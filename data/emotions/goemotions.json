@@ -1,0 +1,10 @@
+[
+  {
+    "text": "I am happy with the results.",
+    "emotions": ["joy", "satisfaction"]
+  },
+  {
+    "text": "This situation makes me so angry!",
+    "emotions": ["anger", "frustration"]
+  }
+]
