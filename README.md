@@ -18,6 +18,9 @@ The Artificial Consciousness Module (ACM) is an ambitious project to develop syn
 - **Learning Frameworks:** LoRA, PEFT, RLHF
 
 ## **Folder Structure**
+
+Refer to `docs/architecture.md` for a detailed breakdown of the repository structure.
+
 - `data/`: Stores datasets for emotions, simulations, and training.
 - `models/`: Contains pre-trained and fine-tuned AI models.
 - `scripts/`: Utility scripts for setup, training, and testing.
@@ -33,6 +36,11 @@ The Artificial Consciousness Module (ACM) is an ambitious project to develop syn
 
 ## **Contributing**
 We welcome contributions! Please read our [CONTRIBUTING.md](docs/contributing.md) for guidelines.
+
+## Getting Started
+1. Install dependencies:
+   ```bash
+   bash scripts/setup/install_dependencies.sh
 
 ## **License**
 This project is licensed under the MIT License.
