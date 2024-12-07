@@ -1,0 +1,23 @@
+
+---
+
+#### **.gitignore**
+```plaintext
+# Python
+*.pyc
+__pycache__/
+
+# Virtual Environment
+.env/
+venv/
+
+# Unreal Engine
+Saved/
+DerivedDataCache/
+
+# Logs
+*.log
+
+# OS Files
+.DS_Store
+Thumbs.db
