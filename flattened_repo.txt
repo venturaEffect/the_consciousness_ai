@@ -1,0 +1,534 @@
+<data/emotions/goemotions.json>
+[
+  {
+    "text": "I am happy with the results.",
+    "emotions": ["joy", "satisfaction"]
+  },
+  {
+    "text": "This situation makes me so angry!",
+    "emotions": ["anger", "frustration"]
+  }
+]
+
+</data/emotions/goemotions.json>
+
+<data/simulations/api/simulation_manager.py>
+from concurrent import futures
+import grpc
+import simulation_pb2
+import simulation_pb2_grpc
+
+class SimulationManager(simulation_pb2_grpc.SimulationManagerServicer):
+    def StartSimulation(self, request, context):
+        # Logic for starting a simulation task
+        return simulation_pb2.SimulationResponse(message="Simulation started successfully!")
+
+    def StopSimulation(self, request, context):
+        # Logic for stopping a simulation task
+        return simulation_pb2.SimulationResponse(message="Simulation stopped successfully!")
+
+def serve():
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    simulation_pb2_grpc.add_SimulationManagerServicer_to_server(SimulationManager(), server)
+    server.add_insecure_port("[::]:50051")
+    server.start()
+    print("Simulation Manager is running on port 50051")
+    server.wait_for_termination()
+
+if __name__ == "__main__":
+    serve()
+
+</data/simulations/api/simulation_manager.py>
+
+<data/simulations/tasks.json>
+
+</data/simulations/tasks.json>
+
+<docs/architechture.md>
+# Architecture of the Artificial Consciousness Module
+
+## **Overview**
+
+The ACM architecture integrates multiple components to achieve synthetic awareness:
+
+1. **Virtual Reality Simulations:** Unreal Engine 5 for immersive environments.
+2. **Multimodal AI Models:** Vision-language, speech, and emotion detection models.
+3. **Emotional Memory Core:** A vector-based system for storing past experiences.
+4. **Narrative Engine:** Large language models (LLMs) maintaining a coherent self-narrative.
+5. **Adaptive Systems:** Self-modifying code for continuous learning.
+
+## **Component Breakdown**
+
+- **Data Layer:** Stores raw and processed datasets (e.g., GoEmotions, EmoWOZ).
+- **Model Layer:** Fine-tuned models for perception, reasoning, and emotional processing.
+- **Simulation Layer:** Manages VR environments and agent interactions.
+- **Memory Layer:** Vector stores (e.g., Pinecone) for persistent memory storage.
+- **Integration Layer:** Orchestrates multimodal inputs and outputs.
+
+## **Workflow**
+
+1. VR simulations generate sensory data (vision, audio, text).
+2. Multimodal models process the data and produce insights.
+3. Emotional triggers are logged and stored in the memory core.
+4. The narrative engine integrates insights to maintain a continuous self-model.
+
+</docs/architechture.md>
+
+<docs/contributing.md>
+---
+
+#### **2. `scripts/setup/install_dependencies.sh`**
+
+```bash
+#!/bin/bash
+# Script to install dependencies for ACM project
+
+echo "Installing Python dependencies..."
+pip install -r requirements.txt
+
+echo "Installing Unreal Engine prerequisites..."
+# Add Unreal Engine-specific commands here, e.g.:
+sudo apt-get update
+sudo apt-get install -y build-essential clang
+
+echo "Installing additional tools..."
+pip install torch torchvision torchaudio pinecone-client langchain
+
+echo "Setup complete!"
+```
+
+</docs/contributing.md>
+
+<docs/installation.md>
+# Installation Guide
+
+## **Prerequisites**
+
+1. Python 3.9 or higher
+2. Unreal Engine 5
+3. Node.js (for gRPC bindings)
+4. GPU with CUDA support (optional, but recommended)
+
+## **Steps**
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/venturaEffect/the_consciousness_ai.git
+   cd the_consciousness_ai
+   ```
+
+</docs/installation.md>
+
+<docs/roadmap.md>
+**Here’s a detailed roadmap, folder and file structure, and README content for your GitHub repository to implement the artificial consciousness module based on the updated technologies and workflow.**
+
+**Roadmap**
+
+**Phase 1: Initial Setup and Research**
+    - Define project scope, objectives, and contributors.
+    - Research and document existing technologies, frameworks, and datasets:
+        - Unreal Engine 5 for VR simulations.
+        - Models like LLaMA 2, PaLI-2, GPT-4V, and Whisper.
+        - Vector storage solutions (e.g., Pinecone).
+        - Emotion datasets (GoEmotions) and advanced multimodal integration techniques.
+    - Set up a GitHub repository with a clear folder structure and CI/CD pipelines.
+
+**Phase 2: VR Simulation Development**
+    - Build basic VR environments using Unreal Engine 5.
+    - Implement simulation APIs (e.g., gRPC) for AI-agent interactions.
+    - Develop foundational tasks focusing on self-recognition and simple decision-making.
+
+**Phase 3: Multimodal AI Integration**
+    - Integrate vision-language models (PaLI-2, BLIP-2) for environmental understanding.
+    - Add Whisper for real-time speech processing.
+    - Implement multimodal fusion using LangChain for cohesive data flow.
+
+**Phase 4: Emotional Processing and Memory Core**
+    - Train models on GoEmotions and EmoWOZ datasets for nuanced emotion detection.
+    - Create a dynamic emotional memory core using a vector database (e.g., Pinecone).
+    - Integrate Temporal Graph Neural Networks (TGNN) to map emotional relationships.
+
+**Phase 5: Advanced Narrative Construction**
+    - Develop the internal narrative engine using LLaMA 2 or GPT-4 with chain-of-thought prompting.
+    - Implement long-context models (Claude 100k, MPT-100k) for working memory.
+    - Enable adaptive narrative generation based on past emotional and decision-making patterns.
+
+**Phase 6: Human Interaction and Ethical Training**
+    - Introduce human participants with hyper-realistic avatars in simulations.
+    - Collect feedback using Reinforcement Learning from Human Feedback (RLHF).
+    - Refine ethical reasoning and social adaptability.
+
+**Phase 7: Iterative Refinement and Deployment**
+    - Test self-modifying code generation and continuous learning pipelines (LoRA, PEFT).
+    - Scale up simulation complexity and assess adaptive growth.
+    - Document outcomes and iterate for improved performance.
+
+</docs/roadmap.md>
+
+<models/emotion/tgnn/emotional_graph.py>
+import torch_geometric
+from torch_geometric.nn import GCNConv
+import torch.nn.functional as F
+
+class EmotionalGraphNetwork(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = GCNConv(input_channels, 128)
+        self.conv2 = GCNConv(128, 64)
+        self.emotion_classifier = torch.nn.Linear(64, num_emotion_classes)
+        
+    def forward(self, x, edge_index, edge_attr):
+        # Process emotional relationships in graph structure
+        x = F.relu(self.conv1(x, edge_index, edge_attr))
+        x = F.dropout(x, training=self.training)
+        x = self.conv2(x, edge_index, edge_attr)
+        return self.emotion_classifier(x)
+</models/emotion/tgnn/emotional_graph.py>
+
+<models/narrative/narrative_engine.py>
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
+
+class NarrativeEngine:
+    def __init__(self, model_name="anthropic/claude-2-100k"):
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name)
+        self.memory_context = []
+        
+    def generate_narrative(self, current_state, emotional_context):
+        # Combine current state with historical context
+        context = self._build_context(current_state, emotional_context)
+        
+        # Generate coherent narrative
+        inputs = self.tokenizer(context, return_tensors="pt")
+        outputs = self.model.generate(
+            **inputs,
+            max_length=1000,
+            temperature=0.7,
+            do_sample=True
+        )
+        
+        narrative = self.tokenizer.decode(outputs[0])
+        self.memory_context.append(narrative)
+        return narrative
+        
+    def _build_context(self, current_state, emotional_context):
+        """Build context string from current state and emotional context"""
+        # Convert state and context to string format
+        state_str = " ".join([f"{k}: {v}" for k, v in current_state.items()])
+        emotion_str = " ".join([f"{k}: {v}" for k, v in emotional_context.items()])
+        
+        # Combine with historical context
+        context = f"Current State: {state_str}\nEmotional Context: {emotion_str}\n"
+        if self.memory_context:
+            context += f"\nPrevious Narratives:\n" + "\n".join(self.memory_context[-5:])
+            
+        return context
+</models/narrative/narrative_engine.py>
+
+<models/predictive/attention_mechanism.py>
+
+</models/predictive/attention_mechanism.py>
+
+<models/predictive/dreamerv3_wrapper.py>
+
+</models/predictive/dreamerv3_wrapper.py>
+
+<models/self_model/belief_system.py>
+
+</models/self_model/belief_system.py>
+
+<models/self_model/intention_tracker.py>
+
+</models/self_model/intention_tracker.py>
+
+<README.md>
+# Artificial Consciousness Module (ACM)
+
+## **Overview**
+
+With The Artificial Consciousness Module (ACM) try to create synthetic awareness in AI systems. By combining most updated AI technologies, virtual reality environments, and emotional processing. This project explores the possibility of replicating human-like consciousness in non-biological systems.
+
+Link: [The Consciousness AI Module](https://theconsciousness.ai)
+
+## **Core Features**
+
+1. **VR Simulations:** Realistic environments built with Unreal Engine 5.
+2. **Multimodal Integration:** Combines vision, speech, and text models for rich understanding.
+3. **Emotional Memory Core:** Processes and stores past emotional experiences.
+4. **Narrative Construction:** Maintains a self-consistent internal narrative driven by large language models.
+5. **Adaptive Learning:** Implements self-modifying code for continuous improvement.
+
+## **Technologies**
+
+- **Game Engines:** Unreal Engine 5
+- **AI Models:** LLaMA 2, GPT-4V, PaLI-2, Whisper
+- **Vector Storage:** Pinecone, Chroma
+- **Emotion Detection:** Temporal Graph Neural Networks, GoEmotions
+- **Learning Frameworks:** LoRA, PEFT, RLHF
+
+## **Folder Structure**
+
+- `data/`: Datasets for emotions and simulations.
+- `docs/`: Documentation for architecture, installation, and the roadmap.
+- `models/`: Pre-trained and fine-tuned AI models.
+- `scripts/`: Utility scripts for setup, training, and testing.
+- `simulations/`: VR environments and APIs for agent interactions.
+- `tests/`: Unit and integration tests.
+
+## **Getting Started**
+
+1. Install dependencies:
+   ```bash
+   bash scripts/setup/install_dependencies.sh
+   ```
+
+</README.md>
+
+<scripts/setup/configure_unreal.sh>
+
+</scripts/setup/configure_unreal.sh>
+
+<scripts/setup/install_dependencies.sh>
+
+</scripts/setup/install_dependencies.sh>
+
+<scripts/training/train_emotion_classifier.py>
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from torch.utils.data import DataLoader, Dataset
+from torchvision import transforms
+import torch.nn as nn
+
+class MultimodalEmotionModel(nn.Module):
+    def __init__(self, text_model_name="bert-base-uncased", num_emotions=27):
+        super().__init__()
+        self.text_encoder = AutoModelForSequenceClassification.from_pretrained(text_model_name)
+        self.vision_encoder = torch.hub.load('pytorch/vision:v0.10.0', 'resnet50')
+        self.audio_encoder = nn.Sequential(
+            nn.Conv1d(1, 64, kernel_size=3),
+            nn.ReLU(),
+            nn.MaxPool1d(2)
+        )
+        
+        fusion_dim = 1024
+        self.fusion_layer = nn.Sequential(
+            nn.Linear(self.text_encoder.config.hidden_size + 2048 + 64, fusion_dim),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(fusion_dim, num_emotions)
+        )
+
+    def forward(self, text_inputs, image_inputs, audio_inputs):
+        text_features = self.text_encoder(**text_inputs).logits
+        vision_features = self.vision_encoder(image_inputs)
+        audio_features = self.audio_encoder(audio_inputs)
+        
+        # Fusion
+        combined = torch.cat([text_features, vision_features, audio_features], dim=1)
+        return self.fusion_layer(combined)
+</scripts/training/train_emotion_classifier.py>
+
+<scripts/training/train_rlhf.py>
+
+</scripts/training/train_rlhf.py>
+
+<scripts/training/train_vision_model.py>
+import torch
+from transformers import AutoModelForImageClassification, AutoFeatureExtractor
+
+def train_vision_model():
+    # Load a pre-trained vision model
+    model_name = "google/vit-base-patch16-224"
+    model = AutoModelForImageClassification.from_pretrained(model_name)
+    feature_extractor = AutoFeatureExtractor.from_pretrained(model_name)
+
+    # Example dataset (replace with real VR data)
+    dataset = torch.utils.data.TensorDataset(torch.rand(10, 3, 224, 224), torch.randint(0, 10, (10,)))
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=2)
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=5e-5)
+
+    # Training loop
+    for epoch in range(3):
+        for batch in dataloader:
+            inputs, labels = batch
+            outputs = model(inputs)
+            loss = torch.nn.functional.cross_entropy(outputs.logits, labels)
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+        print(f"Epoch {epoch} completed with loss {loss.item()}")
+
+if __name__ == "__main__":
+    train_vision_model()
+
+</scripts/training/train_vision_model.py>
+
+<scripts/utils/multimodal_integration.py>
+
+</scripts/utils/multimodal_integration.py>
+
+<scripts/utils/predictive_processing/world_model.py>
+import torch
+from dreamerv3_torch import DreamerV3
+
+class WorldModel:
+    def __init__(self):
+        self.model = DreamerV3(
+            obs_shape=(3, 64, 64),
+            action_shape=(8,),
+            hidden_size=200
+        )
+        
+    def predict_next_state(self, current_state, action):
+        """Predict next simulation state based on current state and action"""
+        with torch.no_grad():
+            predicted_state = self.model.imagine(current_state, action)
+        return predicted_state
+</scripts/utils/predictive_processing/world_model.py>
+
+<scripts/utils/vector_store_utils.py>
+from pinecone import Pinecone
+import numpy as np
+from typing import List, Dict, Any
+import time
+
+class MemoryCore:
+    def __init__(self, api_key: str, environment: str):
+        self.pc = Pinecone(api_key=api_key)
+        self.index = self.pc.Index("consciousness-memory")
+        
+    def store_experience(self, 
+                        embedding: List[float], 
+                        metadata: Dict[str, Any],
+                        emotional_context: Dict[str, float]):
+        """Store an experience with emotional context"""
+        vector_id = f"exp_{np.random.uuid4()}"
+        self.index.upsert(
+            vectors=[(
+                vector_id,
+                embedding,
+                {
+                    **metadata,
+                    "emotional_valence": emotional_context.get("valence"),
+                    "emotional_arousal": emotional_context.get("arousal"),
+                    "timestamp": time.time()
+                }
+            )]
+        )
+        
+    def retrieve_similar_experiences(self, 
+                                   query_embedding: List[float],
+                                   emotional_filter: Dict[str, float] = None,
+                                   top_k: int = 5):
+        """Retrieve experiences with emotional context filtering"""
+        filter_query = {}
+        if emotional_filter:
+            filter_query = {
+                "emotional_valence": {"$gte": emotional_filter["min_valence"]},
+                "emotional_arousal": {"$gte": emotional_filter["min_arousal"]}
+            }
+            
+        return self.index.query(
+            vector=query_embedding,
+            filter=filter_query,
+            top_k=top_k
+        )
+
+</scripts/utils/vector_store_utils.py>
+
+<simulations/enviroments/vr_environment.py>
+import unreal
+from typing import Dict, Any
+
+class VREnvironment:
+    def __init__(self):
+        self.ue = unreal.EditorLevelLibrary()
+        self.world = self.ue.get_editor_world()
+        
+    def spawn_agent(self, location: Dict[str, float], avatar_type: str):
+        # Spawn MetaHuman character
+        character = self.ue.spawn_actor_from_class(
+            unreal.MetaHumanCharacter,
+            unreal.Transform(
+                location=unreal.Vector(
+                    x=location['x'],
+                    y=location['y'],
+                    z=location['z']
+                )
+            )
+        )
+        return character
+        
+    def create_interaction_zone(self, radius: float, location: Dict[str, float]):
+        # Create interactive area for agent-environment interaction
+        trigger = self.ue.spawn_actor_from_class(
+            unreal.TriggerVolume,
+            unreal.Transform(
+                location=unreal.Vector(
+                    x=location['x'],
+                    y=location['y'],
+                    z=location['z']
+                )
+            )
+        )
+        return trigger
+</simulations/enviroments/vr_environment.py>
+
+<simulations/scenarios/ethical_dilemmas.py>
+
+</simulations/scenarios/ethical_dilemmas.py>
+
+<simulations/scenarios/simple_tasks.py>
+
+</simulations/scenarios/simple_tasks.py>
+
+<simulations/scenarios/social_interactions.py>
+
+</simulations/scenarios/social_interactions.py>
+
+<tests/test_emotion_classifier.py>
+
+</tests/test_emotion_classifier.py>
+
+<tests/test_memory_core.py>
+import unittest
+from pinecone import Index
+
+class TestMemoryCore(unittest.TestCase):
+    def setUp(self):
+        # Connect to Pinecone index
+        self.index = Index("ac_memory")
+
+    def test_add_vector(self):
+        # Add a vector to memory
+        self.index.upsert([("test-id", [0.1, 0.2, 0.3])])
+        result = self.index.query([0.1, 0.2, 0.3], top_k=1)
+        self.assertEqual(result["matches"][0]["id"], "test-id")
+
+    def tearDown(self):
+        # Clean up the index
+        self.index.delete(["test-id"])
+
+if __name__ == "__main__":
+    unittest.main()
+
+</tests/test_memory_core.py>
+
+<tests/test_narrative_engine.py>
+import unittest
+from models.narrative.narrative_engine import NarrativeEngine
+
+class TestNarrativeEngine(unittest.TestCase):
+    def setUp(self):
+        self.engine = NarrativeEngine()
+        
+    def test_narrative_generation(self):
+        current_state = {"location": "virtual_room", "action": "observe"}
+        emotional_context = {"valence": 0.7, "arousal": 0.3}
+        narrative = self.engine.generate_narrative(current_state, emotional_context)
+        self.assertIsInstance(narrative, str)
+        self.assertGreater(len(narrative), 0)
+</tests/test_narrative_engine.py>
+

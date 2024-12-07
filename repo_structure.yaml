@@ -1,0 +1,164 @@
+  - path: /data
+    type: directory
+    contents:
+    - path: /data/emotions
+      type: directory
+      contents:
+      - path: /data/emotions/emowoz.csv
+        type: file
+      - path: /data/emotions/goemotions.json
+        type: file
+    - path: /data/simulations
+      type: directory
+      contents:
+      - path: /data/simulations/api
+        type: directory
+        contents:
+        - path: /data/simulations/api/simulation_manager.py
+          type: file
+      - path: /data/simulations/tasks.json
+        type: file
+  - path: /docs
+    type: directory
+    contents:
+    - path: /docs/architechture.md
+      type: file
+    - path: /docs/contributing.md
+      type: file
+    - path: /docs/installation.md
+      type: file
+    - path: /docs/roadmap.md
+      type: file
+  - path: /LICENSE
+    type: file
+  - path: /models
+    type: directory
+    contents:
+    - path: /models/code-generation
+      type: directory
+      contents:
+      - path: /models/code-generation/code-llama
+        type: directory
+        contents:
+    - path: /models/emotion
+      type: directory
+      contents:
+      - path: /models/emotion/tgnn
+        type: directory
+        contents:
+        - path: /models/emotion/tgnn/emotional_graph.py
+          type: file
+    - path: /models/emotional
+      type: directory
+      contents:
+      - path: /models/emotional/multimodal_fusion
+        type: directory
+        contents:
+    - path: /models/language
+      type: directory
+      contents:
+      - path: /models/language/gpt-4v
+        type: directory
+        contents:
+      - path: /models/language/llama-2
+        type: directory
+        contents:
+    - path: /models/narrative
+      type: directory
+      contents:
+      - path: /models/narrative/narrative_engine.py
+        type: file
+    - path: /models/predictive
+      type: directory
+      contents:
+      - path: /models/predictive/attention_mechanism.py
+        type: file
+      - path: /models/predictive/dreamerv3_wrapper.py
+        type: file
+    - path: /models/self_model
+      type: directory
+      contents:
+      - path: /models/self_model/belief_system.py
+        type: file
+      - path: /models/self_model/intention_tracker.py
+        type: file
+    - path: /models/speech
+      type: directory
+      contents:
+      - path: /models/speech/whisper
+        type: directory
+        contents:
+    - path: /models/vision-language
+      type: directory
+      contents:
+      - path: /models/vision-language/llava
+        type: directory
+        contents:
+      - path: /models/vision-language/pali-2
+        type: directory
+        contents:
+  - path: /README.md
+    type: file
+  - path: /scripts
+    type: directory
+    contents:
+    - path: /scripts/setup
+      type: directory
+      contents:
+      - path: /scripts/setup/configure_unreal.sh
+        type: file
+      - path: /scripts/setup/install_dependencies.sh
+        type: file
+    - path: /scripts/training
+      type: directory
+      contents:
+      - path: /scripts/training/rlhf
+        type: directory
+        contents:
+      - path: /scripts/training/train_emotion_classifier.py
+        type: file
+      - path: /scripts/training/train_rlhf.py
+        type: file
+      - path: /scripts/training/train_vision_model.py
+        type: file
+    - path: /scripts/utils
+      type: directory
+      contents:
+      - path: /scripts/utils/multimodal_integration.py
+        type: file
+      - path: /scripts/utils/predictive_processing
+        type: directory
+        contents:
+        - path: /scripts/utils/predictive_processing/world_model.py
+          type: file
+      - path: /scripts/utils/vector_store_utils.py
+        type: file
+  - path: /simulations
+    type: directory
+    contents:
+    - path: /simulations/agents
+      type: directory
+      contents:
+    - path: /simulations/enviroments
+      type: directory
+      contents:
+      - path: /simulations/enviroments/vr_environment.py
+        type: file
+    - path: /simulations/scenarios
+      type: directory
+      contents:
+      - path: /simulations/scenarios/ethical_dilemmas.py
+        type: file
+      - path: /simulations/scenarios/simple_tasks.py
+        type: file
+      - path: /simulations/scenarios/social_interactions.py
+        type: file
+  - path: /tests
+    type: directory
+    contents:
+    - path: /tests/test_emotion_classifier.py
+      type: file
+    - path: /tests/test_memory_core.py
+      type: file
+    - path: /tests/test_narrative_engine.py
+      type: file
