@@ -38,4 +38,4 @@ We welcome contributions! Please read our [CONTRIBUTING.md](docs/contributing.md
 This project is licensed under the MIT License.
 
 ## **Contact**
-For inquiries, please open an issue or email [maintainer@example.com](mailto:maintainer@example.com).
+For inquiries, please open an issue or email [info@theconsciousness.ai](mailto:info@theconsciousness.ai).
