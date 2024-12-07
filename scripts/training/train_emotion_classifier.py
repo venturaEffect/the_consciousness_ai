@@ -1,46 +1,33 @@
 import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
-from datasets import load_dataset
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from torch.utils.data import DataLoader, Dataset
+from torchvision import transforms
+import torch.nn as nn
 
-def train_emotion_classifier():
-    # Load the dataset
-    dataset = load_dataset("go_emotions")
-    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+class MultimodalEmotionModel(nn.Module):
+    def __init__(self, text_model_name="bert-base-uncased", num_emotions=27):
+        super().__init__()
+        self.text_encoder = AutoModelForSequenceClassification.from_pretrained(text_model_name)
+        self.vision_encoder = torch.hub.load('pytorch/vision:v0.10.0', 'resnet50')
+        self.audio_encoder = nn.Sequential(
+            nn.Conv1d(1, 64, kernel_size=3),
+            nn.ReLU(),
+            nn.MaxPool1d(2)
+        )
+        
+        fusion_dim = 1024
+        self.fusion_layer = nn.Sequential(
+            nn.Linear(self.text_encoder.config.hidden_size + 2048 + 64, fusion_dim),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(fusion_dim, num_emotions)
+        )
 
-    def tokenize_function(examples):
-        return tokenizer(examples["text"], truncation=True)
-
-    tokenized_datasets = dataset.map(tokenize_function, batched=True)
-    tokenized_datasets = tokenized_datasets.rename_column("labels", "label")
-
-    # Load the model
-    model = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=27)
-
-    # Define training arguments
-    training_args = TrainingArguments(
-        output_dir="./results",
-        evaluation_strategy="epoch",
-        learning_rate=5e-5,
-        per_device_train_batch_size=16,
-        num_train_epochs=3,
-        weight_decay=0.01,
-        save_strategy="epoch",
-        logging_dir="./logs"
-    )
-
-    # Define Trainer
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=tokenized_datasets["train"],
-        eval_dataset=tokenized_datasets["validation"],
-    )
-
-    # Train the model
-    trainer.train()
-
-    # Save the model
-    model.save_pretrained("./emotion_classifier")
-
-if __name__ == "__main__":
-    train_emotion_classifier()
+    def forward(self, text_inputs, image_inputs, audio_inputs):
+        text_features = self.text_encoder(**text_inputs).logits
+        vision_features = self.vision_encoder(image_inputs)
+        audio_features = self.audio_encoder(audio_inputs)
+        
+        # Fusion
+        combined = torch.cat([text_features, vision_features, audio_features], dim=1)
+        return self.fusion_layer(combined)
