@@ -19,7 +19,7 @@ Link: [The Consciousness AI Module](https://theconsciousness.ai)
 ## **Technologies**
 
 - **Game Engines:** Unreal Engine 5
-- **AI Models:** LLaMA 2, GPT-4V, PaLI-2, Whisper
+- **AI Models:** Llama 3.3, GPT-4V, PaLI-2, Whisper
 - **Vector Storage:** Pinecone, Chroma
 - **Emotion Detection:** Temporal Graph Neural Networks, GoEmotions
 - **Learning Frameworks:** LoRA, PEFT, RLHF

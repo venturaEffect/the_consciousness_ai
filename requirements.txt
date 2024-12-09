@@ -10,3 +10,4 @@ flask
 fastapi
 uvicorn
 Pillow
+llama-3.3
