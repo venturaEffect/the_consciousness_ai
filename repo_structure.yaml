@@ -60,7 +60,7 @@
         - path: /models/language/gpt-4v
           type: directory
           contents:
-        - path: /models/language/llama-2
+        - path: /models/language/Llama-3.3
           type: directory
           contents:
         - path: /models/language/long_context_integration.py
