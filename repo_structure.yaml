@@ -63,6 +63,13 @@
       - path: /models/language/llama-2
         type: directory
         contents:
+      - path: /models/language/long_context_integration.py
+        type: file
+    - path: /models/memory
+      type: directory
+      contents:
+      - path: /models/memory/memory_core.py
+        type: file
     - path: /models/narrative
       type: directory
       contents:
@@ -88,6 +95,8 @@
       - path: /models/speech/whisper
         type: directory
         contents:
+        - path: /models/speech/whisper/whisper_integration.py
+          type: file
     - path: /models/vision-language
       type: directory
       contents:
@@ -97,6 +106,8 @@
       - path: /models/vision-language/pali-2
         type: directory
         contents:
+        - path: /models/vision-language/pali-2/pali2_integration.py
+          type: file
   - path: /README.md
     type: file
   - path: /requirements.txt
@@ -126,6 +137,8 @@
     - path: /scripts/utils
       type: directory
       contents:
+      - path: /scripts/utils/multimodal_fusion.py
+        type: file
       - path: /scripts/utils/multimodal_integration.py
         type: file
       - path: /scripts/utils/predictive_processing

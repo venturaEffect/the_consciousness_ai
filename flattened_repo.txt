@@ -166,64 +166,118 @@ echo "Setup complete!"
 </docs/roadmap.md>
 
 <models/emotion/tgnn/emotional_graph.py>
-import torch_geometric
-from torch_geometric.nn import GCNConv
+import torch
 import torch.nn.functional as F
+from torch_geometric.nn import GCNConv
 
-class EmotionalGraphNetwork(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = GCNConv(input_channels, 128)
-        self.conv2 = GCNConv(128, 64)
-        self.emotion_classifier = torch.nn.Linear(64, num_emotion_classes)
-        
-    def forward(self, x, edge_index, edge_attr):
-        # Process emotional relationships in graph structure
-        x = F.relu(self.conv1(x, edge_index, edge_attr))
-        x = F.dropout(x, training=self.training)
-        x = self.conv2(x, edge_index, edge_attr)
-        return self.emotion_classifier(x)
+class EmotionalGraphNN(torch.nn.Module):
+    def __init__(self, num_features, hidden_dim, num_classes):
+        super(EmotionalGraphNN, self).__init__()
+        self.conv1 = GCNConv(num_features, hidden_dim)
+        self.conv2 = GCNConv(hidden_dim, hidden_dim // 2)
+        self.fc = torch.nn.Linear(hidden_dim // 2, num_classes)
+
+    def forward(self, x, edge_index):
+        x = self.conv1(x, edge_index)
+        x = F.relu(x)
+        x = self.conv2(x, edge_index)
+        x = F.relu(x)
+        x = self.fc(x)
+        return F.log_softmax(x, dim=1)
 </models/emotion/tgnn/emotional_graph.py>
+
+<models/language/long_context_integration.py>
+# models/language/long_context_integration.py
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
+
+class LongContextIntegration:
+    def __init__(self, model_name="mosaicml/mpt-7b-storywriter"):
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            model_name,
+            trust_remote_code=True
+        )
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype=torch.float16,
+            trust_remote_code=True
+        )
+        self.model.eval()
+
+    def process_long_input(self, input_text):
+        inputs = self.tokenizer(
+            input_text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=65536
+        ).to("cuda")
+        with torch.no_grad():
+            outputs = self.model.generate(
+                **inputs,
+                max_new_tokens=1024,
+                temperature=0.7,
+                do_sample=True
+            )
+        result = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return result
+</models/language/long_context_integration.py>
+
+<models/memory/memory_core.py>
+# models/memory/memory_core.py
+import pinecone
+import uuid
+
+class MemoryCore:
+    def __init__(self, api_key, environment="us-west1-gcp", index_name="memory-core", dimension=768):
+        pinecone.init(api_key=api_key, environment=environment)
+        if index_name not in pinecone.list_indexes():
+            pinecone.create_index(index_name, dimension=dimension)
+        self.index = pinecone.Index(index_name)
+
+    def store_memory(self, embedding, metadata=None):
+        vector_id = str(uuid.uuid4())
+        self.index.upsert([(vector_id, embedding.tolist(), metadata)])
+
+    def retrieve_memory(self, query_embedding, top_k=5):
+        results = self.index.query(query_embedding.tolist(), top_k=top_k, include_metadata=True)
+        return results["matches"]
+</models/memory/memory_core.py>
 
 <models/narrative/narrative_engine.py>
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
 class NarrativeEngine:
-    def __init__(self, model_name="anthropic/claude-2-100k"):
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name)
-        self.memory_context = []
-        
-    def generate_narrative(self, current_state, emotional_context):
-        # Combine current state with historical context
-        context = self._build_context(current_state, emotional_context)
-        
-        # Generate coherent narrative
-        inputs = self.tokenizer(context, return_tensors="pt")
-        outputs = self.model.generate(
-            **inputs,
-            max_length=1000,
-            temperature=0.7,
-            do_sample=True
+    def __init__(self, model_name="meta-llama/Llama-2-13b-chat-hf"):
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=True)
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype=torch.float16,
+            device_map="auto",
+            use_auth_token=True
         )
-        
-        narrative = self.tokenizer.decode(outputs[0])
+        self.memory_context = []
+
+    def generate_narrative(self, input_text):
+        prompt = self._build_prompt(input_text)
+        inputs = self.tokenizer(prompt, return_tensors="pt").to("cuda")
+        with torch.no_grad():
+            outputs = self.model.generate(
+                **inputs,
+                max_new_tokens=512,
+                temperature=0.7,
+                do_sample=True
+            )
+        narrative = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         self.memory_context.append(narrative)
         return narrative
-        
-    def _build_context(self, current_state, emotional_context):
-        """Build context string from current state and emotional context"""
-        # Convert state and context to string format
-        state_str = " ".join([f"{k}: {v}" for k, v in current_state.items()])
-        emotion_str = " ".join([f"{k}: {v}" for k, v in emotional_context.items()])
-        
-        # Combine with historical context
-        context = f"Current State: {state_str}\nEmotional Context: {emotion_str}\n"
+
+    def _build_prompt(self, input_text):
+        prompt = "Let's think step by step.\n"
+        prompt += input_text
         if self.memory_context:
-            context += f"\nPrevious Narratives:\n" + "\n".join(self.memory_context[-5:])
-            
-        return context
+            prompt += "\nPrevious Thoughts:\n" + "\n".join(self.memory_context[-5:])
+        return prompt
 </models/narrative/narrative_engine.py>
 
 <models/predictive/attention_mechanism.py>
@@ -241,6 +295,40 @@ class NarrativeEngine:
 <models/self_model/intention_tracker.py>
 
 </models/self_model/intention_tracker.py>
+
+<models/speech/whisper/whisper_integration.py>
+# models/speech/whisper_integration.py
+import whisper
+
+class WhisperIntegration:
+    def __init__(self, model_name="small"):
+        self.model = whisper.load_model(model_name)
+
+    def transcribe_audio(self, audio_path):
+        result = self.model.transcribe(audio_path)
+        return result["text"]
+</models/speech/whisper/whisper_integration.py>
+
+<models/vision-language/pali-2/pali2_integration.py>
+# models/vision-language/pali-2/pali2_integration.py
+from transformers import Blip2ForConditionalGeneration, Blip2Processor
+import torch
+
+class PaLI2Integration:
+    def __init__(self, model_name="Salesforce/blip2-flan-t5-xl"):
+        self.processor = Blip2Processor.from_pretrained(model_name)
+        self.model = Blip2ForConditionalGeneration.from_pretrained(
+            model_name, torch_dtype=torch.float16
+        )
+        self.model.eval()
+
+    def generate_caption(self, image):
+        inputs = self.processor(images=image, return_tensors="pt")
+        with torch.no_grad():
+            outputs = self.model.generate(**inputs)
+        caption = self.processor.decode(outputs[0], skip_special_tokens=True)
+        return caption
+</models/vision-language/pali-2/pali2_integration.py>
 
 <README.md>
 **work in progress**
@@ -395,6 +483,30 @@ if __name__ == "__main__":
     train_vision_model()
 
 </scripts/training/train_vision_model.py>
+
+<scripts/utils/multimodal_fusion.py>
+# scripts/utils/multimodal_fusion.py
+from models.vision_language.pali_2.pali2_integration import PaLI2Integration
+from models.speech.whisper_integration import WhisperIntegration
+
+class MultimodalFusion:
+    def __init__(self):
+        self.vision_model = PaLI2Integration()
+        self.speech_model = WhisperIntegration()
+
+    def fuse_inputs(self, image, audio_path):
+        caption = self.vision_model.generate_caption(image)
+        transcription = self.speech_model.transcribe_audio(audio_path)
+        return self.fuse_modalities(caption, transcription)
+
+    def fuse_modalities(self, caption, transcription):
+        # Simple fusion of modalities
+        fused_output = {
+            "caption": caption,
+            "transcription": transcription
+        }
+        return fused_output
+</scripts/utils/multimodal_fusion.py>
 
 <scripts/utils/multimodal_integration.py>
 
