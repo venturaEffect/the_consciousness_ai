@@ -1,0 +1,12 @@
+torch
+transformers
+pinecone-client
+opencv-python
+unrealcv
+numpy
+pandas
+scikit-learn
+flask
+fastapi
+uvicorn
+Pillow
