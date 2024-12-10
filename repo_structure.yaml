@@ -1,26 +1,26 @@
-- path: /data
-  type: directory
-  contents:
+  - path: /data
+    type: directory
+    contents:
     - path: /data/emotions
       type: directory
       contents:
-        - path: /data/emotions/emowoz.csv
-          type: file
-        - path: /data/emotions/goemotions.json
-          type: file
+      - path: /data/emotions/emowoz.csv
+        type: file
+      - path: /data/emotions/goemotions.json
+        type: file
     - path: /data/simulations
       type: directory
       contents:
-        - path: /data/simulations/api
-          type: directory
-          contents:
-            - path: /data/simulations/api/simulation_manager.py
-              type: file
-        - path: /data/simulations/tasks.json
+      - path: /data/simulations/api
+        type: directory
+        contents:
+        - path: /data/simulations/api/simulation_manager.py
           type: file
-- path: /docs
-  type: directory
-  contents:
+      - path: /data/simulations/tasks.json
+        type: file
+  - path: /docs
+    type: directory
+    contents:
     - path: /docs/architechture.md
       type: file
     - path: /docs/contributing.md
@@ -29,374 +29,379 @@
       type: file
     - path: /docs/roadmap.md
       type: file
-- path: /LICENSE
-  type: file
-- path: /models
-  type: directory
-  contents:
+  - path: /LICENSE
+    type: file
+  - path: /models
+    type: directory
+    contents:
     - path: /models/code-generation
       type: directory
       contents:
-        - path: /models/code-generation/code-llama
-          type: directory
-          contents:
+      - path: /models/code-generation/code-llama
+        type: directory
+        contents:
     - path: /models/emotion
       type: directory
       contents:
-        - path: /models/emotion/tgnn
-          type: directory
-          contents:
-            - path: /models/emotion/tgnn/emotional_graph.py
-              type: file
+      - path: /models/emotion/tgnn
+        type: directory
+        contents:
+        - path: /models/emotion/tgnn/emotional_graph.py
+          type: file
     - path: /models/emotional
       type: directory
       contents:
-        - path: /models/emotional/multimodal_fusion
-          type: directory
-          contents:
+      - path: /models/emotional/multimodal_fusion
+        type: directory
+        contents:
     - path: /models/language
       type: directory
       contents:
-        - path: /models/language/gpt-4v
-          type: directory
-          contents:
-        - path: /models/language/Llama-3.3
-          type: directory
-          contents:
-        - path: /models/language/long_context_integration.py
-          type: file
+      - path: /models/language/gpt-4v
+        type: directory
+        contents:
+      - path: /models/language/llama-3.3
+        type: directory
+        contents:
+      - path: /models/language/long_context_integration.py
+        type: file
     - path: /models/memory
       type: directory
       contents:
-        - path: /models/memory/memory_core.py
-          type: file
+      - path: /models/memory/memory_core.py
+        type: file
     - path: /models/narrative
       type: directory
       contents:
-        - path: /models/narrative/narrative_engine.py
-          type: file
+      - path: /models/narrative/narrative_engine.py
+        type: file
     - path: /models/predictive
       type: directory
       contents:
-        - path: /models/predictive/attention_mechanism.py
-          type: file
-        - path: /models/predictive/dreamerv3_wrapper.py
-          type: file
+      - path: /models/predictive/attention_mechanism.py
+        type: file
+      - path: /models/predictive/dreamerv3_wrapper.py
+        type: file
     - path: /models/self_model
       type: directory
       contents:
-        - path: /models/self_model/belief_system.py
-          type: file
-        - path: /models/self_model/intention_tracker.py
-          type: file
+      - path: /models/self_model/belief_system.py
+        type: file
+      - path: /models/self_model/intention_tracker.py
+        type: file
     - path: /models/speech
       type: directory
       contents:
-        - path: /models/speech/whisper
-          type: directory
-          contents:
-            - path: /models/speech/whisper/whisper_integration.py
-              type: file
+      - path: /models/speech/whisper
+        type: directory
+        contents:
+        - path: /models/speech/whisper/whisper_integration.py
+          type: file
     - path: /models/vision-language
       type: directory
       contents:
-        - path: /models/vision-language/llava
-          type: directory
-          contents:
-        - path: /models/vision-language/pali-2
-          type: directory
-          contents:
-            - path: /models/vision-language/pali-2/pali2_integration.py
-              type: file
-- path: /README.md
-  type: file
-- path: /requirements.txt
-  type: file
-- path: /scripts
-  type: directory
-  contents:
+      - path: /models/vision-language/llava
+        type: directory
+        contents:
+      - path: /models/vision-language/pali-2
+        type: directory
+        contents:
+        - path: /models/vision-language/pali-2/pali2_integration.py
+          type: file
+      - path: /models/vision-language/palm-e
+        type: directory
+        contents:
+        - path: /models/vision-language/palm-e/palm_e_integration.py
+          type: file
+  - path: /README.md
+    type: file
+  - path: /requirements.txt
+    type: file
+  - path: /scripts
+    type: directory
+    contents:
     - path: /scripts/setup
       type: directory
       contents:
-        - path: /scripts/setup/configure_unreal.sh
-          type: file
-        - path: /scripts/setup/install_dependencies.sh
-          type: file
+      - path: /scripts/setup/configure_unreal.sh
+        type: file
+      - path: /scripts/setup/install_dependencies.sh
+        type: file
     - path: /scripts/training
       type: directory
       contents:
-        - path: /scripts/training/rlhf
-          type: directory
-          contents:
-        - path: /scripts/training/train_emotion_classifier.py
-          type: file
-        - path: /scripts/training/train_rlhf.py
-          type: file
-        - path: /scripts/training/train_vision_model.py
-          type: file
+      - path: /scripts/training/rlhf
+        type: directory
+        contents:
+      - path: /scripts/training/train_emotion_classifier.py
+        type: file
+      - path: /scripts/training/train_rlhf.py
+        type: file
+      - path: /scripts/training/train_vision_model.py
+        type: file
     - path: /scripts/utils
       type: directory
       contents:
-        - path: /scripts/utils/multimodal_fusion.py
+      - path: /scripts/utils/multimodal_fusion.py
+        type: file
+      - path: /scripts/utils/multimodal_integration.py
+        type: file
+      - path: /scripts/utils/predictive_processing
+        type: directory
+        contents:
+        - path: /scripts/utils/predictive_processing/world_model.py
           type: file
-        - path: /scripts/utils/multimodal_integration.py
-          type: file
-        - path: /scripts/utils/predictive_processing
-          type: directory
-          contents:
-            - path: /scripts/utils/predictive_processing/world_model.py
-              type: file
-        - path: /scripts/utils/vector_store_utils.py
-          type: file
-- path: /simulations
-  type: directory
-  contents:
+      - path: /scripts/utils/vector_store_utils.py
+        type: file
+  - path: /simulations
+    type: directory
+    contents:
     - path: /simulations/agents
       type: directory
       contents:
     - path: /simulations/enviroments
       type: directory
       contents:
-        - path: /simulations/enviroments/vr_environment.py
-          type: file
+      - path: /simulations/enviroments/vr_environment.py
+        type: file
     - path: /simulations/scenarios
       type: directory
       contents:
-        - path: /simulations/scenarios/ethical_dilemmas.py
-          type: file
-        - path: /simulations/scenarios/simple_tasks.py
-          type: file
-        - path: /simulations/scenarios/social_interactions.py
-          type: file
-- path: /tech documentation
-  type: directory
-  contents:
+      - path: /simulations/scenarios/ethical_dilemmas.py
+        type: file
+      - path: /simulations/scenarios/simple_tasks.py
+        type: file
+      - path: /simulations/scenarios/social_interactions.py
+        type: file
+  - path: /tech documentation
+    type: directory
+    contents:
     - path: /tech documentation/A Generalist Agent
       type: directory
       contents:
-        - path: /tech documentation/A Generalist Agent/2205.06175v3.md
-          type: file
-        - path: /tech documentation/A Generalist Agent/2205.06175v3_meta.json
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_0_Figure_7.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_10_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_11_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_12_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_14_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_15_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_1_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_31_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_31_Figure_3.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_32_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_33_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_34_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_38_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_39_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_4_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_6_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_7_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_8_Picture_1.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_8_Picture_13.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_8_Picture_17.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_8_Picture_21.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_8_Picture_24.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_8_Picture_28.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_8_Picture_32.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_8_Picture_36.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_8_Picture_41.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_8_Picture_5.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_8_Picture_9.jpeg
-          type: file
-        - path: /tech documentation/A Generalist Agent/_page_9_Figure_11.jpeg
-          type: file
+      - path: /tech documentation/A Generalist Agent/2205.06175v3.md
+        type: file
+      - path: /tech documentation/A Generalist Agent/2205.06175v3_meta.json
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_0_Figure_7.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_10_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_11_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_12_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_14_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_15_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_1_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_31_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_31_Figure_3.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_32_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_33_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_34_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_38_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_39_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_4_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_6_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_7_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_8_Picture_1.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_8_Picture_13.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_8_Picture_17.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_8_Picture_21.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_8_Picture_24.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_8_Picture_28.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_8_Picture_32.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_8_Picture_36.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_8_Picture_41.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_8_Picture_5.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_8_Picture_9.jpeg
+        type: file
+      - path: /tech documentation/A Generalist Agent/_page_9_Figure_11.jpeg
+        type: file
     - path: /tech documentation/Dual PatchNorm
       type: directory
       contents:
-        - path: /tech documentation/Dual PatchNorm/2302.01327v3.md
-          type: file
-        - path: /tech documentation/Dual PatchNorm/2302.01327v3_meta.json
-          type: file
-        - path: /tech documentation/Dual PatchNorm/_page_16_Figure_4.jpeg
-          type: file
-        - path: /tech documentation/Dual PatchNorm/_page_3_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/Dual PatchNorm/_page_7_Figure_4.jpeg
-          type: file
-        - path: /tech documentation/Dual PatchNorm/_page_8_Figure_1.jpeg
-          type: file
-    - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models
+      - path: /tech documentation/Dual PatchNorm/2302.01327v3.md
+        type: file
+      - path: /tech documentation/Dual PatchNorm/2302.01327v3_meta.json
+        type: file
+      - path: /tech documentation/Dual PatchNorm/_page_16_Figure_4.jpeg
+        type: file
+      - path: /tech documentation/Dual PatchNorm/_page_3_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/Dual PatchNorm/_page_7_Figure_4.jpeg
+        type: file
+      - path: /tech documentation/Dual PatchNorm/_page_8_Figure_1.jpeg
+        type: file
+    - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models
       type: directory
       contents:
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/2307.09288v2.md
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/2307.09288v2_meta.json
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_12_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_13_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_13_Figure_7.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_15_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_16_Figure_2.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_17_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_18_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_20_Figure_5.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_24_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_25_Figure_2.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_27_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_29_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_29_Figure_4.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_2_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_2_Figure_2.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_30_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_31_Figure_4.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_32_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_32_Figure_2.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_3_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_47_Figure_2.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_4_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_52_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_52_Figure_5.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_53_Figure_7.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_54_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_54_Figure_2.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_56_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_56_Figure_3.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_57_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_5_Figure_2.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_63_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/Llama 3.3 Open Foundation and Fine Tuned Chat Models/_page_66_Figure_0.jpeg
-          type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/2307.09288v2.md
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/2307.09288v2_meta.json
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_12_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_13_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_13_Figure_7.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_15_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_16_Figure_2.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_17_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_18_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_20_Figure_5.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_24_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_25_Figure_2.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_27_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_29_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_29_Figure_4.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_2_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_2_Figure_2.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_30_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_31_Figure_4.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_32_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_32_Figure_2.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_3_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_47_Figure_2.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_4_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_52_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_52_Figure_5.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_53_Figure_7.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_54_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_54_Figure_2.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_56_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_56_Figure_3.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_57_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_5_Figure_2.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_63_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_66_Figure_0.jpeg
+        type: file
     - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone
       type: directory
       contents:
-        - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/2206.04040v2.md
-          type: file
-        - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/2206.04040v2_meta.json
-          type: file
-        - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_11_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_11_Figure_2.jpeg
-          type: file
-        - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_11_Figure_4.jpeg
-          type: file
-        - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_14_Picture_2.jpeg
-          type: file
-        - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_15_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_1_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_3_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_4_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_5_Figure_4.jpeg
-          type: file
+      - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/2206.04040v2.md
+        type: file
+      - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/2206.04040v2_meta.json
+        type: file
+      - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_11_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_11_Figure_2.jpeg
+        type: file
+      - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_11_Figure_4.jpeg
+        type: file
+      - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_14_Picture_2.jpeg
+        type: file
+      - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_15_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_1_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_3_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_4_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_5_Figure_4.jpeg
+        type: file
     - path: /tech documentation/The Virasoro Minimal String
       type: directory
       contents:
-        - path: /tech documentation/The Virasoro Minimal String/2309.10846v3.md
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/2309.10846v3_meta.json
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_13_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_15_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_19_Figure_7.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_23_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_45_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_49_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_51_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_52_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_55_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_56_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_62_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_63_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_65_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_68_Figure_6.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_6_Figure_1.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_74_Figure_0.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_75_Figure_6.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_99_Figure_6.jpeg
-          type: file
-        - path: /tech documentation/The Virasoro Minimal String/_page_9_Figure_0.jpeg
-          type: file
-- path: /tests
-  type: directory
-  contents:
+      - path: /tech documentation/The Virasoro Minimal String/2309.10846v3.md
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/2309.10846v3_meta.json
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_13_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_15_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_19_Figure_7.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_23_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_45_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_49_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_51_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_52_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_55_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_56_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_62_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_63_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_65_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_68_Figure_6.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_6_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_74_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_75_Figure_6.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_99_Figure_6.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_9_Figure_0.jpeg
+        type: file
+  - path: /tests
+    type: directory
+    contents:
     - path: /tests/test_emotion_classifier.py
       type: file
     - path: /tests/test_memory_core.py
