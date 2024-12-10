@@ -159,6 +159,11 @@
     - path: /simulations/agents
       type: directory
       contents:
+    - path: /simulations/api
+      type: directory
+      contents:
+      - path: /simulations/api/simulation_manager.py
+        type: file
     - path: /simulations/enviroments
       type: directory
       contents:
