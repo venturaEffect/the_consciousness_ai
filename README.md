@@ -44,7 +44,7 @@ The **Artificial Consciousness Module (ACM)** attempts to create synthetic aware
 
 ```bash
 git clone https://github.com/venturaEffect/the_consciousness_ai.git
-cd ACM
+cd the_consciousness_ai 
 ```
 
 ### Set Up a Virtual Environment
