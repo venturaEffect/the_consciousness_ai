@@ -1,5 +1,6 @@
 torch>=2.0.0
-transformers>=4.30.0
+transformers>=4.43.0
+huggingface_hub>=0.16.4
 pinecone-client>=2.2.1
 opencv-python>=4.8.0
 unrealcv>=1.0.0
@@ -12,6 +13,9 @@ uvicorn>=0.23.0
 Pillow>=10.0.0
 grpcio>=1.56.0
 protobuf>=4.23.0
-llama-3.3>=1.0.0
 palm-e>=2.0.0
 whisper-v3>=1.0.0
+fairscale
+fire
+tiktoken==0.4.0
+blobfile
