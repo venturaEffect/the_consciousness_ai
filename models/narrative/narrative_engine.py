@@ -3,7 +3,7 @@ import torch
 
 class NarrativeEngine:
     def __init__(self):
-        self.model_name = "meta-llama/llama-3.3-70b"
+        self.model_name = "meta-llama/Llama-3.3-70B-Instruct"
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_name,
             use_auth_token=True

@@ -248,7 +248,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
 class NarrativeEngine:
-    def __init__(self, model_name="meta-llama/Llama-3.3-13b-chat-hf"):
+    def __init__(self, model_name="meta-llama/Llama-3.3-70B-Instruct"):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=True)
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name,
