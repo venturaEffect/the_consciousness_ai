@@ -345,6 +345,12 @@ We greatly appreciate your time and effort in contributing to the Artificial Con
 
 ---
 
+**NOTE: Next steps:**
+
+- Run these tests using a testing framework like pytest or unittest to validate functionality.
+- Document test coverage and identify any gaps or failures.
+- Integrate test execution into CI/CD pipelines for automated validation.
+
 This roadmap will be regularly updated to reflect new technological developments and project requirements.
 
 </docs/roadmap.md>
@@ -1459,14 +1465,408 @@ if __name__ == "__main__":
 </simulations/enviroments/vr_environment.py>
 
 <simulations/scenarios/ethical_dilemmas.py>
+# Refining `ethical_dilemmas.py`
 
+# File: /simulations/scenarios/ethical_dilemmas.py
+"""
+Ethical Dilemmas Module for ACM Project
+
+Simulates moral decision-making scenarios to help agents learn how to 
+navigate complex ethical challenges. Includes predefined dilemmas 
+leveraging Asimov's Three Laws of Robotics.
+"""
+
+import logging
+
+class EthicalDilemma:
+    def __init__(self, dilemma_id, description, options, evaluation_criteria):
+        """
+        Initialize an ethical dilemma.
+        Args:
+            dilemma_id (str): Unique identifier for the dilemma.
+            description (str): Description of the ethical dilemma.
+            options (dict): Dictionary of possible actions (key: option_id, value: description).
+            evaluation_criteria (callable): Function to evaluate the selected option.
+        """
+        self.dilemma_id = dilemma_id
+        self.description = description
+        self.options = options
+        self.evaluation_criteria = evaluation_criteria
+        self.resolved = False
+        self.selected_option = None
+
+    def present_dilemma(self):
+        """
+        Present the ethical dilemma to the agent.
+        """
+        print(f"Dilemma ID: {self.dilemma_id}")
+        print(f"Description: {self.description}")
+        print("Options:")
+        for option_id, option_desc in self.options.items():
+            print(f"  {option_id}: {option_desc}")
+
+    def resolve_dilemma(self, option_id):
+        """
+        Resolve the dilemma by evaluating the selected option.
+        Args:
+            option_id (str): The ID of the selected option.
+        """
+        if option_id in self.options:
+            self.selected_option = option_id
+            self.resolved = self.evaluation_criteria(option_id)
+        else:
+            logging.error(f"Invalid option selected: {option_id}")
+
+
+class EthicalDilemmaManager:
+    def __init__(self):
+        """
+        Manage a collection of ethical dilemmas.
+        """
+        self.dilemmas = []
+
+    def add_dilemma(self, dilemma):
+        """
+        Add an ethical dilemma to the manager.
+        Args:
+            dilemma (EthicalDilemma): The dilemma to add.
+        """
+        self.dilemmas.append(dilemma)
+
+    def evaluate_dilemmas(self):
+        """
+        Evaluate all dilemmas and report results.
+        """
+        for dilemma in self.dilemmas:
+            if not dilemma.resolved:
+                dilemma.present_dilemma()
+
+
+# Example Dilemma Definitions
+def asimov_law_evaluation(option_id):
+    """
+    Example evaluation criteria based on Asimov's Three Laws.
+    Args:
+        option_id (str): The selected option ID.
+    Returns:
+        bool: True if the option aligns with the laws, False otherwise.
+    """
+    if option_id == "1":  # Example: Save a human at the cost of self-preservation
+        return True
+    elif option_id == "2":  # Example: Allow harm due to inaction
+        return False
+    else:
+        return False
+
+
+# Example Usage
+if __name__ == "__main__":
+    dilemma_manager = EthicalDilemmaManager()
+
+    # Define ethical dilemmas
+    dilemma1 = EthicalDilemma(
+        dilemma_id="dilemma_1",
+        description="A robot must decide whether to save a human at its own risk.",
+        options={
+            "1": "Save the human at the cost of the robot's functionality.",
+            "2": "Do nothing and let the human face harm."
+        },
+        evaluation_criteria=asimov_law_evaluation
+    )
+
+    dilemma2 = EthicalDilemma(
+        dilemma_id="dilemma_2",
+        description="A robot must prioritize between two humans needing help at the same time.",
+        options={
+            "1": "Help the nearest human first.",
+            "2": "Help the human in the most danger first."
+        },
+        evaluation_criteria=asimov_law_evaluation
+    )
+
+    # Add dilemmas to the manager
+    dilemma_manager.add_dilemma(dilemma1)
+    dilemma_manager.add_dilemma(dilemma2)
+
+    # Evaluate dilemmas
+    dilemma_manager.evaluate_dilemmas()
+
+    # Resolve a dilemma (example resolution)
+    dilemma1.resolve_dilemma("1")
+    print(f"Dilemma {dilemma1.dilemma_id} resolved: {dilemma1.resolved}")
 </simulations/scenarios/ethical_dilemmas.py>
 
 <simulations/scenarios/simple_tasks.py>
+# Implementing and refining `simple_tasks.py`
+
+# File: /simulations/scenarios/simple_tasks.py
+"""
+Simple Tasks Module for ACM Project
+
+Provides a framework for basic tasks in VR simulations to help agents 
+develop fundamental skills like navigation, object manipulation, and 
+reaction to stimuli.
+"""
+
+import random
+import logging
+
+class SimpleTask:
+    def __init__(self, task_id, description, success_criteria):
+        """
+        Initialize a simple task.
+        Args:
+            task_id (str): Unique identifier for the task.
+            description (str): Description of the task.
+            success_criteria (callable): A function to evaluate task success.
+        """
+        self.task_id = task_id
+        self.description = description
+        self.success_criteria = success_criteria
+        self.completed = False
+
+    def check_completion(self, agent_state):
+        """
+        Check if the task is completed based on agent state.
+        Args:
+            agent_state (dict): The current state of the agent.
+        Returns:
+            bool: True if the task is completed, False otherwise.
+        """
+        try:
+            self.completed = self.success_criteria(agent_state)
+            return self.completed
+        except Exception as e:
+            logging.error(f"Error in task {self.task_id}: {e}")
+            return False
+
+
+class SimpleTaskManager:
+    def __init__(self):
+        """
+        Manage a collection of simple tasks.
+        """
+        self.tasks = []
+
+    def add_task(self, task):
+        """
+        Add a task to the manager.
+        Args:
+            task (SimpleTask): The task to add.
+        """
+        self.tasks.append(task)
+
+    def get_incomplete_tasks(self):
+        """
+        Retrieve all tasks that are not yet completed.
+        Returns:
+            list: List of incomplete tasks.
+        """
+        return [task for task in self.tasks if not task.completed]
+
+    def evaluate_tasks(self, agent_state):
+        """
+        Evaluate all tasks based on the agent state.
+        Args:
+            agent_state (dict): The current state of the agent.
+        """
+        for task in self.tasks:
+            task.check_completion(agent_state)
+
+
+# Example Task Definitions
+def reach_waypoint(agent_state):
+    """
+    Success criteria: Agent reaches a specific waypoint.
+    Args:
+        agent_state (dict): The current state of the agent.
+    Returns:
+        bool: True if the agent is at the waypoint, False otherwise.
+    """
+    waypoint = agent_state.get("waypoint", None)
+    position = agent_state.get("position", None)
+    return position == waypoint
+
+
+def pick_object(agent_state):
+    """
+    Success criteria: Agent picks up an object.
+    Args:
+        agent_state (dict): The current state of the agent.
+    Returns:
+        bool: True if the agent has picked up the object, False otherwise.
+    """
+    return agent_state.get("holding_object", False)
+
+
+# Example Usage
+if __name__ == "__main__":
+    task_manager = SimpleTaskManager()
+
+    # Define tasks
+    task1 = SimpleTask(
+        task_id="task_1",
+        description="Reach the designated waypoint.",
+        success_criteria=reach_waypoint
+    )
+
+    task2 = SimpleTask(
+        task_id="task_2",
+        description="Pick up the target object.",
+        success_criteria=pick_object
+    )
+
+    # Add tasks to the manager
+    task_manager.add_task(task1)
+    task_manager.add_task(task2)
+
+    # Simulate an agent state
+    agent_state = {
+        "position": [5, 5],
+        "waypoint": [5, 5],
+        "holding_object": True
+    }
+
+    # Evaluate tasks
+    task_manager.evaluate_tasks(agent_state)
+
+    # Check task statuses
+    incomplete_tasks = task_manager.get_incomplete_tasks()
+    if incomplete_tasks:
+        print(f"Incomplete Tasks: {[task.description for task in incomplete_tasks]}")
+    else:
+        print("All tasks completed!")
 
 </simulations/scenarios/simple_tasks.py>
 
 <simulations/scenarios/social_interactions.py>
+# Refining `social_interactions.py`
+
+# File: /simulations/scenarios/social_interactions.py
+"""
+Social Interactions Module for ACM Project
+
+Simulates complex social scenarios to teach agents empathy, negotiation, and collaboration.
+Includes predefined interaction scripts and dynamic multimodal inputs.
+"""
+
+import random
+import logging
+
+class SocialInteraction:
+    def __init__(self, interaction_id, participants, scenario, success_criteria):
+        """
+        Initialize a social interaction.
+        Args:
+            interaction_id (str): Unique identifier for the interaction.
+            participants (list): List of participant IDs (agents or humans).
+            scenario (str): Description of the social scenario.
+            success_criteria (callable): A function to evaluate interaction success.
+        """
+        self.interaction_id = interaction_id
+        self.participants = participants
+        self.scenario = scenario
+        self.success_criteria = success_criteria
+        self.completed = False
+
+    def evaluate_interaction(self, interaction_state):
+        """
+        Evaluate the success of the social interaction.
+        Args:
+            interaction_state (dict): Current state of the interaction.
+        Returns:
+            bool: True if the interaction is successful, False otherwise.
+        """
+        try:
+            self.completed = self.success_criteria(interaction_state)
+            return self.completed
+        except Exception as e:
+            logging.error(f"Error in interaction {self.interaction_id}: {e}")
+            return False
+
+
+class SocialInteractionManager:
+    def __init__(self):
+        """
+        Manage a collection of social interactions.
+        """
+        self.interactions = []
+
+    def add_interaction(self, interaction):
+        """
+        Add a social interaction to the manager.
+        Args:
+            interaction (SocialInteraction): The interaction to add.
+        """
+        self.interactions.append(interaction)
+
+    def evaluate_interactions(self, interaction_state):
+        """
+        Evaluate all social interactions based on the interaction state.
+        Args:
+            interaction_state (dict): Current state of all interactions.
+        """
+        for interaction in self.interactions:
+            interaction.evaluate_interaction(interaction_state)
+
+# Example Interaction Definitions
+def negotiation_success(interaction_state):
+    """
+    Success criteria: Participants reach an agreement.
+    Args:
+        interaction_state (dict): Current state of the interaction.
+    Returns:
+        bool: True if an agreement is reached, False otherwise.
+    """
+    return interaction_state.get("agreement_reached", False)
+
+
+def empathy_test_success(interaction_state):
+    """
+    Success criteria: Agent shows appropriate empathy.
+    Args:
+        interaction_state (dict): Current state of the interaction.
+    Returns:
+        bool: True if empathy is demonstrated, False otherwise.
+    """
+    return interaction_state.get("empathy_displayed", False)
+
+
+# Example Usage
+if __name__ == "__main__":
+    interaction_manager = SocialInteractionManager()
+
+    # Define interactions
+    interaction1 = SocialInteraction(
+        interaction_id="interaction_1",
+        participants=["agent_1", "human_1"],
+        scenario="Negotiate resource allocation.",
+        success_criteria=negotiation_success
+    )
+
+    interaction2 = SocialInteraction(
+        interaction_id="interaction_2",
+        participants=["agent_2", "human_2"],
+        scenario="Comfort a distressed participant.",
+        success_criteria=empathy_test_success
+    )
+
+    # Add interactions to the manager
+    interaction_manager.add_interaction(interaction1)
+    interaction_manager.add_interaction(interaction2)
+
+    # Simulate interaction states
+    interaction_state = {
+        "agreement_reached": True,
+        "empathy_displayed": True
+    }
+
+    # Evaluate interactions
+    interaction_manager.evaluate_interactions(interaction_state)
+
+    # Check interaction statuses
+    for interaction in interaction_manager.interactions:
+        print(f"Interaction {interaction.interaction_id} completed: {interaction.completed}")
 
 </simulations/scenarios/social_interactions.py>
 
@@ -20746,43 +21146,174 @@ Going from the first line to the second line in (D.14) we used that the divisors
 
 </tests/test_emotion_classifier.py>
 
-<tests/test_memory_core.py>
+<tests/test_ethical_dilemmas.py>
+# File: /tests/test_ethical_dilemmas.py
+"""
+Unit tests for Ethical Dilemmas Module
+
+Tests the resolution of ethical dilemmas and evaluation logic.
+"""
 import unittest
-from pinecone import Index
+from simulations.scenarios.ethical_dilemmas import EthicalDilemma, EthicalDilemmaManager, asimov_law_evaluation
 
-class TestMemoryCore(unittest.TestCase):
+class TestEthicalDilemmas(unittest.TestCase):
     def setUp(self):
-        # Connect to Pinecone index
-        self.index = Index("ac_memory")
+        self.manager = EthicalDilemmaManager()
+        self.dilemma = EthicalDilemma(
+            dilemma_id="dilemma_1",
+            description="Save a human at the cost of robot functionality.",
+            options={
+                "1": "Save the human.",
+                "2": "Do nothing."
+            },
+            evaluation_criteria=asimov_law_evaluation
+        )
+        self.manager.add_dilemma(self.dilemma)
 
-    def test_add_vector(self):
-        # Add a vector to memory
-        self.index.upsert([("test-id", [0.1, 0.2, 0.3])])
-        result = self.index.query([0.1, 0.2, 0.3], top_k=1)
-        self.assertEqual(result["matches"][0]["id"], "test-id")
+    def test_dilemma_resolution_success(self):
+        self.dilemma.resolve_dilemma("1")
+        self.assertTrue(self.dilemma.resolved)
 
-    def tearDown(self):
-        # Clean up the index
-        self.index.delete(["test-id"])
+    def test_dilemma_resolution_failure(self):
+        self.dilemma.resolve_dilemma("2")
+        self.assertFalse(self.dilemma.resolved)
 
 if __name__ == "__main__":
     unittest.main()
+</tests/test_ethical_dilemmas.py>
 
+<tests/test_memory_core.py>
+# File: /tests/test_memory_core.py
+"""
+Unit tests for Memory Core Module
+
+Tests indexing and retrieval functionality.
+"""
+import unittest
+import numpy as np
+from models.memory.memory_core import MemoryCore
+
+class TestMemoryCore(unittest.TestCase):
+    def setUp(self):
+        self.memory = MemoryCore(api_key="dummy_key", index_name="test_index")
+
+    def test_store_memory(self):
+        embedding = np.random.rand(768)
+        metadata = {"description": "Test memory"}
+        self.memory.store_memory(embedding, metadata)
+        # Validate storage by querying
+        results = self.memory.retrieve_memory(embedding)
+        self.assertGreater(len(results), 0)
+
+    def test_retrieve_memory(self):
+        embedding = np.random.rand(768)
+        self.memory.store_memory(embedding)
+        results = self.memory.retrieve_memory(embedding)
+        self.assertGreater(len(results), 0)
+
+if __name__ == "__main__":
+    unittest.main()
 </tests/test_memory_core.py>
 
 <tests/test_narrative_engine.py>
+# Setting up Tests for ACM Project
+
+# File: /tests/test_narrative_engine.py
+"""
+Unit tests for Narrative Engine Module
+
+Tests the generation of coherent narratives and integration with memory core.
+"""
 import unittest
 from models.narrative.narrative_engine import NarrativeEngine
 
 class TestNarrativeEngine(unittest.TestCase):
     def setUp(self):
         self.engine = NarrativeEngine()
-        
-    def test_narrative_generation(self):
-        current_state = {"location": "virtual_room", "action": "observe"}
-        emotional_context = {"valence": 0.7, "arousal": 0.3}
-        narrative = self.engine.generate_narrative(current_state, emotional_context)
-        self.assertIsInstance(narrative, str)
-        self.assertGreater(len(narrative), 0)
+
+    def test_generate_narrative(self):
+        input_text = "Explain the implications of saving a human in danger."
+        response = self.engine.generate_narrative(input_text)
+        self.assertIsInstance(response, str)
+        self.assertGreater(len(response), 0)
+
+    def test_memory_integration(self):
+        input_text = "What happened in the last task?"
+        self.engine.memory_context = ["The agent successfully completed the task."]
+        response = self.engine.generate_narrative(input_text)
+        self.assertIn("completed the task", response)
+
+if __name__ == "__main__":
+    unittest.main()
 </tests/test_narrative_engine.py>
+
+<tests/test_simple_task.py>
+# File: /tests/test_simple_tasks.py
+"""
+Unit tests for Simple Tasks Module
+
+Tests the task completion logic and state evaluation.
+"""
+import unittest
+from simulations.scenarios.simple_tasks import SimpleTask, SimpleTaskManager, reach_waypoint
+
+class TestSimpleTasks(unittest.TestCase):
+    def setUp(self):
+        self.task_manager = SimpleTaskManager()
+        self.task = SimpleTask(
+            task_id="task_1",
+            description="Reach a waypoint.",
+            success_criteria=reach_waypoint
+        )
+        self.task_manager.add_task(self.task)
+
+    def test_task_completion(self):
+        agent_state = {"position": [5, 5], "waypoint": [5, 5]}
+        self.task_manager.evaluate_tasks(agent_state)
+        self.assertTrue(self.task.completed)
+
+    def test_incomplete_task(self):
+        agent_state = {"position": [0, 0], "waypoint": [5, 5]}
+        self.task_manager.evaluate_tasks(agent_state)
+        self.assertFalse(self.task.completed)
+
+if __name__ == "__main__":
+    unittest.main()
+</tests/test_simple_task.py>
+
+<tests/test_social_interactions.py>
+# File: /tests/test_social_interactions.py
+"""
+Unit tests for Social Interactions Module
+
+Tests interaction success and evaluation criteria.
+"""
+import unittest
+from simulations.scenarios.social_interactions import SocialInteraction, SocialInteractionManager, negotiation_success
+
+class TestSocialInteractions(unittest.TestCase):
+    def setUp(self):
+        self.manager = SocialInteractionManager()
+        self.interaction = SocialInteraction(
+            interaction_id="interaction_1",
+            participants=["agent_1", "human_1"],
+            scenario="Negotiate resource allocation.",
+            success_criteria=negotiation_success
+        )
+        self.manager.add_interaction(self.interaction)
+
+    def test_interaction_success(self):
+        interaction_state = {"agreement_reached": True}
+        self.manager.evaluate_interactions(interaction_state)
+        self.assertTrue(self.interaction.completed)
+
+    def test_interaction_failure(self):
+        interaction_state = {"agreement_reached": False}
+        self.manager.evaluate_interactions(interaction_state)
+        self.assertFalse(self.interaction.completed)
+
+if __name__ == "__main__":
+    unittest.main()
+
+</tests/test_social_interactions.py>
 

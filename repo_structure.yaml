@@ -409,7 +409,13 @@
     contents:
     - path: /tests/test_emotion_classifier.py
       type: file
+    - path: /tests/test_ethical_dilemmas.py
+      type: file
     - path: /tests/test_memory_core.py
       type: file
     - path: /tests/test_narrative_engine.py
+      type: file
+    - path: /tests/test_simple_task.py
+      type: file
+    - path: /tests/test_social_interactions.py
       type: file
