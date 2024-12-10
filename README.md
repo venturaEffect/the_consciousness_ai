@@ -4,7 +4,7 @@
 
 ## **Overview**
 
-With The Artificial Consciousness Module (ACM) try to create synthetic awareness in AI systems. By combining most updated AI technologies, virtual reality environments, and emotional processing. This project explores the possibility of replicating human-like consciousness in non-biological systems. The goal is  to use human interactions in synthetic environments to foster an emotional connection between the ACM-equipped AI agent and humans. This emotional framework would reinforce the AI’s adherence to Asimov’s Three Laws of Robotics.
+With The Artificial Consciousness Module (ACM) try to create synthetic awareness in AI systems. By combining most updated AI technologies, virtual reality environments, and emotional processing. This project explores the possibility of replicating human-like consciousness in non-biological systems. The goal is to use human interactions in synthetic environments to foster an emotional connection between the ACM-equipped AI agent and humans. This emotional framework would reinforce the AI's adherence to Asimov's Three Laws of Robotics.
 
 Link: [The Consciousness AI Module](https://theconsciousness.ai)
 
