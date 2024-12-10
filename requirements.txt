@@ -1,5 +1,5 @@
-torch>=2.0.0
-transformers>=4.43.0
+torch==2.0.1+cu118  # GPU-optimized PyTorch
+transformers>=4.30.0
 huggingface_hub>=0.16.4
 pinecone-client>=2.2.1
 opencv-python>=4.8.0
@@ -19,3 +19,6 @@ fairscale
 fire
 tiktoken==0.4.0
 blobfile
+bitsandbytes>=0.37.0
+fairscale>=0.4.0
+langchain>=0.0.200

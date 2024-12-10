@@ -10,14 +10,21 @@ echo "Installing Unreal Engine prerequisites..."
 sudo apt-get update
 sudo apt-get install -y build-essential clang
 
-# Install packages required for LLaMA 3.3
-echo "Installing required packages for LLaMA 3.3..."
-pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu118
-pip install transformers huggingface_hub bitsandbytes
+# Check for CUDA availability
+if ! nvcc --version &> /dev/null; then
+    echo "CUDA Toolkit is not installed. Please install CUDA for GPU support."
+else
+    echo "CUDA Toolkit found. Proceeding with GPU-compatible installations..."
+    pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu118
+fi
 
-#PALM-E installation
-echo "Installing PaLM-E..."
-pip install palm-e
+# Install Pinecone and Hugging Face tools
+echo "Installing Pinecone and Hugging Face tools..."
+pip install pinecone-client transformers huggingface_hub bitsandbytes
+
+# Install emotion-related tools
+echo "Installing emotion processing tools..."
+pip install palm-e whisper-v3
 
 # Install additional tools
 echo "Installing additional tools..."
