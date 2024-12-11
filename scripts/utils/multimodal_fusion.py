@@ -1,21 +1,18 @@
-# scripts/utils/multimodal_fusion.py
-from models.vision_language.pali_2.pali2_integration import PaLI2Integration
-from models.speech.whisper_integration import WhisperIntegration
-
 class MultimodalFusion:
     def __init__(self):
         self.vision_model = PaLI2Integration()
         self.speech_model = WhisperIntegration()
+        self.extra_modalities = {}
 
-    def fuse_inputs(self, image, audio_path):
+    def register_modality(self, name, model):
+        self.extra_modalities[name] = model
+
+    def fuse_inputs(self, image, audio_path, text, **extra_inputs):
         caption = self.vision_model.generate_caption(image)
         transcription = self.speech_model.transcribe_audio(audio_path)
-        return self.fuse_modalities(caption, transcription)
+        fused_data = {"caption": caption, "transcription": transcription, "text": text}
 
-    def fuse_modalities(self, caption, transcription):
-        # Simple fusion of modalities
-        fused_output = {
-            "caption": caption,
-            "transcription": transcription
-        }
-        return fused_output
+        for name, input_data in extra_inputs.items():
+            if name in self.extra_modalities:
+                fused_data[name] = self.extra_modalities[name].process(input_data)
+        return fused_data

@@ -34,12 +34,6 @@
   - path: /models
     type: directory
     contents:
-    - path: /models/code-generation
-      type: directory
-      contents:
-      - path: /models/code-generation/code-llama
-        type: directory
-        contents:
     - path: /models/emotion
       type: directory
       contents:
@@ -48,12 +42,6 @@
         contents:
         - path: /models/emotion/tgnn/emotional_graph.py
           type: file
-    - path: /models/emotional
-      type: directory
-      contents:
-      - path: /models/emotional/multimodal_fusion
-        type: directory
-        contents:
     - path: /models/language
       type: directory
       contents:
@@ -86,6 +74,8 @@
       type: directory
       contents:
       - path: /models/self_model/belief_system.py
+        type: file
+      - path: /models/self_model/emotion_context_tracker.py
         type: file
       - path: /models/self_model/intention_tracker.py
         type: file
@@ -261,78 +251,64 @@
         type: file
       - path: /tech documentation/Dual PatchNorm/_page_8_Figure_1.jpeg
         type: file
-    - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models
+    - path: /tech documentation/llama3 Herd of Models
       type: directory
       contents:
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/2307.09288v2.md
+      - path: /tech documentation/llama3 Herd of Models/llama3_herd.md
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/2307.09288v2_meta.json
+      - path: /tech documentation/llama3 Herd of Models/llama3_herd_meta.json
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_12_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_10_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_13_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_11_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_13_Figure_7.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_14_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_15_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_25_Picture_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_16_Figure_2.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_29_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_17_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_31_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_18_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_31_Figure_2.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_20_Figure_5.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_32_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_24_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_39_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_25_Figure_2.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_3_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_27_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_40_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_29_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_42_Figure_3.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_29_Figure_4.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_43_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_2_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_43_Figure_2.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_2_Figure_2.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_44_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_30_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_46_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_31_Figure_4.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_46_Figure_1.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_32_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_51_Figure_2.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_32_Figure_2.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_52_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_3_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_52_Figure_2.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_47_Figure_2.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_53_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_4_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_54_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_52_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_62_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_52_Figure_5.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_7_Figure_0.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_53_Figure_7.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_7_Figure_2.jpeg
         type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_54_Figure_0.jpeg
-        type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_54_Figure_2.jpeg
-        type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_56_Figure_1.jpeg
-        type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_56_Figure_3.jpeg
-        type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_57_Figure_0.jpeg
-        type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_5_Figure_2.jpeg
-        type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_63_Figure_0.jpeg
-        type: file
-      - path: /tech documentation/Llama 2 Open Foundation and Fine Tuned Chat Models/_page_66_Figure_0.jpeg
+      - path: /tech documentation/llama3 Herd of Models/_page_8_Figure_0.jpeg
         type: file
     - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone
       type: directory
