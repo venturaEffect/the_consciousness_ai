@@ -1,4 +1,4 @@
-#Note: WORK IN PROGRESS
+#WORK IN PROGRESS
 
 # Artificial Consciousness Module (ACM)
 
