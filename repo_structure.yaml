@@ -35,7 +35,7 @@
       type: file
     - path: /docs/roadmap.md
       type: file
-  - path: /LICENSE
+  - path: /LICENSE.md
     type: file
   - path: /models
     type: directory
