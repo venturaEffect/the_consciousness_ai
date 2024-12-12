@@ -25,9 +25,13 @@
       type: file
     - path: /docs/contributing.md
       type: file
+    - path: /docs/datasets.md
+      type: file
     - path: /docs/installation.md
       type: file
     - path: /docs/interaction_workflow.md
+      type: file
+    - path: /docs/preprocessing.md
       type: file
     - path: /docs/roadmap.md
       type: file

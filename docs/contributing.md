@@ -12,6 +12,24 @@ We welcome contributions of all types, including but not limited to:
 - Enhancing performance
 - Writing tests
 - Reporting issues or suggesting enhancements
+- **Recommending new datasets for improving the ACM**
+
+### Dataset Contributions
+
+We are always looking to enhance the quality of the ACM by integrating high-quality datasets. If you find a dataset that could be valuable for improving AI performance, particularly in areas like emotion recognition, simulation interaction, or narrative generation, follow these steps:
+
+1. Open an issue on our GitHub repository titled `Dataset Suggestion: [Dataset Name]`.
+2. Include the following information:
+
+   - **Dataset Name**
+   - **Description**: A brief summary of what the dataset covers.
+   - **Link**: A URL to access or learn more about the dataset.
+   - **License**: Verify that the dataset is licensed for commercial use.
+   - **Proposed Use**: Explain how the dataset can be used in the ACM project (e.g., training models, fine-tuning, validation).
+
+3. If approved, submit a pull request to add the dataset details to the `/docs/datasets.md` file.
+
+---
 
 ## Getting Started
 
@@ -51,15 +69,7 @@ Refer to the [README](README.md) for detailed setup instructions.
    ```
 8. **Submit a Pull Request**: Open a pull request to the `main` branch of the original repository.
 
-## Code Style Guidelines
-
-To maintain consistency, please adhere to the following guidelines:
-
-- **Python Code**: Follow [PEP 8](https://pep8.org/) standards.
-- **Commit Messages**:
-  - Use the present tense (e.g., "Add feature" instead of "Added feature").
-  - Be descriptive but concise.
-- **Documentation**: Ensure any new feature or significant change is documented in `docs/`.
+---
 
 ## Reporting Issues
 
@@ -70,6 +80,8 @@ If you encounter a bug or have a feature request, please [open an issue](https:/
 - Expected vs. actual behavior
 - Environment details (e.g., OS, Python version, GPU specs)
 
+---
+
 ## Pull Request Checklist
 
 Before submitting a pull request, ensure the following:
@@ -79,10 +91,12 @@ Before submitting a pull request, ensure the following:
 3. Documentation has been updated, if applicable.
 4. Your branch is up to date with the latest changes from the `main` branch.
 
+---
+
 ## License
 
 By contributing to this project, you agree that your contributions will be licensed under the terms of the [MIT License](LICENSE).
 
 ## Acknowledgments
 
-We greatly appreciate your time and effort in contributing to the Artificial Consciousness Module. Let’s build something groundbreaking together!
+We greatly appreciate your time and effort in contributing to the Artificial Consciousness Module. Let’s build something great!

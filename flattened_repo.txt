@@ -89,6 +89,24 @@ We welcome contributions of all types, including but not limited to:
 - Enhancing performance
 - Writing tests
 - Reporting issues or suggesting enhancements
+- **Recommending new datasets for improving the ACM**
+
+### Dataset Contributions
+
+We are always looking to enhance the quality of the ACM by integrating high-quality datasets. If you find a dataset that could be valuable for improving AI performance, particularly in areas like emotion recognition, simulation interaction, or narrative generation, follow these steps:
+
+1. Open an issue on our GitHub repository titled `Dataset Suggestion: [Dataset Name]`.
+2. Include the following information:
+
+   - **Dataset Name**
+   - **Description**: A brief summary of what the dataset covers.
+   - **Link**: A URL to access or learn more about the dataset.
+   - **License**: Verify that the dataset is licensed for commercial use.
+   - **Proposed Use**: Explain how the dataset can be used in the ACM project (e.g., training models, fine-tuning, validation).
+
+3. If approved, submit a pull request to add the dataset details to the `/docs/datasets.md` file.
+
+---
 
 ## Getting Started
 
@@ -128,15 +146,7 @@ Refer to the [README](README.md) for detailed setup instructions.
    ```
 8. **Submit a Pull Request**: Open a pull request to the `main` branch of the original repository.
 
-## Code Style Guidelines
-
-To maintain consistency, please adhere to the following guidelines:
-
-- **Python Code**: Follow [PEP 8](https://pep8.org/) standards.
-- **Commit Messages**:
-  - Use the present tense (e.g., "Add feature" instead of "Added feature").
-  - Be descriptive but concise.
-- **Documentation**: Ensure any new feature or significant change is documented in `docs/`.
+---
 
 ## Reporting Issues
 
@@ -147,6 +157,8 @@ If you encounter a bug or have a feature request, please [open an issue](https:/
 - Expected vs. actual behavior
 - Environment details (e.g., OS, Python version, GPU specs)
 
+---
+
 ## Pull Request Checklist
 
 Before submitting a pull request, ensure the following:
@@ -156,15 +168,109 @@ Before submitting a pull request, ensure the following:
 3. Documentation has been updated, if applicable.
 4. Your branch is up to date with the latest changes from the `main` branch.
 
+---
+
 ## License
 
 By contributing to this project, you agree that your contributions will be licensed under the terms of the [MIT License](LICENSE).
 
 ## Acknowledgments
 
-We greatly appreciate your time and effort in contributing to the Artificial Consciousness Module. Let’s build something groundbreaking together!
+We greatly appreciate your time and effort in contributing to the Artificial Consciousness Module. Let’s build something great!
 
 </docs/contributing.md>
+
+<docs/datasets.md>
+# Datasets Used in Artificial Consciousness Module (ACM)
+
+This document provides a detailed overview of the datasets used in the ACM project, their applications, and licensing details.
+
+---
+
+## Emotion Recognition Datasets
+
+### 1. **GoEmotions**
+
+- **Description**: A large-scale dataset for fine-grained emotion classification from text.
+- **License**: [Apache 2.0 License](https://github.com/google-research/google-research/blob/master/LICENSE)
+- **Application**:
+  - Used to train text-based emotion classifiers.
+  - Enables nuanced understanding of emotional tone in text-based interactions.
+- **Link**: [GoEmotions GitHub](https://github.com/google-research/google-research/tree/master/goemotions)
+
+### 2. **MELD (Multimodal EmotionLines Dataset)**
+
+- **Description**: Multimodal dataset featuring audio, visual, and textual dialogues annotated for emotions and sentiment.
+- **License**: Available for commercial use.
+- **Application**:
+  - Enhances multimodal emotion recognition capabilities.
+  - Provides audio-visual dialogue data for contextual emotion analysis.
+- **Link**: [MELD Dataset GitHub](https://github.com/declare-lab/MELD)
+
+### 3. **HEU Emotion**
+
+- **Description**: Dataset containing video clips with emotional annotations, including facial expressions and speech.
+- **License**: Available for commercial use.
+- **Application**:
+  - Expands diversity in emotion recognition models.
+  - Incorporates emotional context from video and speech.
+- **Link**: [HEU Emotion Dataset](https://arxiv.org/abs/2007.12519)
+
+---
+
+## Simulation and Interaction Datasets
+
+### 4. **INTERACTION Dataset**
+
+- **Description**: Contains naturalistic motion data for traffic participants in highly interactive driving scenarios.
+- **License**: Available for commercial use.
+- **Application**:
+  - Provides interaction data for behavior modeling in simulations.
+  - Enhances decision-making algorithms for autonomous agents.
+- **Link**: [INTERACTION Dataset](https://interaction-dataset.com/)
+
+### 5. **UE-HRI (Ulster Event-based Human-Robot Interaction)**
+
+- **Description**: Human-robot interaction dataset featuring annotated spontaneous interactions.
+- **License**: Available for commercial use.
+- **Application**:
+  - Supports development of interaction scenarios for ACM simulations.
+  - Enables modeling of engagement levels in human-robot communication.
+- **Link**: [UE-HRI Dataset GitHub](https://github.com/mjyc/awesome-hri-datasets)
+
+---
+
+## Usage Guidelines
+
+1. Ensure compliance with the licensing terms of each dataset when integrating into the project.
+2. Preprocess datasets according to the requirements of the ACM's training and testing pipelines.
+3. Document the preprocessing steps in `/docs/preprocessing.md`.
+
+---
+
+## Suggestions for New Datasets
+
+If you discover a dataset that could improve the ACM's capabilities, please follow the contribution process outlined in the [CONTRIBUTING.md](../CONTRIBUTING.md) file.
+
+We welcome:
+
+- Emotion datasets covering underrepresented modalities or scenarios.
+- Simulation datasets enhancing interaction complexity.
+- Multimodal datasets with innovative applications.
+
+---
+
+## Dataset Contributions
+
+The following contributors have added datasets to the ACM project:
+
+- **GoEmotions**: Added by Google Research.
+- **MELD**: Integrated by Declare Lab.
+- **HEU Emotion**: Suggested by academic researchers.
+
+Thank you for supporting the growth of the ACM!
+
+</docs/datasets.md>
 
 <docs/installation.md>
 # Installation Guide
@@ -232,6 +338,140 @@ This document outlines how the AI agent interacts with the simulation environmen
   ```
 
 </docs/interaction_workflow.md>
+
+<docs/preprocessing.md>
+# Dataset Preprocessing Guide
+
+This document provides instructions for downloading, preprocessing, and organizing datasets required for the Artificial Consciousness Module (ACM) project.
+
+---
+
+## 1. Downloading Datasets
+
+The datasets used in this project are stored externally to ensure efficient management of large files. Follow these steps to download them:
+
+### Emotion Recognition Datasets
+
+#### **GoEmotions**
+
+1. Visit the [GoEmotions GitHub Repository](https://github.com/google-research/google-research/tree/master/goemotions).
+2. Clone the repository or download the dataset directly:
+   ```bash
+   git clone https://github.com/google-research/google-research.git
+   ```
+3. Extract the `dataset/` folder from the repository and place it in the `data/emotions/` directory:
+   ```bash
+   mv google-research/goemotions/data /path/to/your/repo/data/emotions/goemotions
+   ```
+
+#### **MELD**
+
+1. Download the dataset from the [MELD Dataset GitHub](https://github.com/declare-lab/MELD):
+   ```bash
+   wget https://github.com/declare-lab/MELD/raw/master/data/MELD.Raw.zip
+   ```
+2. Unzip the file:
+   ```bash
+   unzip MELD.Raw.zip -d /path/to/your/repo/data/emotions/meld
+   ```
+
+#### **HEU Emotion**
+
+1. Refer to the [HEU Emotion Dataset page](https://arxiv.org/abs/2007.12519) for access.
+2. Follow the instructions to request access or download directly, if available.
+3. Place the dataset files in the `data/emotions/heu_emotion/` directory.
+
+---
+
+### Simulation and Interaction Datasets
+
+#### **INTERACTION Dataset**
+
+1. Visit the [INTERACTION Dataset Website](https://interaction-dataset.com/).
+2. Register and download the dataset.
+3. Place the CSV files in the `data/simulations/interaction_data/` directory.
+
+#### **UE-HRI Dataset**
+
+1. Access the dataset through [UE-HRI GitHub](https://github.com/mjyc/awesome-hri-datasets).
+2. Download and extract the dataset to the `data/simulations/ue_hri_data/` directory.
+
+---
+
+## 2. Preprocessing Steps
+
+### Text-Based Emotion Datasets (GoEmotions, MELD)
+
+1. Ensure CSV files are clean and include the following columns:
+   - **Text**: The input text.
+   - **Label**: The emotion category.
+2. Use the preprocessing script (`scripts/utils/preprocess_emotions.py`) to clean and normalize the data:
+   ```bash
+   python scripts/utils/preprocess_emotions.py --input /path/to/raw/data --output /path/to/processed/data
+   ```
+
+### Audio-Visual Emotion Datasets (HEU Emotion)
+
+1. Convert audio files to a uniform format (e.g., WAV, 16 kHz sampling rate) using a tool like FFmpeg:
+   ```bash
+   ffmpeg -i input.mp4 -ar 16000 output.wav
+   ```
+2. Ensure facial images are resized and aligned for visual analysis.
+3. Use the preprocessing script (`scripts/utils/preprocess_audio_visual.py`) for automated cleaning:
+   ```bash
+   python scripts/utils/preprocess_audio_visual.py --input /path/to/raw/data --output /path/to/processed/data
+   ```
+
+### Simulation Interaction Datasets
+
+1. Normalize interaction logs to include consistent fields like:
+   - **Participant ID**
+   - **Interaction Type**
+   - **Outcome**
+2. Use the preprocessing script (`scripts/utils/preprocess_simulations.py`):
+   ```bash
+   python scripts/utils/preprocess_simulations.py --input /path/to/raw/data --output /path/to/processed/data
+   ```
+
+---
+
+## 3. Organizing Preprocessed Data
+
+After preprocessing, organize datasets into the following structure:
+
+```
+/data
+├── emotions
+│   ├── goemotions
+│   │   ├── train.csv
+│   │   ├── val.csv
+│   │   └── test.csv
+│   ├── meld
+│   │   ├── train.csv
+│   │   ├── val.csv
+│   │   └── test.csv
+│   └── heu_emotion
+│       ├── train.csv
+│       ├── val.csv
+│       └── test.csv
+├── simulations
+│   ├── interaction_data
+│   │   ├── scenario_1.csv
+│   │   └── scenario_2.csv
+│   └── ue_hri_data
+│       ├── session_1.csv
+│       └── session_2.csv
+```
+
+---
+
+## Notes
+
+- Ensure all dataset licenses are adhered to.
+- Document any custom preprocessing scripts used.
+- Validate preprocessed datasets using appropriate testing scripts in `/tests/`.
+
+</docs/preprocessing.md>
 
 <docs/roadmap.md>
 # Roadmap for the Artificial Consciousness Module (ACM)
