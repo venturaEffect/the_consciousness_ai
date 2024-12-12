@@ -1,5 +1,4 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
 
 class NarrativeEngine:
     def __init__(self, model_name="meta-llama/Llama-3.3-13b-chat-hf"):
@@ -10,27 +9,28 @@ class NarrativeEngine:
             device_map="auto",
             use_auth_token=True
         )
-        self.memory_context = []
 
-    def generate_narrative(self, input_text):
-        prompt = self._build_prompt(input_text)
+    def generate_interaction_code(self, task_description, environment_state):
+        """
+        Generates Python code to interact with the simulation based on the given task and environment state.
+        """
+        prompt = f"Write Python code to {task_description} given the environment state: {environment_state}"
         inputs = self.tokenizer(prompt, return_tensors="pt").to("cuda")
         with torch.no_grad():
             outputs = self.model.generate(
                 **inputs,
-                max_new_tokens=512,
+                max_new_tokens=256,
                 temperature=0.7,
                 do_sample=True
             )
-        narrative = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        self.memory_context.append(narrative)
-        if len(self.memory_context) > 10:  # Limit memory to last 10 narratives
-            self.memory_context.pop(0)
-        return narrative
+        code = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return code
 
-    def _build_prompt(self, input_text):
-        prompt = "Reflect and proceed step by step.\n"
-        prompt += input_text
-        if self.memory_context:
-            prompt += "\nMemory Context:\n" + "\n".join(self.memory_context[-5:])
-        return prompt
+# Example usage
+if __name__ == "__main__":
+    engine = NarrativeEngine()
+    generated_code = engine.generate_interaction_code(
+        "move an object to a new location",
+        "an object at position (0, 0, 0) must be moved to (100, 200, 50)"
+    )
+    print(generated_code)

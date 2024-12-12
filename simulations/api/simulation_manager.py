@@ -1,40 +1,35 @@
 from threading import Lock
+import subprocess
+import unreal
 
-class SimulationManager(simulation_pb2_grpc.SimulationManagerServicer):
+class SimulationManager:
     def __init__(self):
-        self.simulations = {}
         self.lock = Lock()
 
-    def StartSimulation(self, request, context):
+    def execute_code(self, script: str):
+        """
+        Executes the provided Python code within the simulation environment.
+        """
         try:
             with self.lock:
-                simulation_id = request.simulation_id
-                if simulation_id in self.simulations:
-                    return simulation_pb2.SimulationResponse(
-                        message=f"Simulation {simulation_id} already running."
-                    )
-                self.simulations[simulation_id] = {"status": "running"}
-            return simulation_pb2.SimulationResponse(
-                message=f"Simulation {simulation_id} started successfully!"
-            )
-        except Exception as e:
-            context.set_code(grpc.StatusCode.INTERNAL)
-            context.set_details(str(e))
-            return simulation_pb2.SimulationResponse(message="Error starting simulation.")
+                # Save the script to a temporary file
+                with open("temp_script.py", "w") as temp_file:
+                    temp_file.write(script)
+                
+                # Execute the script
+                result = subprocess.run(["python", "temp_script.py"], capture_output=True, text=True)
 
-    def StopSimulation(self, request, context):
-        try:
-            with self.lock:
-                simulation_id = request.simulation_id
-                if simulation_id not in self.simulations:
-                    return simulation_pb2.SimulationResponse(
-                        message=f"Simulation {simulation_id} not found."
-                    )
-                del self.simulations[simulation_id]
-            return simulation_pb2.SimulationResponse(
-                message=f"Simulation {simulation_id} stopped successfully!"
-            )
+                # Log the result
+                if result.returncode == 0:
+                    print(f"Script executed successfully: {result.stdout}")
+                else:
+                    print(f"Script execution failed: {result.stderr}")
+
+                return result
         except Exception as e:
-            context.set_code(grpc.StatusCode.INTERNAL)
-            context.set_details(str(e))
-            return simulation_pb2.SimulationResponse(message="Error stopping simulation.")
+            print(f"Error during script execution: {str(e)}")
+
+# Example usage
+if __name__ == "__main__":
+    manager = SimulationManager()
+    manager.execute_code("print('Hello, Unreal Engine!')")

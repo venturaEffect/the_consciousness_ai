@@ -186,172 +186,190 @@ We greatly appreciate your time and effort in contributing to the Artificial Con
 
 </docs/installation.md>
 
+<docs/interaction_workflow.md>
+# Interaction Workflow for AI Agent in ACM
+
+This document outlines how the AI agent interacts with the simulation environment using the Artificial Consciousness Module (ACM).
+
+## Workflow
+
+1. **Observation**:
+
+   - Multimodal inputs (text, vision, audio) are processed and fused.
+
+2. **Decision-Making**:
+
+   - The AI agent determines its next action based on memory, emotion, and current goals.
+
+3. **Code Generation**:
+
+   - Python or Unreal-specific commands are dynamically generated to achieve task objectives.
+
+4. **Validation**:
+
+   - Generated code is validated within the simulation manager.
+
+5. **Execution**:
+
+   - The validated code is executed in the simulation environment.
+
+6. **Feedback**:
+   - Results of execution are logged and analyzed to improve future actions.
+
+## Key Modules
+
+- **`narrative_engine.py`**: Generates code for interactions.
+- **`simulation_manager.py`**: Executes generated code and manages simulations.
+- **`memory_core.py`**: Stores and retrieves past experiences.
+
+## Example
+
+- Task: Move an object in the simulation.
+- Generated Code:
+  ```python
+  obj = unreal.EditorAssetLibrary.load_asset("/Game/Assets/Box")
+  obj.set_location([100, 200, 50])
+  ```
+
+</docs/interaction_workflow.md>
+
 <docs/roadmap.md>
-# Roadmap
+# Roadmap for the Artificial Consciousness Module (ACM)
 
-**Phase 1: Initial Setup and Research**
+## Phase 1: Initial Setup and Research
 
-- Define project scope, objectives, and contributors.
-- Research and document existing technologies, frameworks, and datasets:
-  - **Unreal Engine 5** for VR simulations.
-  - Latest foundation models:
-    - **LLaMA 3.3** for narrative reasoning
-    - **PaLM-E** for vision-language tasks
-    - **Whisper v3** for speech recognition
-  - Vector storage: **Pinecone v2**
-  - Emotion datasets and recognition:
-    - **GoEmotions** (text)
-    - **emotion2vec+** (audio)
-    - **LibreFace** (visual)
-
----
-
-**Phase 2: Core Infrastructure**
-
-- Implement base models integration:
-  - Set up LLaMA 3.3 with optimized inference
-  - Integrate PaLM-E for visual understanding
-  - Configure Whisper v3 for real-time transcription
-- Deploy Pinecone v2 for vector storage
-- Establish gRPC communication layer
+- Refine project scope and objectives.
+- Evaluate and document required technologies:
+  - **Unreal Engine 5** for immersive VR simulations.
+  - **Key AI Models:**
+    - LLaMA 3.3 for narrative construction.
+    - PaLM-E for vision-language understanding.
+    - Whisper v3 for speech recognition and transcription.
+  - **Vector Storage System:** Pinecone v2 for high-speed memory retrieval.
+  - **Emotion Datasets:**
+    - GoEmotions (textual emotion classification).
+    - Emotion2Vec+ for audio-based emotional analysis.
+    - LibreFace for visual emotion recognition.
 
 ---
 
-**Phase 3: Multimodal Processing**
+## Phase 2: Core Infrastructure
 
-- Vision-Language Integration:
-  - PaLM-E for environmental understanding
-  - Implement advanced scene comprehension
-- Speech Processing:
-  - Whisper v3 for real-time transcription
-  - Enhanced audio feature extraction
-- Multimodal Fusion:
-  - Cross-attention mechanisms
-  - Modal alignment strategies
-
----
-
-**Phase 4: Emotional Intelligence**
-
-- Text Analysis:
-  - GoEmotions dataset integration
-  - Fine-tune LLaMA 3.3 for emotion detection
-- Audio Processing:
-  - emotion2vec+ implementation
-  - Real-time emotion tracking
-- Visual Recognition:
-  - LibreFace integration
-  - Expression analysis pipeline
+- Build modular and scalable architecture:
+  - Integrate foundational models:
+    - LLaMA 3.3 for reasoning and contextual generation.
+    - PaLM-E for vision-language tasks with scene comprehension.
+    - Whisper v3 for accurate audio transcription.
+  - Establish memory infrastructure:
+    - Deploy Pinecone v2 for vector storage and contextual memory retrieval.
+    - Implement indexing pipelines for multimodal embeddings.
+  - Create a robust simulation API using gRPC for managing VR environments.
 
 ---
 
-**Phase 5: Memory and Narrative**
+## Phase 3: Multimodal Processing
 
-- Memory Core:
-  - Pinecone v2 vector store setup
-  - Emotional context indexing
-- Narrative Engine:
-  - LLaMA 3.3 for reasoning
-  - Long-context processing with Transformer-XL
-- Working Memory:
-  - Short-term context management
-  - Attention mechanism optimization
+- Enhance input-output integration:
+  - Implement vision-language fusion using PaLM-E.
+  - Extend Whisper v3 functionality to handle real-time and batch processing of audio inputs.
+  - Develop the Multimodal Fusion module:
+    - Add support for haptic inputs and their integration.
+    - Align modalities through cross-attention mechanisms.
 
 ---
 
-**Phase 6: Advanced Integration and Optimization**
+## Phase 4: Emotional Intelligence
 
-- Unreal Engine 5 Integration:
-
-  - Custom plugin development for AI agent interaction
-  - Real-time environment simulation
-  - Physics-based interaction systems
-  - Advanced rendering pipeline integration
-
-- Performance Optimization:
-  - Model quantization for LLaMA 3.3
-  - Batch processing optimization
-  - GPU memory management
-  - Distributed computing setup
-
-**Phase 7: Communication and API Development**
-
-- API Development:
-
-  - RESTful API implementation using FastAPI
-  - WebSocket integration for real-time communication
-  - gRPC services for high-performance inter-process communication
-  - Authentication and security layers
-
-- Interface Development:
-  - Command-line interface
-  - Web dashboard for monitoring
-  - Debug and testing tools
-  - Performance metrics visualization
-
-**Phase 8: Testing and Validation**
-
-- Unit Testing:
-
-  - Comprehensive test suite development
-  - Integration testing
-  - Performance benchmarking
-  - Stress testing
-
-- Validation:
-  - Emotion recognition accuracy validation
-  - Response time optimization
-  - Memory usage monitoring
-  - System stability testing
-
-**Phase 9: Documentation and Deployment**
-
-- Technical Documentation:
-
-  - API documentation
-  - System architecture documentation
-  - User guides
-  - Maintenance procedures
-
-- Deployment:
-  - Containerization with Docker
-  - Kubernetes orchestration
-  - CI/CD pipeline setup
-  - Monitoring and logging implementation
-
-**Short-Term Goals**
-
-- Implement LLaMA 3.3 integration for enhanced reasoning
-- Set up PaLM-E for improved vision-language tasks
-- Configure Whisper v3 for better speech recognition
-- Deploy Pinecone v2 for efficient vector storage
-- Integrate emotion recognition models (GoEmotions, emotion2vec+, LibreFace)
-
-**Long-Term Goals**
-
-- Achieve real-time multimodal processing
-- Implement advanced memory management system
-- Develop sophisticated emotional reasoning capabilities
-- Create seamless VR integration with Unreal Engine 5
-- Establish robust distributed processing architecture
-
-**Success Metrics**
-
-- **Emotional Reasoning Accuracy**: 90% accuracy in emotion classification tasks.
-- **Multimodal Integration**: 95% consistency across vision, audio, and textual inputs.
-- **Memory Retrieval Efficiency**: 99% accuracy in retrieving contextually relevant embeddings.
-- **Real-Time Processing**: Ensure response time remains below 100 ms.
-- **Ethical Framework Validation**: Pass 100% of predefined ethical interaction tests.
+- Integrate emotion recognition across modalities:
+  - **Text:**
+    - Use GoEmotions to classify emotional context.
+  - **Audio:**
+    - Fine-tune Emotion2Vec+ for real-time emotion tracking.
+  - **Visual:**
+    - Develop pipelines using LibreFace for facial expression analysis.
+- Establish an Emotional Graph Neural Network (EGNN) to model relationships between detected emotions.
 
 ---
 
-**NOTE: Next steps:**
+## Phase 5: Memory and Narrative Building
 
-- Run these tests using a testing framework like pytest or unittest to validate functionality.
-- Document test coverage and identify any gaps or failures.
-- Integrate test execution into CI/CD pipelines for automated validation.
+- Enhance memory architecture:
+  - Optimize Pinecone-based retrieval for high-dimensional embeddings.
+  - Index emotional contexts alongside events for nuanced memory recall.
+- Extend narrative reasoning capabilities:
+  - Fine-tune LLaMA 3.3 for adaptive and context-sensitive narratives.
+  - Enable long-context processing for maintaining continuity in simulations.
 
-This roadmap will be regularly updated to reflect new technological developments and project requirements.
+---
+
+## Phase 6: Advanced VR Integration and Performance Optimization
+
+- Unreal Engine 5:
+  - Develop plugins for real-time agent interactions.
+  - Create physics-based simulations with immersive agent behaviors.
+- Optimize AI model performance:
+  - Use quantization for LLaMA 3.3 and other large models.
+  - Implement distributed processing for simulation scalability.
+
+---
+
+## Phase 7: Communication and API Development
+
+- Build APIs for broader application:
+  - Develop RESTful APIs using FastAPI.
+  - Implement WebSocket-based real-time communication.
+  - Enhance gRPC services for inter-process communication.
+  - Include robust authentication and security features.
+- Design interfaces:
+  - Command-line tools for direct developer interaction.
+  - A web-based dashboard for performance monitoring and simulation management.
+
+---
+
+## Phase 8: Testing and Validation
+
+- Develop a comprehensive test suite:
+  - Unit testing for individual modules.
+  - Integration tests for multimodal pipelines.
+  - Stress tests for memory and API performance.
+- Validate system functionality:
+  - Emotional intelligence metrics.
+  - Accuracy and consistency in multimodal fusion.
+  - Real-time system response and stability.
+
+---
+
+## Phase 9: Documentation and Deployment
+
+- Finalize and publish documentation:
+  - User manuals for developers and researchers.
+  - API and system architecture guides.
+  - Maintenance and troubleshooting documentation.
+- Deploy production-ready systems:
+  - Containerize applications using Docker.
+  - Use Kubernetes for deployment orchestration.
+  - Set up CI/CD pipelines for automated testing and deployment.
+
+---
+
+## Short-Term Goals
+
+- Implement and test LLaMA 3.3 integration.
+- Establish a functional multimodal fusion layer with PaLM-E and Whisper.
+- Validate initial memory core integration with Pinecone v2.
+
+## Long-Term Goals
+
+- Build advanced emotional reasoning systems with EGNN.
+- Achieve seamless integration with Unreal Engine 5.
+- Enable high-scale real-time processing with distributed architecture.
+
+## Success Metrics
+
+- **Emotional Recognition Accuracy:** 95% accuracy in multimodal emotion recognition.
+- **Memory Retrieval Efficiency:** 99% efficiency in memory retrieval and indexing.
+- **Real-Time Response:** Consistent system response times below 100 ms in real-time tasks.
+- **Ethical Compliance:** 100% adherence to ethical guidelines across all simulations and interactions.
 
 </docs/roadmap.md>
 
@@ -421,7 +439,6 @@ class MemoryCore:
 
 <models/narrative/narrative_engine.py>
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
 
 class NarrativeEngine:
     def __init__(self, model_name="meta-llama/Llama-3.3-13b-chat-hf"):
@@ -432,31 +449,31 @@ class NarrativeEngine:
             device_map="auto",
             use_auth_token=True
         )
-        self.memory_context = []
 
-    def generate_narrative(self, input_text):
-        prompt = self._build_prompt(input_text)
+    def generate_interaction_code(self, task_description, environment_state):
+        """
+        Generates Python code to interact with the simulation based on the given task and environment state.
+        """
+        prompt = f"Write Python code to {task_description} given the environment state: {environment_state}"
         inputs = self.tokenizer(prompt, return_tensors="pt").to("cuda")
         with torch.no_grad():
             outputs = self.model.generate(
                 **inputs,
-                max_new_tokens=512,
+                max_new_tokens=256,
                 temperature=0.7,
                 do_sample=True
             )
-        narrative = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        self.memory_context.append(narrative)
-        if len(self.memory_context) > 10:  # Limit memory to last 10 narratives
-            self.memory_context.pop(0)
-        return narrative
+        code = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return code
 
-    def _build_prompt(self, input_text):
-        prompt = "Reflect and proceed step by step.\n"
-        prompt += input_text
-        if self.memory_context:
-            prompt += "\nMemory Context:\n" + "\n".join(self.memory_context[-5:])
-        return prompt
-
+# Example usage
+if __name__ == "__main__":
+    engine = NarrativeEngine()
+    generated_code = engine.generate_interaction_code(
+        "move an object to a new location",
+        "an object at position (0, 0, 0) must be moved to (100, 200, 50)"
+    )
+    print(generated_code)
 </models/narrative/narrative_engine.py>
 
 <models/predictive/attention_mechanism.py>
@@ -627,6 +644,8 @@ class PaLI2Integration:
 </models/vision-language/palm-e/palm_e_integration.py>
 
 <README.md>
+#WORK IN PROGRESS
+
 # Artificial Consciousness Module (ACM)
 
 ## Overview
@@ -1048,45 +1067,40 @@ class MemoryCore:
 
 <simulations/api/simulation_manager.py>
 from threading import Lock
+import subprocess
+import unreal
 
-class SimulationManager(simulation_pb2_grpc.SimulationManagerServicer):
+class SimulationManager:
     def __init__(self):
-        self.simulations = {}
         self.lock = Lock()
 
-    def StartSimulation(self, request, context):
+    def execute_code(self, script: str):
+        """
+        Executes the provided Python code within the simulation environment.
+        """
         try:
             with self.lock:
-                simulation_id = request.simulation_id
-                if simulation_id in self.simulations:
-                    return simulation_pb2.SimulationResponse(
-                        message=f"Simulation {simulation_id} already running."
-                    )
-                self.simulations[simulation_id] = {"status": "running"}
-            return simulation_pb2.SimulationResponse(
-                message=f"Simulation {simulation_id} started successfully!"
-            )
-        except Exception as e:
-            context.set_code(grpc.StatusCode.INTERNAL)
-            context.set_details(str(e))
-            return simulation_pb2.SimulationResponse(message="Error starting simulation.")
+                # Save the script to a temporary file
+                with open("temp_script.py", "w") as temp_file:
+                    temp_file.write(script)
+                
+                # Execute the script
+                result = subprocess.run(["python", "temp_script.py"], capture_output=True, text=True)
 
-    def StopSimulation(self, request, context):
-        try:
-            with self.lock:
-                simulation_id = request.simulation_id
-                if simulation_id not in self.simulations:
-                    return simulation_pb2.SimulationResponse(
-                        message=f"Simulation {simulation_id} not found."
-                    )
-                del self.simulations[simulation_id]
-            return simulation_pb2.SimulationResponse(
-                message=f"Simulation {simulation_id} stopped successfully!"
-            )
+                # Log the result
+                if result.returncode == 0:
+                    print(f"Script executed successfully: {result.stdout}")
+                else:
+                    print(f"Script execution failed: {result.stderr}")
+
+                return result
         except Exception as e:
-            context.set_code(grpc.StatusCode.INTERNAL)
-            context.set_details(str(e))
-            return simulation_pb2.SimulationResponse(message="Error stopping simulation.")
+            print(f"Error during script execution: {str(e)}")
+
+# Example usage
+if __name__ == "__main__":
+    manager = SimulationManager()
+    manager.execute_code("print('Hello, Unreal Engine!')")
 </simulations/api/simulation_manager.py>
 
 <simulations/enviroments/vr_environment.py>
