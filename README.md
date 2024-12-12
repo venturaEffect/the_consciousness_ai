@@ -1,5 +1,3 @@
-#WORK IN PROGRESS
-
 # Artificial Consciousness Module (ACM)
 
 ## Overview
@@ -15,19 +13,21 @@ The **Artificial Consciousness Module (ACM)** attempts to create synthetic aware
 3. **Emotional Memory Core:** Processes and stores past emotional experiences.
 4. **Narrative Construction:** Maintains a self-consistent internal narrative using large language models.
 5. **Adaptive Learning:** Employs self-modifying code for continuous improvement.
+6. **Dataset Integration:** Leverages high-quality, licensed datasets (e.g., GoEmotions, MELD) for emotion recognition and simulation tasks.
 
 ## Technologies
 
 - **Game Engines:** Unreal Engine 5
 - **AI Models:** Llama 3.3, GPT-4V, PaLI-2, Whisper
 - **Vector Storage:** Pinecone, Chroma
-- **Emotion Detection:** Temporal Graph Neural Networks, GoEmotions
+- **Emotion Detection:** Temporal Graph Neural Networks, GoEmotions, MELD
 - **Learning Frameworks:** LoRA, PEFT, RLHF
 
 ## Folder Structure
 
 - `data/`: Datasets for emotions and simulations.
-- `docs/`: Documentation for architecture, installation, and the roadmap.
+- `docs/`: Documentation for architecture, installation, datasets, and the roadmap.
+  - Includes `datasets.md` and `preprocessing.md` for dataset-related details.
 - `models/`: Pre-trained and fine-tuned AI models.
 - `scripts/`: Utility scripts for setup, training, and testing.
 - `simulations/`: VR environments and APIs for agent interactions.
@@ -46,7 +46,7 @@ The **Artificial Consciousness Module (ACM)** attempts to create synthetic aware
 
 ```bash
 git clone https://github.com/venturaEffect/the_consciousness_ai.git
-cd the_consciousness_ai 
+cd the_consciousness_ai
 ```
 
 ### Set Up a Virtual Environment
@@ -80,6 +80,19 @@ Or install manually:
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
+```
+
+### Download and Preprocess Datasets
+
+Datasets are hosted externally and need to be downloaded and preprocessed locally:
+
+1. Refer to `/docs/datasets.md` for dataset details and download links.
+2. Follow the preprocessing instructions in `/docs/preprocessing.md` to prepare datasets for use.
+
+Example:
+
+```bash
+python scripts/utils/preprocess_emotions.py --input /path/to/raw/data --output /path/to/processed/data
 ```
 
 ### Authenticate with Hugging Face
@@ -168,7 +181,7 @@ Detailed usage instructions for each module are in their respective directories 
 
 ## Contributing
 
-Contributions are welcome. Please see `docs/CONTRIBUTING.md` for details.
+Contributions are welcome. Please see `docs/CONTRIBUTING.md` for details on contributing new datasets, features, or fixes.
 
 ## License
 
@@ -179,3 +192,4 @@ This project is licensed under the terms of the `LICENSE` file.
 - **Meta AI** for the LLaMA model
 - **Google AI** for PaLM-E
 - **OpenAI** for Whisper
+- **Contributors** for suggesting and integrating datasets
