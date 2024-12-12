@@ -1,7 +1,10 @@
----
+**LICENSE (Non-commercial Open Source)**
 
+<<<<<<< HEAD:LICENSE.md
 #### **LICENSE (Non-commercial Open Source)**
 
+=======
+>>>>>>> 21da61145d2486503ec4eca9816245aad2c21408:LICENSE
 MIT License
 
 Copyright (c) 2024 The Consciousness AI
