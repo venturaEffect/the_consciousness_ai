@@ -111,10 +111,10 @@
           type: file
   - path: /README.md
     type: file
-  - path: /repo images
+  - path: /repo_images
     type: directory
     contents:
-    - path: /repo images/acm_thumbnail_1.png
+    - path: /repo_images/acm_thumbnail_1.png
       type: file
   - path: /requirements.txt
     type: file
