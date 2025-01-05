@@ -1,0 +1,594 @@
+  - path: /analysis
+    type: directory
+    contents:
+    - path: /analysis/icons
+      type: directory
+      contents:
+      - path: /analysis/icons/cross.png
+        type: file
+      - path: /analysis/icons/sleep.png
+        type: file
+      - path: /analysis/icons/tick.png
+        type: file
+    - path: /analysis/plot_annecs.py
+      type: file
+    - path: /analysis/plot_diversity.py
+      type: file
+    - path: /analysis/plot_envgen_success.py
+      type: file
+    - path: /analysis/plot_percentlearned.py
+      type: file
+    - path: /analysis/run_scratch.py
+      type: file
+    - path: /analysis/visualize_blockbuster.py
+      type: file
+    - path: /analysis/visualize_dreamer.py
+      type: file
+    - path: /analysis/visualize_taskgen.py
+      type: file
+  - path: /apptainer
+    type: directory
+    contents:
+    - path: /apptainer/10_nvidia.json
+      type: file
+    - path: /apptainer/container.def
+      type: file
+  - path: /configs
+    type: directory
+    contents:
+    - path: /configs/dreamer
+      type: directory
+      contents:
+      - path: /configs/dreamer/dreamer_xs.yaml
+        type: file
+      - path: /configs/dreamer/dreamer_xxs.yaml
+        type: file
+    - path: /configs/omni_epic.yaml
+      type: file
+    - path: /configs/plot_annecs.yaml
+      type: file
+    - path: /configs/plot_diversity.yaml
+      type: file
+  - path: /dreamerv3
+    type: directory
+    contents:
+    - path: /dreamerv3/agent.py
+      type: file
+    - path: /dreamerv3/configs.yaml
+      type: file
+    - path: /dreamerv3/Dockerfile
+      type: file
+    - path: /dreamerv3/jaxagent.py
+      type: file
+    - path: /dreamerv3/jaxutils.py
+      type: file
+    - path: /dreamerv3/main.py
+      type: file
+    - path: /dreamerv3/nets.py
+      type: file
+    - path: /dreamerv3/ninjax.py
+      type: file
+    - path: /dreamerv3/requirements.txt
+      type: file
+    - path: /dreamerv3/__init__.py
+      type: file
+  - path: /embodied
+    type: directory
+    contents:
+    - path: /embodied/core
+      type: directory
+      contents:
+      - path: /embodied/core/agg.py
+        type: file
+      - path: /embodied/core/base.py
+        type: file
+      - path: /embodied/core/checkpoint.py
+        type: file
+      - path: /embodied/core/config.py
+        type: file
+      - path: /embodied/core/counter.py
+        type: file
+      - path: /embodied/core/driver.py
+        type: file
+      - path: /embodied/core/flags.py
+        type: file
+      - path: /embodied/core/fps.py
+        type: file
+      - path: /embodied/core/logger.py
+        type: file
+      - path: /embodied/core/path.py
+        type: file
+      - path: /embodied/core/prefetch.py
+        type: file
+      - path: /embodied/core/printing.py
+        type: file
+      - path: /embodied/core/random_agent.py
+        type: file
+      - path: /embodied/core/rwlock.py
+        type: file
+      - path: /embodied/core/space.py
+        type: file
+      - path: /embodied/core/timer.py
+        type: file
+      - path: /embodied/core/tree.py
+        type: file
+      - path: /embodied/core/usage.py
+        type: file
+      - path: /embodied/core/utils.py
+        type: file
+      - path: /embodied/core/uuid.py
+        type: file
+      - path: /embodied/core/when.py
+        type: file
+      - path: /embodied/core/wrappers.py
+        type: file
+      - path: /embodied/core/__init__.py
+        type: file
+    - path: /embodied/distr
+      type: directory
+      contents:
+      - path: /embodied/distr/client.py
+        type: file
+      - path: /embodied/distr/pool.py
+        type: file
+      - path: /embodied/distr/process.py
+        type: file
+      - path: /embodied/distr/proc_server.py
+        type: file
+      - path: /embodied/distr/server.py
+        type: file
+      - path: /embodied/distr/sockets.py
+        type: file
+      - path: /embodied/distr/thread.py
+        type: file
+      - path: /embodied/distr/utils.py
+        type: file
+      - path: /embodied/distr/__init__.py
+        type: file
+    - path: /embodied/envs
+      type: directory
+      contents:
+      - path: /embodied/envs/atari.py
+        type: file
+      - path: /embodied/envs/bsuite.py
+        type: file
+      - path: /embodied/envs/crafter.py
+        type: file
+      - path: /embodied/envs/dmc.py
+        type: file
+      - path: /embodied/envs/dmlab.py
+        type: file
+      - path: /embodied/envs/dummy.py
+        type: file
+      - path: /embodied/envs/from_dm.py
+        type: file
+      - path: /embodied/envs/from_gym.py
+        type: file
+      - path: /embodied/envs/loconav.py
+        type: file
+      - path: /embodied/envs/loconav_quadruped.py
+        type: file
+      - path: /embodied/envs/loconav_quadruped.xml
+        type: file
+      - path: /embodied/envs/minecraft.py
+        type: file
+      - path: /embodied/envs/minecraft_base.py
+        type: file
+      - path: /embodied/envs/minecraft_minerl.py
+        type: file
+      - path: /embodied/envs/pinpad.py
+        type: file
+      - path: /embodied/envs/procgen.py
+        type: file
+      - path: /embodied/envs/pybullet.py
+        type: file
+    - path: /embodied/replay
+      type: directory
+      contents:
+      - path: /embodied/replay/chunk.py
+        type: file
+      - path: /embodied/replay/indexdict.py
+        type: file
+      - path: /embodied/replay/limiters.py
+        type: file
+      - path: /embodied/replay/replay.py
+        type: file
+      - path: /embodied/replay/sampletree.py
+        type: file
+      - path: /embodied/replay/selectors.py
+        type: file
+      - path: /embodied/replay/__init__.py
+        type: file
+    - path: /embodied/requirements.txt
+      type: file
+    - path: /embodied/run
+      type: directory
+      contents:
+      - path: /embodied/run/eval.py
+        type: file
+      - path: /embodied/run/eval_only.py
+        type: file
+      - path: /embodied/run/parallel.py
+        type: file
+      - path: /embodied/run/parallel_with_eval.py
+        type: file
+      - path: /embodied/run/train.py
+        type: file
+      - path: /embodied/run/train_eval.py
+        type: file
+      - path: /embodied/run/train_holdout.py
+        type: file
+      - path: /embodied/run/__init__.py
+        type: file
+    - path: /embodied/scripts
+      type: directory
+      contents:
+      - path: /embodied/scripts/install-dmlab.sh
+        type: file
+      - path: /embodied/scripts/install-minecraft.sh
+        type: file
+      - path: /embodied/scripts/print.py
+        type: file
+      - path: /embodied/scripts/xvfb_run.sh
+        type: file
+    - path: /embodied/tests
+      type: directory
+      contents:
+      - path: /embodied/tests/distr
+        type: directory
+        contents:
+        - path: /embodied/tests/distr/test_process.py
+          type: file
+        - path: /embodied/tests/distr/test_server.py
+          type: file
+        - path: /embodied/tests/distr/test_thread.py
+          type: file
+      - path: /embodied/tests/run
+        type: directory
+        contents:
+        - path: /embodied/tests/run/test_parallel.py
+          type: file
+        - path: /embodied/tests/run/test_train.py
+          type: file
+        - path: /embodied/tests/run/utils.py
+          type: file
+      - path: /embodied/tests/test_driver.py
+        type: file
+      - path: /embodied/tests/test_path.py
+        type: file
+      - path: /embodied/tests/test_replay.py
+        type: file
+      - path: /embodied/tests/test_sampletree.py
+        type: file
+    - path: /embodied/__init__.py
+      type: file
+  - path: /flattened_repo._omni.txt
+    type: file
+  - path: /game
+    type: directory
+    contents:
+    - path: /game/backend
+      type: directory
+      contents:
+      - path: /game/backend/app.py
+        type: file
+      - path: /game/backend/env_codes
+        type: directory
+        contents:
+        - path: /game/backend/env_codes/archive.jsonl
+          type: file
+        - path: /game/backend/env_codes/cross_bridge.py
+          type: file
+        - path: /game/backend/env_codes/cross_lava.py
+          type: file
+        - path: /game/backend/env_codes/go_down_stairs.py
+          type: file
+        - path: /game/backend/env_codes/go_forward.py
+          type: file
+        - path: /game/backend/env_codes/go_to_box.py
+          type: file
+        - path: /game/backend/env_codes/kick_ball.py
+          type: file
+        - path: /game/backend/env_codes/maze.py
+          type: file
+        - path: /game/backend/env_codes/open_door.py
+          type: file
+      - path: /game/backend/requirements.txt
+        type: file
+      - path: /game/backend/templates
+        type: directory
+        contents:
+        - path: /game/backend/templates/index.html
+          type: file
+    - path: /game/frontend
+      type: directory
+      contents:
+      - path: /game/frontend/components.json
+        type: file
+      - path: /game/frontend/next.config.mjs
+        type: file
+      - path: /game/frontend/package-lock.json
+        type: file
+      - path: /game/frontend/package.json
+        type: file
+      - path: /game/frontend/postcss.config.mjs
+        type: file
+      - path: /game/frontend/public
+        type: directory
+        contents:
+        - path: /game/frontend/public/next.svg
+          type: file
+        - path: /game/frontend/public/placeholder.svg
+          type: file
+        - path: /game/frontend/public/research-paper-content.json
+          type: file
+        - path: /game/frontend/public/vercel.svg
+          type: file
+      - path: /game/frontend/README.md
+        type: file
+      - path: /game/frontend/src
+        type: directory
+        contents:
+        - path: /game/frontend/src/app
+          type: directory
+          contents:
+          - path: /game/frontend/src/app/favicon.ico
+            type: file
+          - path: /game/frontend/src/app/globals.css
+            type: file
+          - path: /game/frontend/src/app/KeyIdentifier.tsx
+            type: file
+          - path: /game/frontend/src/app/layout.tsx
+            type: file
+          - path: /game/frontend/src/app/leaderboard
+            type: directory
+            contents:
+            - path: /game/frontend/src/app/leaderboard/page.tsx
+              type: file
+          - path: /game/frontend/src/app/page.tsx
+            type: file
+        - path: /game/frontend/src/components
+          type: directory
+          contents:
+          - path: /game/frontend/src/components/academic-page.tsx
+            type: file
+          - path: /game/frontend/src/components/academic_page_v2
+            type: directory
+            contents:
+            - path: /game/frontend/src/components/academic_page_v2/acad-page_2.tsx
+              type: file
+          - path: /game/frontend/src/components/canvas.tsx
+            type: file
+          - path: /game/frontend/src/components/header-component.tsx
+            type: file
+          - path: /game/frontend/src/components/home-page.tsx
+            type: file
+          - path: /game/frontend/src/components/leader-board.tsx
+            type: file
+          - path: /game/frontend/src/components/ui
+            type: directory
+            contents:
+            - path: /game/frontend/src/components/ui/alert-dialog.tsx
+              type: file
+            - path: /game/frontend/src/components/ui/alert.tsx
+              type: file
+            - path: /game/frontend/src/components/ui/aspect-ratio.tsx
+              type: file
+            - path: /game/frontend/src/components/ui/avatar.tsx
+              type: file
+            - path: /game/frontend/src/components/ui/button.tsx
+              type: file
+            - path: /game/frontend/src/components/ui/connected
+              type: directory
+              contents:
+              - path: /game/frontend/src/components/ui/connected/connected.tsx
+                type: file
+              - path: /game/frontend/src/components/ui/connected/notconnected.tsx
+                type: file
+              - path: /game/frontend/src/components/ui/connected/toast.tsx
+                type: file
+            - path: /game/frontend/src/components/ui/dropdown-menu.tsx
+              type: file
+            - path: /game/frontend/src/components/ui/label.tsx
+              type: file
+            - path: /game/frontend/src/components/ui/next_level
+              type: directory
+              contents:
+              - path: /game/frontend/src/components/ui/next_level/button_level.tsx
+                type: file
+            - path: /game/frontend/src/components/ui/sheet.tsx
+              type: file
+            - path: /game/frontend/src/components/ui/table.tsx
+              type: file
+            - path: /game/frontend/src/components/ui/toast.tsx
+              type: file
+            - path: /game/frontend/src/components/ui/toaster.tsx
+              type: file
+            - path: /game/frontend/src/components/ui/use-toast.ts
+              type: file
+      - path: /game/frontend/tailwind.config.ts
+        type: file
+      - path: /game/frontend/tsconfig.json
+        type: file
+      - path: /game/frontend/types
+        type: directory
+        contents:
+        - path: /game/frontend/types/socket_types.tsx
+          type: file
+      - path: /game/frontend/utils
+        type: directory
+        contents:
+        - path: /game/frontend/utils/socket.js
+          type: file
+  - path: /LICENSE
+    type: file
+  - path: /main_dreamer.py
+    type: file
+  - path: /main_omni_epic.py
+    type: file
+  - path: /misc
+    type: directory
+    contents:
+    - path: /misc/algo.svg
+      type: file
+    - path: /misc/render3p_2.gif
+      type: file
+    - path: /misc/render3p_3.gif
+      type: file
+    - path: /misc/render_0.gif
+      type: file
+    - path: /misc/render_1.gif
+      type: file
+    - path: /misc/render_2.gif
+      type: file
+  - path: /omni_epic
+    type: directory
+    contents:
+    - path: /omni_epic/core
+      type: directory
+      contents:
+      - path: /omni_epic/core/fm.py
+        type: file
+      - path: /omni_epic/core/prompts
+        type: directory
+        contents:
+        - path: /omni_epic/core/prompts/query_env_code.py
+          type: file
+        - path: /omni_epic/core/prompts/query_interestingness.py
+          type: file
+        - path: /omni_epic/core/prompts/query_next_task_desc.py
+          type: file
+        - path: /omni_epic/core/prompts/query_next_task_desc_no_moi.py
+          type: file
+        - path: /omni_epic/core/prompts/query_success.py
+          type: file
+        - path: /omni_epic/core/prompts/reflect_error.py
+          type: file
+        - path: /omni_epic/core/prompts/reflect_task.py
+          type: file
+        - path: /omni_epic/core/prompts/reflect_task_with_vision.py
+          type: file
+        - path: /omni_epic/core/prompts/__init__.py
+          type: file
+      - path: /omni_epic/core/__init__.py
+        type: file
+    - path: /omni_epic/envs
+      type: directory
+      contents:
+      - path: /omni_epic/envs/ant
+        type: directory
+        contents:
+        - path: /omni_epic/envs/ant/balance_board.py
+          type: file
+        - path: /omni_epic/envs/ant/base.py
+          type: file
+        - path: /omni_epic/envs/ant/cross_bridge.py
+          type: file
+        - path: /omni_epic/envs/ant/cross_lava.py
+          type: file
+        - path: /omni_epic/envs/ant/go_down_stairs.py
+          type: file
+        - path: /omni_epic/envs/ant/go_forward.py
+          type: file
+        - path: /omni_epic/envs/ant/go_to_box.py
+          type: file
+        - path: /omni_epic/envs/ant/kick_ball.py
+          type: file
+        - path: /omni_epic/envs/ant/maze.py
+          type: file
+        - path: /omni_epic/envs/ant/open_door.py
+          type: file
+        - path: /omni_epic/envs/ant/walk_on_cylinder.py
+          type: file
+      - path: /omni_epic/envs/base.py
+        type: file
+      - path: /omni_epic/envs/humanoid
+        type: directory
+        contents:
+        - path: /omni_epic/envs/humanoid/balance_board.py
+          type: file
+        - path: /omni_epic/envs/humanoid/base.py
+          type: file
+        - path: /omni_epic/envs/humanoid/cross_bridge.py
+          type: file
+        - path: /omni_epic/envs/humanoid/cross_lava.py
+          type: file
+        - path: /omni_epic/envs/humanoid/go_down_stairs.py
+          type: file
+        - path: /omni_epic/envs/humanoid/go_forward.py
+          type: file
+        - path: /omni_epic/envs/humanoid/go_to_box.py
+          type: file
+        - path: /omni_epic/envs/humanoid/kick_ball.py
+          type: file
+        - path: /omni_epic/envs/humanoid/maze.py
+          type: file
+        - path: /omni_epic/envs/humanoid/open_door.py
+          type: file
+        - path: /omni_epic/envs/humanoid/walk_on_cylinder.py
+          type: file
+      - path: /omni_epic/envs/r2d2
+        type: directory
+        contents:
+        - path: /omni_epic/envs/r2d2/balance_board.py
+          type: file
+        - path: /omni_epic/envs/r2d2/base.py
+          type: file
+        - path: /omni_epic/envs/r2d2/cross_bridge.py
+          type: file
+        - path: /omni_epic/envs/r2d2/cross_lava.py
+          type: file
+        - path: /omni_epic/envs/r2d2/go_down_stairs.py
+          type: file
+        - path: /omni_epic/envs/r2d2/go_forward.py
+          type: file
+        - path: /omni_epic/envs/r2d2/go_to_box.py
+          type: file
+        - path: /omni_epic/envs/r2d2/kick_ball.py
+          type: file
+        - path: /omni_epic/envs/r2d2/maze.py
+          type: file
+        - path: /omni_epic/envs/r2d2/open_door.py
+          type: file
+        - path: /omni_epic/envs/r2d2/walk_on_cylinder.py
+          type: file
+      - path: /omni_epic/envs/wrappers
+        type: directory
+        contents:
+        - path: /omni_epic/envs/wrappers/vision.py
+          type: file
+        - path: /omni_epic/envs/wrappers/__init__.py
+          type: file
+      - path: /omni_epic/envs/__init__.py
+        type: file
+    - path: /omni_epic/robots
+      type: directory
+      contents:
+      - path: /omni_epic/robots/ant.py
+        type: file
+      - path: /omni_epic/robots/assets
+        type: directory
+        contents:
+        - path: /omni_epic/robots/assets/r2d2.urdf
+          type: file
+      - path: /omni_epic/robots/base.py
+        type: file
+      - path: /omni_epic/robots/humanoid.py
+        type: file
+      - path: /omni_epic/robots/r2d2.py
+        type: file
+      - path: /omni_epic/robots/__init__.py
+        type: file
+  - path: /output
+    type: directory
+    contents:
+  - path: /rag_utils.py
+    type: file
+  - path: /README.md
+    type: file
+  - path: /repo_structure_omni.yaml
+    type: file
+  - path: /requirements.txt
+    type: file
+  - path: /run_utils.py
+    type: file
