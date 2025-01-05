@@ -1,3 +1,8 @@
+  - path: /configs
+    type: directory
+    contents:
+    - path: /configs/reinforcement.yaml
+      type: file
   - path: /data
     type: directory
     contents:
@@ -35,6 +40,8 @@
       type: file
     - path: /docs/roadmap.md
       type: file
+  - path: /flattened_repo_omni_2.txt
+    type: file
   - path: /LICENSE.md
     type: file
   - path: /models
@@ -85,6 +92,8 @@
         type: file
       - path: /models/self_model/intention_tracker.py
         type: file
+      - path: /models/self_model/reinforcement_core.py
+        type: file
     - path: /models/speech
       type: directory
       contents:
@@ -116,6 +125,8 @@
     contents:
     - path: /repo_images/acm_thumbnail_1.png
       type: file
+  - path: /repo_structure_omni2.yaml
+    type: file
   - path: /requirements.txt
     type: file
   - path: /scripts
