@@ -1,6 +1,8 @@
   - path: /configs
     type: directory
     contents:
+    - path: /configs/consciousness_metrics.yaml
+      type: file
     - path: /configs/reinforcement.yaml
       type: file
   - path: /data
@@ -50,11 +52,20 @@
     - path: /models/emotion
       type: directory
       contents:
+      - path: /models/emotion/reward_shaping.py
+        type: file
       - path: /models/emotion/tgnn
         type: directory
         contents:
         - path: /models/emotion/tgnn/emotional_graph.py
           type: file
+    - path: /models/evaluation
+      type: directory
+      contents:
+      - path: /models/evaluation/consciousness_metrics.py
+        type: file
+      - path: /models/evaluation/emotional_rl_metrics.py
+        type: file
     - path: /models/language
       type: directory
       contents:
@@ -83,6 +94,8 @@
         type: file
       - path: /models/predictive/dreamerv3_wrapper.py
         type: file
+      - path: /models/predictive/dreamer_emotional_wrapper.py
+        type: file
     - path: /models/self_model
       type: directory
       contents:
@@ -91,6 +104,8 @@
       - path: /models/self_model/emotion_context_tracker.py
         type: file
       - path: /models/self_model/intention_tracker.py
+        type: file
+      - path: /models/self_model/meta_learner.py
         type: file
       - path: /models/self_model/reinforcement_core.py
         type: file
@@ -405,6 +420,16 @@
   - path: /tests
     type: directory
     contents:
+    - path: /tests/test_consciousness_development.py
+      type: file
+    - path: /tests/test_emotional_reinforcement.py
+      type: file
+    - path: /tests/test_Emotional_reinforcement_integration.py
+      type: file
+    - path: /tests/test_emotional_reinforcement_success.py
+      type: file
+    - path: /tests/test_emotional_rl_metrics.py
+      type: file
     - path: /tests/test_emotion_classifier.py
       type: file
     - path: /tests/test_ethical_dilemmas.py
@@ -413,7 +438,11 @@
       type: file
     - path: /tests/test_narrative_engine.py
       type: file
+    - path: /tests/test_reinforcement_core.py
+      type: file
     - path: /tests/test_simple_task.py
+      type: file
+    - path: /tests/test_simulation_integration.py
       type: file
     - path: /tests/test_social_interactions.py
       type: file

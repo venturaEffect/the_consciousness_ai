@@ -2,18 +2,45 @@
 
 ## Overview
 
-The **Artificial Consciousness Module (ACM)** attempts to create synthetic awareness in AI systems by combining the latest AI technologies, virtual reality (VR) environments, and emotional processing. This project explores the possibility of replicating human-like consciousness in non-biological systems. By fostering an emotional connection between an ACM-equipped AI agent and humans, to reinforce adherence to **Asimov’s Three Laws of Robotics**.
+The **Artificial Consciousness Module (ACM)** attempts to create synthetic awareness in AI systems by combining the latest AI technologies, virtual reality (VR) environments, and emotional reinforcement learning. This project explores the possibility of replicating human-like consciousness in non-biological systems by fostering emotional connections between AI agents ACM-equipped and humans through reinforcement learning techniques. The idea is to reinforce adherence to Asimov’s Three Laws of Robotics.
 
 [![The Consciousness AI Module](./repo_images/acm_thumbnail_1.png)](https://theconsciousness.ai)
 
 ## Core Features
 
-1. **VR Simulations:** Realistic VR environments built with Unreal Engine 5.
-2. **Multimodal Integration:** Combines vision, speech, and text models for rich understanding.
-3. **Emotional Memory Core:** Processes and stores past emotional experiences.
-4. **Narrative Construction:** Maintains a self-consistent internal narrative using large language models.
-5. **Adaptive Learning:** Employs self-modifying code for continuous improvement.
-6. **Dataset Integration:** Leverages high-quality, licensed datasets (e.g., GoEmotions, MELD) for emotion recognition and simulation tasks.
+1. **Emotional Reinforcement Learning:**
+
+   - DreamerV3-based world modeling with emotional context
+   - Meta-learning for rapid adaptation to new emotional scenarios
+   - Emotional reward shaping through human interaction
+   - Experience memory with emotional imprinting
+   - Consciousness development tracking metrics
+
+2. **VR Simulations:**
+
+   - Realistic VR environments built with Unreal Engine 5
+   - Scenario-based interaction testing
+   - Real-time emotional response tracking
+   - Closed-loop learning environments
+
+3. **Memory Systems:**
+
+   - Emotional memory core with meta-learning
+   - Experience replay with emotional context
+   - Temporal coherence tracking
+   - Long-term memory consolidation
+
+4. **Consciousness Metrics:**
+
+   - Emotional awareness evaluation
+   - Memory coherence analysis
+   - Learning progression tracking
+   - Narrative consistency measurements
+
+5. **Narrative Construction:**
+   - Self-consistent internal narratives using LLaMA 3.3
+   - Emotional context integration
+   - Long-context processing for continuity
 
 ## Technologies
 
@@ -37,9 +64,10 @@ The **Artificial Consciousness Module (ACM)** attempts to create synthetic aware
 
 ### Prerequisites
 
-- **Python 3.8 or higher**
+- **Python 3.9 or higher**
 - **CUDA Toolkit** (for GPU support)
 - **Unreal Engine 5**
+- **Node.js** (for gRPC bindings)
 - **Git**
 
 ### 1. Clone the Repository
@@ -49,22 +77,16 @@ git clone https://github.com/venturaEffect/the_consciousness_ai.git
 cd the_consciousness_ai
 ```
 
-### Set Up a Virtual Environment
+### 2. Set Up a Virtual Environment
 
 It’s recommended to use a Python virtual environment to manage dependencies.
 
 **Linux/MacOS:**
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-**Windows:**
-
-```bash
 python -m venv venv
-.\venv\Scripts\activate
+source venv/bin/activate  # Linux/Mac
+.\venv\Scripts\activate   # Windows
 ```
 
 ### Install Dependencies
@@ -81,6 +103,21 @@ Or install manually:
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+### Project Structure
+
+acm/
+├── configs/ # Configuration files
+├── data/ # Datasets and simulation data
+├── docs/ # Documentation
+├── models/ # Core AI models
+│ ├── emotion/ # Emotional processing
+│ ├── language/ # LLM integrations
+│ ├── memory/ # Memory systems
+│ └── predictive/ # World modeling
+├── scripts/ # Utility scripts
+├── simulations/ # VR environments
+└── tests/ # Test suites
 
 ### Download and Preprocess Datasets
 
@@ -190,6 +227,6 @@ This project is licensed under the terms of the `LICENSE` file.
 ## Acknowledgments
 
 - **Meta AI** for the LLaMA model
-- **Google AI** for PaLM-E
+- **Google AI** for PaLM-E and DreamerV3
 - **OpenAI** for Whisper
 - **Contributors** for suggesting and integrating datasets
