@@ -1,0 +1,22 @@
+# configs/consciousness_metrics.yaml
+
+metrics:
+  coherence_threshold: 0.7
+  emotional_stability: 0.6
+  evaluation_frequency: 100 # episodes
+
+  weights:
+    emotional_awareness: 0.3
+    memory_coherence: 0.3
+    learning_progress: 0.2
+    narrative_consistency: 0.2
+
+  thresholds:
+    minimum_coherence: 0.5
+    minimum_emotional_stability: 0.4
+    minimum_learning_progress: 0.1
+
+  memory_evaluation:
+    recent_experience_limit: 100
+    temporal_window: 20
+    emotion_similarity_threshold: 0.7
