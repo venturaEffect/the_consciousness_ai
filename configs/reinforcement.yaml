@@ -1,17 +1,35 @@
 # configs/reinforcement.yaml
 
 reinforcement:
+  # Emotional reward scaling
   emotional_scale: 2.0 # Weight for emotional rewards
+  positive_emotion_bonus: 0.5 # Additional reward for positive emotions
+
+  # DreamerV3 World Model Configuration
   dreamer_config:
     hidden_size: 256
     learning_rate: 0.0001
-    gamma: 0.99
-    lambda_gae: 0.95
+    gamma: 0.99 # Discount factor
+    lambda_gae: 0.95 # GAE parameter
+    horizon: 333 # Planning horizon
+    imag_steps: 15 # Imagination steps for planning
 
+  # Memory Configuration
   memory_config:
-    capacity: 100000
+    capacity: 100000 # Size of experience buffer
     batch_size: 64
+    emotion_embedding_size: 128
+    context_length: 32
 
+  # Narrative Configuration
   narrative_config:
     model: "llama-3.3"
     max_length: 128
+    emotion_prefix: True # Include emotion context in prompts
+
+  # Meta-Learning
+  meta_config:
+    enabled: True
+    adaptation_steps: 5
+    inner_learning_rate: 0.01
+    meta_batch_size: 16
