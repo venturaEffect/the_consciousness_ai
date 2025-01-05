@@ -3,7 +3,6 @@
 reinforcement:
   # Emotional reward scaling
   emotional_scale: 2.0 # Weight for emotional rewards
-  positive_emotion_bonus: 0.5 # Additional reward for positive emotions
 
   # DreamerV3 World Model Configuration
   dreamer_config:
@@ -25,11 +24,11 @@ reinforcement:
   narrative_config:
     model: "llama-3.3"
     max_length: 128
-    emotion_prefix: True # Include emotion context in prompts
 
   # Meta-Learning
   meta_config:
-    enabled: True
+    enabled: true
     adaptation_steps: 5
     inner_learning_rate: 0.01
     meta_batch_size: 16
+    context_length: 32

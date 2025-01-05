@@ -7,6 +7,7 @@ from models.memory.memory_core import MemoryCore
 from models.narrative.narrative_engine import NarrativeEngine
 from models.self_model.emotion_context_tracker import EmotionContextTracker
 from models.self_model.belief_system import BeliefSystem
+from models.self_model.meta_learner import MetaLearner
 
 class ReinforcementCore:
     def __init__(self, config):
@@ -28,6 +29,16 @@ class ReinforcementCore:
             self.adaptation_steps = config.meta_config.adaptation_steps
             self.inner_lr = config.meta_config.inner_learning_rate
             
+        # Add meta-learner
+        self.meta_learner = MetaLearner(config)
+        self.current_task_params = None
+        
+    def adapt_to_scenario(self, scenario_data: Dict):
+        """Adapt to new scenario using meta-learning"""
+        adaptation_result = self.meta_learner.adapt_to_task(scenario_data)
+        self.current_task_params = adaptation_result['adapted_params']
+        return adaptation_result
+        
     def compute_reward(self, state, emotion_values, action_info):
         """
         Compute reward based on emotional response and state
@@ -38,6 +49,10 @@ class ReinforcementCore:
         """
         # Get emotional valence from tracker
         emotional_reward = self.emotion_tracker.get_emotional_value(emotion_values)
+        
+        # Apply task-specific scaling if available
+        if self.current_task_params is not None:
+            emotional_reward *= self.current_task_params['emotional_scale']
         
         # Apply emotion-based scaling
         scaled_reward = emotional_reward * self.emotional_scale
@@ -54,7 +69,8 @@ class ReinforcementCore:
             'reward': scaled_reward,
             'narrative': self.narrative.generate_experience_narrative(
                 state, emotion_values, scaled_reward
-            )
+            ),
+            'task_params': self.current_task_params
         }
         self.memory.store_experience(experience)
         
