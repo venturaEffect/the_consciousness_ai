@@ -91,6 +91,17 @@ The datasets used in this project are stored externally to ensure efficient mana
    python scripts/utils/preprocess_simulations.py --input /path/to/raw/data --output /path/to/processed/data
    ```
 
+### Reinforcement Learning Datasets
+
+1. Format interaction logs to include:
+   - Emotional responses
+   - Reward signals
+   - State transitions
+2. Use preprocessing script:
+   ```bash
+   python scripts/utils/preprocess_rl_data.py
+   ```
+
 ---
 
 ## 3. Organizing Preprocessed Data

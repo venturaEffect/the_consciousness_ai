@@ -184,3 +184,13 @@ class DreamerEmotionalWrapper:
         self.emotion_network.load_state_dict(checkpoint['emotion_network_state'])
         self.metrics = checkpoint['metrics']
         self.config = checkpoint['config']
+
+    def _layer(self, x):
+        try:
+            shape = (x.shape[-1], int(np.prod(self.units)))
+            if not all(dim > 0 for dim in shape):
+                raise ValueError("Invalid shape dimensions")
+            x = x @ self.get('kernel', self._winit, shape).astype(x.dtype)
+            return x
+        except Exception as e:
+            raise RuntimeError(f"Layer computation failed: {str(e)}")

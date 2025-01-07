@@ -19,6 +19,8 @@ class SimulationConfig:
     emotion_threshold: float = 0.6
     memory_capacity: int = 100000
     narrative_max_length: int = 128
+    use_pavilion: bool = True
+    pavilion_config: Dict = None
 
 class SimulationManager:
     def __init__(self, config: SimulationConfig):
@@ -31,10 +33,22 @@ class SimulationManager:
         self.narrative = NarrativeEngine()
         self.memory = MemoryCore(capacity=config.memory_capacity)
         
+        # Initialize Unreal Engine environment
+        self.env = self._initialize_environment()
+        
         # Tracking metrics
         self.episode_rewards = []
         self.emotion_history = []
         self.current_scenario = None
+
+    def _initialize_environment(self):
+        """Initialize VR environment with Pavilion integration"""
+        if self.config.use_pavilion:
+            return PavilionVREnvironment(
+                config=self.config.pavilion_config,
+                emotion_network=self.emotion_network
+            )
+        return VREnvironment()
 
     def execute_code(self, script: str):
         """
@@ -104,7 +118,7 @@ class SimulationManager:
                 include_context=True
             )
             
-            # Compute emotional reward
+            # Compute emotional reward with Pavilion's emotional feedback
             emotional_reward = self.rl_core.compute_reward(
                 state=state,
                 emotion_values=emotion_values,

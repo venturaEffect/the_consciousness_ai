@@ -2,6 +2,7 @@
 
 import torch
 import numpy as np
+from collections import deque
 from models.predictive.dreamerv3_wrapper import DreamerV3
 from models.memory.memory_core import MemoryCore
 from models.narrative.narrative_engine import NarrativeEngine
@@ -32,6 +33,9 @@ class ReinforcementCore:
         # Add meta-learner
         self.meta_learner = MetaLearner(config)
         self.current_task_params = None
+
+        # Metrics
+        self.metrics.reward_history = deque(maxlen=10000)
         
     def adapt_to_scenario(self, scenario_data: Dict):
         """Adapt to new scenario using meta-learning"""

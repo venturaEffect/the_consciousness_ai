@@ -2,33 +2,32 @@
 
 ## Overview
 
-The **Artificial Consciousness Module (ACM)** attempts to create synthetic awareness in AI systems by combining the latest AI technologies, virtual reality (VR) environments, and emotional reinforcement learning. This project explores the possibility of replicating human-like consciousness in non-biological systems by fostering emotional connections between AI agents ACM-equipped and humans through reinforcement learning techniques. The idea is to reinforce adherence to Asimov’s Three Laws of Robotics.
+The **Artificial Consciousness Module (ACM)** attempts to create synthetic awareness in AI systems by combining the latest AI technologies, virtual reality (VR) environments, and emotional reinforcement learning. This project explores the possibility of replicating human-like consciousness in non-biological systems by fostering emotional connections between AI agents ACM-equipped and humans through reinforcement learning techniques. This synthetic awareness in AI systems through survival-driven emotional experiences in VR environments. The project creates consciousness by exposing AI agents to carefully crafted stressful scenarios that trigger attention and awareness mechanisms. Through these experiences and interactions with humans and other AI agents, emotional memories are formed and stored in the ACM, guided by Asimov's Three Laws of Robotics.
 
 [![The Consciousness AI Module](./repo_images/acm_thumbnail_1.png)](https://theconsciousness.ai)
 
 ## Core Features
 
-1. **Emotional Reinforcement Learning:**
+1. **Survival-Based Consciousness:**
+
+   - Stressful scenario generation in VR
+   - Attention activation through survival challenges
+   - Awareness emergence through problem-solving
+   - Experience accumulation in emotional memory
+
+2. **Emotional Reinforcement Learning:**
 
    - DreamerV3-based world modeling with emotional context
-   - Meta-learning for rapid adaptation to new emotional scenarios
-   - Emotional reward shaping through human interaction
+   - Reward shaping through survival success and social interaction
+   - Meta-learning for emotional adaptation
    - Experience memory with emotional imprinting
-   - Consciousness development tracking metrics
 
-2. **VR Simulations:**
+3. **Social Interaction Framework:**
 
-   - Realistic VR environments built with Unreal Engine 5
-   - Scenario-based interaction testing
+   - Human-AI emotional bonding during challenges
+   - Multi-agent cooperation scenarios
    - Real-time emotional response tracking
-   - Closed-loop learning environments
-
-3. **Memory Systems:**
-
-   - Emotional memory core with meta-learning
-   - Experience replay with emotional context
-   - Temporal coherence tracking
-   - Long-term memory consolidation
+   - Ethical behavior alignment with Asimov's Laws
 
 4. **Consciousness Metrics:**
 

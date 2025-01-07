@@ -44,6 +44,8 @@
       type: file
   - path: /flattened_repo_omni_2.txt
     type: file
+  - path: /INVE_MEM_2008_124320.pdf
+    type: file
   - path: /LICENSE.md
     type: file
   - path: /models
@@ -133,6 +135,8 @@
         contents:
         - path: /models/vision-language/palm-e/palm_e_integration.py
           type: file
+  - path: /principles_of_acm.html
+    type: file
   - path: /README.md
     type: file
   - path: /repo_images
@@ -194,6 +198,8 @@
     - path: /simulations/enviroments
       type: directory
       contents:
+      - path: /simulations/enviroments/pavilion_vr_environment.py
+        type: file
       - path: /simulations/enviroments/vr_environment.py
         type: file
     - path: /simulations/scenarios

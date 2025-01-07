@@ -25,7 +25,13 @@ This document outlines how the AI agent interacts with the simulation environmen
    - The validated code is executed in the simulation environment.
 
 6. **Feedback**:
+
    - Results of execution are logged and analyzed to improve future actions.
+
+7. **Reinforcement Learning**:
+   - Compute emotional rewards
+   - Update model through DreamerV3
+   - Store experience in emotional memory
 
 ## Key Modules
 

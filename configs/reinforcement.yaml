@@ -32,3 +32,17 @@ reinforcement:
     inner_learning_rate: 0.01
     meta_batch_size: 16
     context_length: 32
+
+  # Pavilion Integration
+  pavilion:
+    enabled: true
+    face_recognition:
+      model: "pavilion_face_rec_v1"
+      emotion_threshold: 0.7
+    environment:
+      render_quality: "epic"
+      physics_substeps: 2
+      emotion_feedback_rate: 10 # Hz
+    interaction:
+      max_distance: 2.0
+      emotion_memory_length: 100
