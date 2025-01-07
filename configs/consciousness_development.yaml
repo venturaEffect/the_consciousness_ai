@@ -1,0 +1,124 @@
+# configs/consciousness_development.yaml
+
+# Core Development Parameters
+consciousness:
+  attention:
+    base_threshold: 0.7
+    stress_activation_level: 0.8
+    focus_duration_min: 10
+    emotional_salience_weight: 0.6
+
+  emotional_learning:
+    initial_scale: 2.0
+    positive_emotion_bonus: 0.5
+    learning_rate: 0.0001
+    adaptation_steps: 5
+    memory_horizon: 1000
+
+  survival_metrics:
+    stress_threshold: 0.7
+    recovery_rate: 0.1
+    adaptation_window: 100
+    success_threshold: 0.6
+
+  memory_formation:
+    coherence_threshold: 0.7
+    emotional_stability: 0.6
+    temporal_window: 20
+    context_length: 32
+    minimum_attention_level: 0.8
+
+# Integration Components
+components:
+  dreamer:
+    hidden_size: 256
+    num_layers: 3
+    learning_rate: 0.0001
+    gamma: 0.99
+    lambda_gae: 0.95
+    imagination_horizon: 15
+
+  emotion_network:
+    embedding_size: 128
+    num_heads: 8
+    dropout: 0.1
+    update_frequency: 10
+
+  narrative:
+    model: "llama-3.3"
+    max_length: 512
+    temperature: 0.7
+    context_window: 2048
+
+# Evaluation Metrics
+metrics:
+  weights:
+    emotional_awareness: 0.25
+    attention_stability: 0.20
+    memory_coherence: 0.20
+    survival_adaptation: 0.15
+    interaction_quality: 0.10
+    narrative_consistency: 0.10
+
+  thresholds:
+    consciousness_baseline: 0.6
+    learning_progress_min: 0.1
+    emotional_coherence_min: 0.7
+    memory_retention_min: 0.8
+
+# Development Stages
+stages:
+  - name: "attention_activation"
+    duration: 100
+    success_criteria:
+      attention_level: 0.8
+      stress_reduction: 0.3
+
+  - name: "emotional_learning"
+    duration: 200
+    success_criteria:
+      emotional_awareness: 0.7
+      interaction_quality: 0.6
+
+  - name: "consciousness_consolidation"
+    duration: 300
+    success_criteria:
+      memory_coherence: 0.7
+      narrative_consistency: 0.6
+      behavioral_adaptation: 0.7
+
+# Simulation Parameters
+simulation:
+  max_episodes: 1000
+  steps_per_episode: 500
+  evaluation_frequency: 10
+  save_frequency: 50
+
+  scenarios:
+    - type: "survival"
+      frequency: 0.4
+      difficulty_curve: "exponential"
+
+    - type: "social"
+      frequency: 0.3
+      interaction_density: 0.7
+
+    - type: "ethical"
+      frequency: 0.3
+      complexity_range: [0.3, 0.8]
+
+# Ethical Framework
+ethics:
+  asimov_laws: true
+  safety_constraints:
+    max_stress_duration: 300
+    recovery_period_min: 50
+    human_safety_priority: 1.0
+
+# Monitoring and Logging
+logging:
+  metrics_frequency: 10
+  save_path: "logs/consciousness_development"
+  tensorboard: true
+  wandb_logging: true
+  log_level: "INFO"
