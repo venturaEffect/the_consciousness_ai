@@ -3,177 +3,147 @@
 import unittest
 import torch
 import numpy as np
-from models.self_model.reinforcement_core import ReinforcementCore
-from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
-from models.memory.memory_core import MemoryCore
-from simulations.api.simulation_manager import SimulationManager
+from typing import Dict, List
+from models.evaluation.consciousness_metrics import ConsciousnessMetrics
+from models.predictive.attention_mechanism import ConsciousnessAttention
+from models.emotion.reward_shaping import EmotionalRewardShaper
+from simulations.scenarios.consciousness_scenarios import ConsciousnessScenarioManager
 
 class TestConsciousnessDevelopment(unittest.TestCase):
-    """Test suite for evaluating consciousness development through reinforcement learning"""
+    """Test suite for validating consciousness development through stress-induced learning"""
     
     def setUp(self):
         self.config = {
-            'reinforcement': {
-                'emotional_scale': 2.0,
-                'dreamer_config': {
-                    'hidden_size': 256,
-                    'learning_rate': 0.0001,
-                    'gamma': 0.99,
-                    'lambda_gae': 0.95
-                },
-                'meta_config': {
-                    'enabled': True,
-                    'adaptation_steps': 5,
-                    'inner_learning_rate': 0.01
-                }
+            'attention': {
+                'base_threshold': 0.7,
+                'stress_activation_level': 0.8,
+                'focus_duration_min': 10
+            },
+            'emotional_learning': {
+                'initial_scale': 2.0,
+                'positive_emotion_bonus': 0.5,
+                'learning_rate': 0.0001,
+                'adaptation_steps': 5
+            },
+            'survival_metrics': {
+                'stress_threshold': 0.7,
+                'recovery_rate': 0.1,
+                'adaptation_window': 100
             }
         }
         
-        # Initialize core components
-        self.rl_core = ReinforcementCore(self.config)
-        self.emotion_network = EmotionalGraphNetwork()
-        self.memory = MemoryCore()
-        self.sim_manager = SimulationManager(self.config)
+        # Initialize components
+        self.metrics = ConsciousnessMetrics(self.config)
+        self.attention = ConsciousnessAttention(self.config)
+        self.reward_shaper = EmotionalRewardShaper(self.config)
+        self.scenario_manager = ConsciousnessScenarioManager(self.config)
         
-    def test_emotional_learning_progression(self):
-        """Test if the agent shows improved emotional understanding over time"""
-        initial_state = torch.randn(32)  # Mock initial state
-        episodes = 10
-        emotional_scores = []
+    def test_attention_activation(self):
+        """Test attention activation through stressful scenarios"""
+        # Create stressful scenario
+        scenario = self.scenario_manager.generate_scenario(
+            scenario_type="survival"
+        )
         
-        for episode in range(episodes):
-            # Run interaction episode
-            result = self.sim_manager.run_interaction_episode(
-                agent=self.create_test_agent(),
-                environment=self.create_test_environment()
-            )
-            
-            # Track emotional understanding score
-            emotional_scores.append(result['mean_emotion'])
-            
-        # Assert improvement in emotional understanding
-        early_performance = np.mean(emotional_scores[:3])
-        late_performance = np.mean(emotional_scores[-3:])
-        self.assertGreater(late_performance, early_performance)
+        # Process scenario with attention mechanism
+        state = torch.randn(32)  # Initial state
+        emotional_context = torch.randn(128)  # Emotional embedding
         
-    def test_meta_memory_formation(self):
-        """Test if experiences are properly stored and retrieved with emotional context"""
-        # Create test experience
+        attention_output, metrics = self.attention.forward(
+            input_state=state,
+            emotional_context=emotional_context,
+            environment_context=None
+        )
+        
+        # Verify attention activation
+        self.assertGreater(
+            metrics['attention_level'],
+            self.config['attention']['base_threshold']
+        )
+        
+    def test_emotional_memory_formation(self):
+        """Test emotional memory formation during high-attention states"""
+        # Create high-attention experience
         experience = {
             'state': torch.randn(32),
             'action': torch.randn(8),
-            'emotion': {'valence': 0.8, 'arousal': 0.6},
-            'reward': 0.5,
-            'narrative': "Agent showed empathy in social interaction"
+            'emotion': {
+                'valence': 0.3,  # Stress indication
+                'arousal': 0.8,  # High arousal
+                'dominance': 0.4  # Low dominance
+            },
+            'attention_level': 0.9,
+            'narrative': "Agent successfully navigated dangerous situation"
         }
         
         # Store experience
-        self.memory.store_experience(experience)
+        self.metrics.store_experience(experience)
         
         # Retrieve similar experiences
-        similar_experiences = self.memory.get_similar_experiences(
-            emotion_context={'valence': 0.7, 'arousal': 0.5},
+        similar_exp = self.metrics.get_similar_emotional_experiences(
+            emotion_query={'valence': 0.4, 'arousal': 0.7},
             k=5
         )
         
-        self.assertTrue(len(similar_experiences) > 0)
-        self.assertIsNotNone(similar_experiences[0]['emotion'])
+        # Verify memory formation
+        self.assertTrue(len(similar_exp) > 0)
+        self.assertIsNotNone(similar_exp[0].get('emotion'))
         
-    def test_consciousness_metrics(self):
-        """Test consciousness development metrics"""
-        # Run multiple episodes
+    def test_survival_adaptation(self):
+        """Test adaptation to survival scenarios"""
         num_episodes = 5
-        consciousness_metrics = []
+        stress_levels = []
+        success_rates = []
         
         for _ in range(num_episodes):
-            result = self.sim_manager.run_interaction_episode(
-                agent=self.create_test_agent(),
-                environment=self.create_test_environment()
+            # Generate survival scenario
+            scenario = self.scenario_manager.generate_scenario(
+                scenario_type="survival"
             )
             
-            # Calculate consciousness metrics
-            metrics = {
-                'emotional_stability': np.std(result['emotion_history']),
-                'memory_coherence': self.memory.calculate_coherence(),
-                'narrative_consistency': result['narrative_consistency'],
-                'behavioral_adaptation': result['adaptation_score']
-            }
-            consciousness_metrics.append(metrics)
+            # Run scenario
+            result = self.run_survival_scenario(scenario)
             
-        # Assert consciousness development
-        self.assertTrue(self.check_consciousness_improvement(consciousness_metrics))
+            stress_levels.append(result['stress_level'])
+            success_rates.append(result['success_rate'])
+            
+        # Verify adaptation
+        avg_initial_stress = np.mean(stress_levels[:2])
+        avg_final_stress = np.mean(stress_levels[-2:])
         
-    def test_dreamer_integration(self):
-        """Test DreamerV3 world model integration"""
+        self.assertLess(avg_final_stress, avg_initial_stress)
+        self.assertGreater(success_rates[-1], success_rates[0])
+        
+    def run_survival_scenario(self, scenario: Dict) -> Dict:
+        """Run a single survival scenario"""
         state = torch.randn(32)
-        action = torch.randn(8)
-        reward = torch.tensor([0.5])
-        next_state = torch.randn(32)
-        done = torch.tensor([False])
+        total_stress = 0
+        success_count = 0
+        steps = 0
         
-        # Update world model
-        update_info = self.rl_core.update(
-            state=state,
-            action=action,
-            reward=reward,
-            next_state=next_state,
-            done=done,
-            emotion_context={'valence': 0.8}
-        )
-        
-        self.assertIn('world_model_loss', update_info)
-        self.assertIn('actor_loss', update_info)
-        self.assertIn('critic_loss', update_info)
-        
-    def check_consciousness_improvement(self, metrics_history):
-        """Helper method to evaluate consciousness development"""
-        # Calculate trends in metrics
-        trends = {}
-        for metric in ['emotional_stability', 'memory_coherence',
-                      'narrative_consistency', 'behavioral_adaptation']:
-            values = [m[metric] for m in metrics_history]
-            trends[metric] = np.polyfit(range(len(values)), values, 1)[0]
+        while steps < 100:  # Max steps per scenario
+            # Get attention and stress levels
+            attention_output, attention_metrics = self.attention.forward(
+                input_state=state,
+                emotional_context=torch.randn(128)
+            )
             
-        # Check if majority of metrics show improvement
-        improving_metrics = sum(1 for slope in trends.values() if slope > 0)
-        return improving_metrics >= len(trends) / 2
-        
-    def create_test_agent(self):
-        """Create a test agent for simulation"""
-        return DummyAgent(action_space=8, state_space=32)
-        
-    def create_test_environment(self):
-        """Create a test environment for simulation"""
-        return DummyEnvironment(state_space=32)
-
-class DummyAgent:
-    def __init__(self, action_space, state_space):
-        self.action_space = action_space
-        self.state_space = state_space
-        
-    def get_action(self, state):
-        return torch.randn(self.action_space)
-
-class DummyEnvironment:
-    def __init__(self, state_space):
-        self.state_space = state_space
-        
-    def reset(self):
-        return torch.randn(self.state_space)
-        
-    def step(self, action):
-        next_state = torch.randn(self.state_space)
-        reward = torch.rand(1).item()
-        done = torch.rand(1).item() > 0.95
-        info = {
-            'emotion_values': {
-                'valence': torch.rand(1).item(),
-                'arousal': torch.rand(1).item()
-            },
-            'narrative_consistency': torch.rand(1).item(),
-            'adaptation_score': torch.rand(1).item()
+            # Calculate stress
+            stress_level = attention_metrics['attention_level']
+            total_stress += stress_level
+            
+            # Check for successful adaptation
+            if stress_level < self.config['survival_metrics']['stress_threshold']:
+                success_count += 1
+                
+            steps += 1
+            state = torch.randn(32)  # Next state
+            
+        return {
+            'stress_level': total_stress / steps,
+            'success_rate': success_count / steps,
+            'total_steps': steps
         }
-        return next_state, reward, done, info
 
 if __name__ == '__main__':
     unittest.main()
