@@ -184,6 +184,7 @@ class DreamerEmotionalWrapper:
         self.emotion_network.load_state_dict(checkpoint['emotion_network_state'])
         self.metrics = checkpoint['metrics']
         self.config = checkpoint['config']
+<<<<<<< HEAD:models/predictive/dreamer_Emotional_wrapper.py
 
     def _layer(self, x):
         try:
@@ -194,3 +195,5 @@ class DreamerEmotionalWrapper:
             return x
         except Exception as e:
             raise RuntimeError(f"Layer computation failed: {str(e)}")
+=======
+>>>>>>> c753d0abc01a96f5d2e6eafe30f80fb16c58c3c2:models/predictive/dreamer_emotional_wrapper.py
