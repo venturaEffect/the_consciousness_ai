@@ -9,6 +9,7 @@ from models.memory.emotional_memory_core import EmotionalMemoryCore
 from models.predictive.attention_mechanism import ConsciousnessAttention
 from models.evaluation.consciousness_monitor import ConsciousnessMonitor
 import logging
+from simulations.api.simulation_manager import SimulationManager
 
 @dataclass
 class ConsciousnessState:

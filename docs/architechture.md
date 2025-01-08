@@ -117,3 +117,6 @@ This architecture enables the emergence of consciousness through:
 - Emotional reinforcement learning
 - Social interaction experiences
 - Memory formation and consolidation
+
+The main simulation manager implementation is located at:
+`simulations/api/simulation_manager.py`

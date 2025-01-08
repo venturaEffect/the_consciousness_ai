@@ -9,6 +9,8 @@ from models.fusion.emotional_memory_fusion import EmotionalMemoryFusion
 from models.evaluation.emotional_evaluation import EmotionalEvaluator
 from models.narrative.narrative_engine import NarrativeEngine
 from simulations.scenarios.consciousness_scenarios import ConsciousnessScenarioManager
+from simulations.api.simulation_manager import SimulationManager
+from simulations.enviroments.pavilion_vr_environment import PavilionVREnvironment
 
 @dataclass
 class SimulationMetrics:

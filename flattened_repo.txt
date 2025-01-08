@@ -377,6 +377,9 @@ This architecture enables the emergence of consciousness through:
 - Social interaction experiences
 - Memory formation and consolidation
 
+The main simulation manager implementation is located at:
+`simulations/api/simulation_manager.py`
+
 </docs/architechture.md>
 
 <docs/contributing.md>
@@ -976,6 +979,8 @@ from models.fusion.emotional_memory_fusion import EmotionalMemoryFusion
 from models.evaluation.emotional_evaluation import EmotionalEvaluator
 from models.narrative.narrative_engine import NarrativeEngine
 from simulations.scenarios.consciousness_scenarios import ConsciousnessScenarioManager
+from simulations.api.simulation_manager import SimulationManager
+from simulations.enviroments.pavilion_vr_environment import PavilionVREnvironment
 
 @dataclass
 class SimulationMetrics:
@@ -1191,6 +1196,7 @@ from models.memory.emotional_memory_core import EmotionalMemoryCore
 from models.predictive.attention_mechanism import ConsciousnessAttention
 from models.evaluation.consciousness_monitor import ConsciousnessMonitor
 import logging
+from simulations.api.simulation_manager import SimulationManager
 
 @dataclass
 class ConsciousnessState:
@@ -31734,6 +31740,8 @@ import torch
 from simulations.api.simulation_manager import SimulationManager
 from models.self_model.reinforcement_core import ReinforcementCore
 from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
+from simulations.api.simulation_manager import SimulationManager
+from simulations.scenarios.consciousness_scenarios import ConsciousnessScenarioManager
 
 class TestSimulationIntegration(unittest.TestCase):
     def setUp(self):
