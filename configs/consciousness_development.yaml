@@ -8,6 +8,20 @@ consciousness:
     focus_duration_min: 10
     emotional_salience_weight: 0.6
 
+  # New emotional metadata system
+  emotional_metadata:
+    tagging_model: "clip-like-emotional" # Open source CLIP-style model
+    emotional_dimensions:
+      - valence
+      - arousal
+      - dominance
+      - intensity
+      - social_context
+    metadata_storage:
+      vector_db: "pinecone-v2"
+      emotional_index_name: "emotional-memories"
+      context_window: 1000
+
   emotional_learning:
     initial_scale: 2.0
     positive_emotion_bonus: 0.5
@@ -21,12 +35,26 @@ consciousness:
     adaptation_window: 100
     success_threshold: 0.6
 
+  # Enhanced generative components
+  generative:
+    text_model: "llama-3.3"
+    image_model: "flux"
+    audio_model: "whisper-v3"
+    fusion_model: "multimodal-emotional"
+    temperature: 0.7
+    emotional_conditioning_weight: 0.8
+    memory_reference_weight: 0.6
+
   memory_formation:
     coherence_threshold: 0.7
     emotional_stability: 0.6
     temporal_window: 20
     context_length: 32
     minimum_attention_level: 0.8
+    # New settings
+    emotional_metadata_retention: 0.9
+    generative_reference_threshold: 0.7
+    imagination_creativity_factor: 0.4
 
 # Integration Components
 components:
@@ -37,18 +65,24 @@ components:
     gamma: 0.99
     lambda_gae: 0.95
     imagination_horizon: 15
+    # New emotional integration
+    emotional_condition_size: 128
+    metadata_embedding_size: 256
 
   emotion_network:
-    embedding_size: 128
-    num_heads: 8
+    embedding_size: 256 # Increased for richer emotional context
+    num_heads: 12
     dropout: 0.1
     update_frequency: 10
+    metadata_fusion_layers: 3
 
   narrative:
     model: "llama-3.3"
-    max_length: 512
+    max_length: 1024 # Increased for better context
     temperature: 0.7
     context_window: 2048
+    emotion_prefix_tokens: true
+    memory_conditioning: true
 
 # Evaluation Metrics
 metrics:

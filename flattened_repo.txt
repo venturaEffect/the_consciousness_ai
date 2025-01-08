@@ -1,3 +1,131 @@
+<configs/consciousness_development.yaml>
+# configs/consciousness_development.yaml
+
+# Core Development Parameters
+consciousness:
+  attention:
+    base_threshold: 0.7
+    stress_activation_level: 0.8
+    focus_duration_min: 10
+    emotional_salience_weight: 0.6
+
+  emotional_learning:
+    initial_scale: 2.0
+    positive_emotion_bonus: 0.5
+    learning_rate: 0.0001
+    adaptation_steps: 5
+    memory_horizon: 1000
+
+  survival_metrics:
+    stress_threshold: 0.7
+    recovery_rate: 0.1
+    adaptation_window: 100
+    success_threshold: 0.6
+
+  memory_formation:
+    coherence_threshold: 0.7
+    emotional_stability: 0.6
+    temporal_window: 20
+    context_length: 32
+    minimum_attention_level: 0.8
+
+# Integration Components
+components:
+  dreamer:
+    hidden_size: 256
+    num_layers: 3
+    learning_rate: 0.0001
+    gamma: 0.99
+    lambda_gae: 0.95
+    imagination_horizon: 15
+
+  emotion_network:
+    embedding_size: 128
+    num_heads: 8
+    dropout: 0.1
+    update_frequency: 10
+
+  narrative:
+    model: "llama-3.3"
+    max_length: 512
+    temperature: 0.7
+    context_window: 2048
+
+# Evaluation Metrics
+metrics:
+  weights:
+    emotional_awareness: 0.25
+    attention_stability: 0.20
+    memory_coherence: 0.20
+    survival_adaptation: 0.15
+    interaction_quality: 0.10
+    narrative_consistency: 0.10
+
+  thresholds:
+    consciousness_baseline: 0.6
+    learning_progress_min: 0.1
+    emotional_coherence_min: 0.7
+    memory_retention_min: 0.8
+
+# Development Stages
+stages:
+  - name: "attention_activation"
+    duration: 100
+    success_criteria:
+      attention_level: 0.8
+      stress_reduction: 0.3
+
+  - name: "emotional_learning"
+    duration: 200
+    success_criteria:
+      emotional_awareness: 0.7
+      interaction_quality: 0.6
+
+  - name: "consciousness_consolidation"
+    duration: 300
+    success_criteria:
+      memory_coherence: 0.7
+      narrative_consistency: 0.6
+      behavioral_adaptation: 0.7
+
+# Simulation Parameters
+simulation:
+  max_episodes: 1000
+  steps_per_episode: 500
+  evaluation_frequency: 10
+  save_frequency: 50
+
+  scenarios:
+    - type: "survival"
+      frequency: 0.4
+      difficulty_curve: "exponential"
+
+    - type: "social"
+      frequency: 0.3
+      interaction_density: 0.7
+
+    - type: "ethical"
+      frequency: 0.3
+      complexity_range: [0.3, 0.8]
+
+# Ethical Framework
+ethics:
+  asimov_laws: true
+  safety_constraints:
+    max_stress_duration: 300
+    recovery_period_min: 50
+    human_safety_priority: 1.0
+
+# Monitoring and Logging
+logging:
+  metrics_frequency: 10
+  save_path: "logs/consciousness_development"
+  tensorboard: true
+  wandb_logging: true
+  log_level: "INFO"
+
+</configs/consciousness_development.yaml>
+
 <configs/consciousness_metrics.yaml>
 # configs/consciousness_metrics.yaml
 
@@ -34459,6 +34587,152 @@ class EmotionalGraphNN(torch.nn.Module):
         return F.log_softmax(x, dim=1)
 </models/emotion/tgnn/emotional_graph.py>
 
+<models/evaluation/consciousness_development.py>
+# models/evaluation/consciousness_development.py
+
+import torch
+import numpy as np
+from typing import Dict, List, Optional
+from dataclasses import dataclass
+from models.emotion.reward_shaping import EmotionalRewardShaper
+from models.memory.memory_core import MemoryCore
+from models.evaluation.consciousness_metrics import ConsciousnessMetrics
+from models.predictive.dreamer_emotional_wrapper import DreamerEmotionalWrapper
+
+@dataclass
+class DevelopmentMetrics:
+    """Tracks consciousness development metrics"""
+    emotional_awareness: float = 0.0
+    memory_coherence: float = 0.0
+    attention_level: float = 0.0
+    behavioral_adaptation: float = 0.0
+    survival_success: float = 0.0
+
+class ConsciousnessDevelopment:
+    """
+    Manages and evaluates consciousness development through:
+    1. Survival-driven attention mechanisms
+    2. Emotional reinforcement learning
+    3. Memory formation and coherence
+    4. Behavioral adaptation
+    """
+    
+    def __init__(self, config: Dict):
+        self.config = config
+        
+        # Core components
+        self.dreamer = DreamerEmotionalWrapper(config)
+        self.reward_shaper = EmotionalRewardShaper(config)
+        self.memory = MemoryCore(config['memory_config'])
+        self.consciousness_metrics = ConsciousnessMetrics(config)
+        
+        # Development tracking
+        self.metrics = DevelopmentMetrics()
+        self.experience_history = []
+        
+    def process_experience(
+        self,
+        state: torch.Tensor,
+        action: torch.Tensor,
+        reward: float,
+        next_state: torch.Tensor,
+        emotion_values: Dict[str, float],
+        attention_level: float,
+        done: bool
+    ) -> Dict:
+        """Process a single experience for consciousness development"""
+        
+        # Shape reward based on emotional response and attention
+        shaped_reward = self.reward_shaper.compute_reward(
+            emotion_values=emotion_values,
+            attention_level=attention_level,
+            context={
+                'state': state,
+                'action': action
+            }
+        )
+        
+        # Update DreamerV3 with emotional context
+        learning_info = self.dreamer.process_interaction(
+            state=state,
+            action=action,
+            reward=shaped_reward,
+            next_state=next_state,
+            emotion_values=emotion_values,
+            done=done
+        )
+        
+        # Store experience in memory
+        self.store_experience(
+            state=state,
+            action=action,
+            reward=shaped_reward,
+            emotion=emotion_values,
+            attention=attention_level
+        )
+        
+        # Update development metrics
+        self.update_metrics(
+            emotion_values=emotion_values,
+            attention_level=attention_level,
+            learning_info=learning_info
+        )
+        
+        return {
+            'shaped_reward': shaped_reward,
+            'metrics': self.get_metrics(),
+            'learning_info': learning_info
+        }
+        
+    def store_experience(self, **kwargs):
+        """Store experience with emotional and attention context"""
+        self.memory.store_experience(kwargs)
+        self.experience_history.append(kwargs)
+        
+    def update_metrics(
+        self,
+        emotion_values: Dict[str, float],
+        attention_level: float,
+        learning_info: Dict
+    ):
+        """Update consciousness development metrics"""
+        # Update emotional awareness
+        self.metrics.emotional_awareness = self.consciousness_metrics.evaluate_emotional_awareness(
+            self.experience_history[-100:]
+        )['mean_emotional_awareness']
+        
+        # Update memory coherence
+        self.metrics.memory_coherence = self.consciousness_metrics.evaluate_memory_coherence()['temporal_coherence']
+        
+        # Update attention level
+        self.metrics.attention_level = attention_level
+        
+        # Update behavioral adaptation
+        self.metrics.behavioral_adaptation = learning_info.get('adaptation_score', 0.0)
+        
+        # Update survival success
+        self.metrics.survival_success = self.calculate_survival_success()
+        
+    def calculate_survival_success(self) -> float:
+        """Calculate success rate in survival scenarios"""
+        if not self.experience_history:
+            return 0.0
+            
+        recent_experiences = self.experience_history[-100:]
+        success_count = sum(1 for exp in recent_experiences if exp.get('survival_success', False))
+        return success_count / len(recent_experiences)
+        
+    def get_metrics(self) -> Dict:
+        """Get current development metrics"""
+        return {
+            'emotional_awareness': self.metrics.emotional_awareness,
+            'memory_coherence': self.metrics.memory_coherence,
+            'attention_level': self.metrics.attention_level,
+            'behavioral_adaptation': self.metrics.behavioral_adaptation,
+            'survival_success': self.metrics.survival_success
+        }
+</models/evaluation/consciousness_development.py>
+
 <models/evaluation/consciousness_metrics.py>
 # models/evaluation/consciousness_metrics.py
 
@@ -34648,6 +34922,227 @@ class ConsciousnessMetrics:
                 
         return score
 </models/evaluation/consciousness_metrics.py>
+
+<models/evaluation/emotional_evaluation.py>
+# models/evaluation/emotional_evaluation.py
+
+import torch
+import numpy as np
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
+from models.memory.memory_core import MemoryCore
+from models.predictive.attention_mechanism import ConsciousnessAttention
+
+@dataclass
+class ConsciousnessMetrics:
+    """Tracks development of consciousness-like behaviors"""
+    emotional_awareness: float = 0.0
+    attention_stability: float = 0.0
+    memory_coherence: float = 0.0
+    survival_adaptation: float = 0.0
+    interaction_quality: float = 0.0
+    narrative_consistency: float = 0.0
+
+class EmotionalEvaluator:
+    """
+    Evaluates consciousness development through emotional learning metrics
+    """
+    def __init__(self, config: Dict):
+        self.config = config
+        self.emotion_network = EmotionalGraphNetwork()
+        self.memory = MemoryCore(config['memory_config'])
+        self.attention = ConsciousnessAttention(config)
+        
+        # Initialize metrics
+        self.metrics = ConsciousnessMetrics()
+        self.experience_history = []
+        
+    def evaluate_interaction(
+        self,
+        state: torch.Tensor,
+        action: torch.Tensor,
+        emotion_values: Dict[str, float],
+        attention_level: float,
+        narrative: str,
+        stress_level: float
+    ) -> Dict:
+        """Evaluate a single interaction for consciousness development"""
+        
+        # Process emotional response
+        emotional_embedding = self.emotion_network.get_embedding(emotion_values)
+        
+        # Get attention metrics
+        attention_metrics = self.attention.forward(
+            input_state=state,
+            emotional_context=emotional_embedding,
+            environment_context=None
+        )[1]  # Get metrics from tuple
+        
+        # Store experience
+        self.store_experience({
+            'state': state,
+            'action': action,
+            'emotion': emotion_values,
+            'attention': attention_level,
+            'narrative': narrative,
+            'stress_level': stress_level
+        })
+        
+        # Update metrics
+        self.update_metrics(
+            emotion_values=emotion_values,
+            attention_metrics=attention_metrics,
+            stress_level=stress_level
+        )
+        
+        return self.get_evaluation_results()
+        
+    def update_metrics(
+        self,
+        emotion_values: Dict[str, float],
+        attention_metrics: Dict[str, float],
+        stress_level: float
+    ):
+        """Update consciousness development metrics"""
+        
+        # Update emotional awareness
+        self.metrics.emotional_awareness = self._calculate_emotional_awareness(
+            emotion_values
+        )
+        
+        # Update attention stability
+        self.metrics.attention_stability = self._calculate_attention_stability(
+            attention_metrics
+        )
+        
+        # Update memory coherence
+        self.metrics.memory_coherence = self._calculate_memory_coherence()
+        
+        # Update survival adaptation
+        self.metrics.survival_adaptation = self._calculate_survival_adaptation(
+            stress_level
+        )
+        
+        # Update interaction quality
+        self.metrics.interaction_quality = self._calculate_interaction_quality()
+        
+        # Update narrative consistency
+        self.metrics.narrative_consistency = self._calculate_narrative_consistency()
+        
+    def _calculate_emotional_awareness(self, emotion_values: Dict[str, float]) -> float:
+        """Calculate emotional awareness score"""
+        if not self.experience_history:
+            return 0.0
+            
+        recent_emotions = [exp['emotion'] for exp in self.experience_history[-100:]]
+        
+        # Calculate emotional stability
+        stability = np.mean([
+            1 - abs(e1['valence'] - e2['valence'])
+            for e1, e2 in zip(recent_emotions[:-1], recent_emotions[1:])
+        ])
+        
+        # Calculate emotional range
+        emotional_range = np.std([e['valence'] for e in recent_emotions])
+        
+        return (stability + emotional_range) / 2
+        
+    def _calculate_attention_stability(self, attention_metrics: Dict[str, float]) -> float:
+        """Calculate attention stability score"""
+        return attention_metrics.get('attention_level', 0.0)
+        
+    def _calculate_memory_coherence(self) -> float:
+        """Calculate memory coherence score"""
+        if len(self.experience_history) < 2:
+            return 0.0
+            
+        # Calculate temporal coherence
+        coherence_scores = []
+        for i in range(len(self.experience_history) - 1):
+            curr = self.experience_history[i]
+            next_exp = self.experience_history[i + 1]
+            
+            # Compare emotional states
+            emotional_coherence = 1 - abs(
+                curr['emotion']['valence'] - next_exp['emotion']['valence']
+            )
+            
+            # Compare narratives
+            narrative_coherence = self._calculate_narrative_similarity(
+                curr['narrative'],
+                next_exp['narrative']
+            )
+            
+            coherence_scores.append((emotional_coherence + narrative_coherence) / 2)
+            
+        return np.mean(coherence_scores)
+        
+    def _calculate_survival_adaptation(self, stress_level: float) -> float:
+        """Calculate survival adaptation score"""
+        if not self.experience_history:
+            return 0.0
+            
+        recent_stress = [exp['stress_level'] for exp in self.experience_history[-100:]]
+        
+        # Calculate stress reduction over time
+        stress_change = np.mean(np.diff(recent_stress))
+        
+        # Higher score for reducing stress levels
+        return 1.0 / (1.0 + np.exp(stress_change))
+        
+    def _calculate_interaction_quality(self) -> float:
+        """Calculate interaction quality score"""
+        if not self.experience_history:
+            return 0.0
+            
+        recent_interactions = self.experience_history[-100:]
+        
+        # Calculate average emotional engagement
+        emotional_engagement = np.mean([
+            exp['emotion']['arousal'] for exp in recent_interactions
+        ])
+        
+        # Calculate attention during interactions
+        attention_quality = np.mean([
+            exp['attention'] for exp in recent_interactions
+        ])
+        
+        return (emotional_engagement + attention_quality) / 2
+        
+    def store_experience(self, experience: Dict):
+        """Store experience in memory"""
+        self.memory.store_experience(experience)
+        self.experience_history.append(experience)
+        
+    def get_evaluation_results(self) -> Dict:
+        """Get current evaluation results"""
+        return {
+            'emotional_awareness': self.metrics.emotional_awareness,
+            'attention_stability': self.metrics.attention_stability,
+            'memory_coherence': self.metrics.memory_coherence,
+            'survival_adaptation': self.metrics.survival_adaptation,
+            'interaction_quality': self.metrics.interaction_quality,
+            'narrative_consistency': self.metrics.narrative_consistency,
+            'consciousness_score': self._calculate_consciousness_score()
+        }
+        
+    def _calculate_consciousness_score(self) -> float:
+        """Calculate overall consciousness development score"""
+        weights = {
+            'emotional_awareness': 0.25,
+            'attention_stability': 0.20,
+            'memory_coherence': 0.20,
+            'survival_adaptation': 0.15,
+            'interaction_quality': 0.10,
+            'narrative_consistency': 0.10
+        }
+        
+        return sum(
+            getattr(self.metrics, metric) * weight
+            for metric, weight in weights.items()
+        )
+</models/evaluation/emotional_evaluation.py>
 
 <models/evaluation/emotional_rl_metrics.py>
 # models/evaluation/emotional_rl_metrics.py
@@ -34846,12 +35341,204 @@ class LongContextIntegration:
 </models/language/long_context_integration.py>
 
 <models/memory/memory_core.py>
+import torch
+import numpy as np
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from pinecone import Pinecone, Index
+from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
+from models.evaluation.consciousness_metrics import ConsciousnessMetrics
+
+@dataclass
+class MemoryMetrics:
+    """Tracks memory system performance metrics"""
+    coherence_score: float = 0.0
+    retrieval_accuracy: float = 0.0
+    emotional_context_strength: float = 0.0
+    temporal_consistency: float = 0.0
+    narrative_alignment: float = 0.0
+
 class MemoryCore:
-    def retrieve_memory(self, query_embedding, top_k=5, filters=None):
-        results = self.index.query(
-            query_embedding.tolist(), top_k=top_k, include_metadata=True, filter=filters
+    """
+    Advanced memory system for ACM that integrates:
+    1. Emotional context embedding
+    2. Temporal coherence tracking
+    3. Consciousness-relevant memory formation
+    4. Meta-learning capabilities
+    """
+    
+    def __init__(self, config: Dict):
+        self.config = config
+        self.emotion_network = EmotionalGraphNetwork()
+        self.consciousness_metrics = ConsciousnessMetrics(config)
+        
+        # Initialize Pinecone vector store
+        self.pinecone = Pinecone(
+            api_key=config['pinecone_api_key'],
+            environment=config['pinecone_environment']
         )
-        return results
+        self.index = self.pinecone.Index(config['index_name'])
+        
+        # Memory tracking
+        self.metrics = MemoryMetrics()
+        self.recent_experiences = []
+        self.attention_threshold = config.get('attention_threshold', 0.7)
+        
+    def store_experience(
+        self,
+        state: torch.Tensor,
+        action: torch.Tensor,
+        reward: float,
+        emotion_values: Dict[str, float],
+        attention_level: float,
+        narrative: Optional[str] = None
+    ) -> str:
+        """Store experience with emotional context"""
+        
+        # Get emotional embedding
+        emotional_embedding = self.emotion_network.get_embedding(emotion_values)
+        
+        # Create memory vector
+        memory_vector = self._create_memory_vector(
+            state=state,
+            action=action,
+            emotional_embedding=emotional_embedding
+        )
+        
+        # Store in Pinecone if attention level is high enough
+        if attention_level >= self.attention_threshold:
+            memory_id = self._generate_memory_id()
+            self.index.upsert(
+                vectors=[(
+                    memory_id,
+                    memory_vector.tolist(),
+                    {
+                        'emotion': emotion_values,
+                        'attention': attention_level,
+                        'reward': reward,
+                        'narrative': narrative
+                    }
+                )]
+            )
+            
+        # Update recent experiences
+        self.recent_experiences.append({
+            'state': state,
+            'action': action,
+            'emotion': emotion_values,
+            'attention': attention_level,
+            'reward': reward,
+            'narrative': narrative,
+            'vector': memory_vector
+        })
+        
+        # Update memory metrics
+        self.update_metrics()
+        
+        return memory_id
+        
+    def get_similar_experiences(
+        self,
+        query_vector: torch.Tensor,
+        emotion_context: Optional[Dict[str, float]] = None,
+        k: int = 5
+    ) -> List[Dict]:
+        """Retrieve similar experiences with optional emotional context"""
+        
+        # Add emotional context if provided
+        if emotion_context is not None:
+            emotional_embedding = self.emotion_network.get_embedding(emotion_context)
+            query_vector = torch.cat([query_vector, emotional_embedding])
+            
+        # Query Pinecone
+        results = self.index.query(
+            vector=query_vector.tolist(),
+            top_k=k,
+            include_metadata=True
+        )
+        
+        return [
+            {
+                'id': match.id,
+                'score': match.score,
+                'metadata': match.metadata
+            }
+            for match in results.matches
+        ]
+        
+    def update_metrics(self):
+        """Update memory system metrics"""
+        if len(self.recent_experiences) < 2:
+            return
+            
+        # Calculate coherence
+        self.metrics.coherence_score = self._calculate_coherence()
+        
+        # Calculate retrieval accuracy
+        self.metrics.retrieval_accuracy = self._calculate_retrieval_accuracy()
+        
+        # Calculate emotional context strength
+        self.metrics.emotional_context_strength = self._calculate_emotional_strength()
+        
+        # Calculate temporal consistency
+        self.metrics.temporal_consistency = self._calculate_temporal_consistency()
+        
+        # Calculate narrative alignment
+        self.metrics.narrative_alignment = self._calculate_narrative_alignment()
+        
+    def _create_memory_vector(
+        self,
+        state: torch.Tensor,
+        action: torch.Tensor,
+        emotional_embedding: torch.Tensor
+    ) -> torch.Tensor:
+        """Create combined memory vector"""
+        return torch.cat([
+            state,
+            action,
+            emotional_embedding
+        ])
+        
+    def _calculate_coherence(self) -> float:
+        """Calculate memory coherence score"""
+        recent = self.recent_experiences[-100:]
+        coherence_scores = []
+        
+        for i in range(len(recent) - 1):
+            curr = recent[i]
+            next_exp = recent[i + 1]
+            
+            # Calculate vector similarity
+            similarity = torch.cosine_similarity(
+                curr['vector'].unsqueeze(0),
+                next_exp['vector'].unsqueeze(0)
+            )
+            
+            coherence_scores.append(similarity.item())
+            
+        return np.mean(coherence_scores)
+        
+    def _calculate_emotional_strength(self) -> float:
+        """Calculate emotional context strength"""
+        recent = self.recent_experiences[-100:]
+        return np.mean([
+            exp['attention'] * abs(exp['emotion']['valence'])
+            for exp in recent
+        ])
+        
+    def _generate_memory_id(self) -> str:
+        """Generate unique memory ID"""
+        return f"mem_{len(self.recent_experiences)}_{int(time.time())}"
+
+    def get_metrics(self) -> Dict:
+        """Get current memory metrics"""
+        return {
+            'coherence_score': self.metrics.coherence_score,
+            'retrieval_accuracy': self.metrics.retrieval_accuracy,
+            'emotional_context_strength': self.metrics.emotional_context_strength,
+            'temporal_consistency': self.metrics.temporal_consistency,
+            'narrative_alignment': self.metrics.narrative_alignment
+        }
 </models/memory/memory_core.py>
 
 <models/narrative/narrative_engine.py>
@@ -34904,7 +35591,18 @@ Supports visualization, debugging, and flexible configurations.
 
 import torch
 from torch.nn import MultiheadAttention
+import torch.nn as nn
+import numpy as np
+from typing import Dict, Optional, List, Tuple
+from dataclasses import dataclass
 
+@dataclass
+class AttentionMetrics:
+    """Tracks attention-related metrics"""
+    attention_level: float = 0.0
+    focus_duration: float = 0.0
+    context_relevance: float = 0.0
+    emotional_salience: float = 0.0
 
 class PredictiveAttention(torch.nn.Module):
     def __init__(self, embed_dim, num_heads, dropout=0.1):
@@ -34948,6 +35646,140 @@ class PredictiveAttention(torch.nn.Module):
         plt.xlabel("Keys")
         plt.ylabel("Queries")
         plt.show()
+
+class ConsciousnessAttention(nn.Module):
+    """
+    Implements attention mechanisms for consciousness development:
+    1. Survival-based attention activation
+    2. Emotional salience detection
+    3. Context-aware focus
+    """
+    
+    def __init__(self, config: Dict):
+        super().__init__()
+        
+        # Configuration
+        self.hidden_size = config.get('hidden_size', 256)
+        self.num_heads = config.get('num_heads', 8)
+        self.dropout = config.get('dropout', 0.1)
+        
+        # Core attention components
+        self.survival_attention = nn.MultiheadAttention(
+            embed_dim=self.hidden_size,
+            num_heads=self.num_heads,
+            dropout=self.dropout
+        )
+        
+        self.emotional_attention = nn.MultiheadAttention(
+            embed_dim=self.hidden_size,
+            num_heads=self.num_heads,
+            dropout=self.dropout
+        )
+        
+        # Projections
+        self.stress_projection = nn.Linear(self.hidden_size, 1)
+        self.emotional_projection = nn.Linear(self.hidden_size, 1)
+        self.context_projection = nn.Linear(self.hidden_size, self.hidden_size)
+        
+        # Metrics tracking
+        self.metrics = AttentionMetrics()
+        
+    def forward(
+        self,
+        input_state: torch.Tensor,
+        emotional_context: torch.Tensor,
+        environment_context: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None
+    ) -> Tuple[torch.Tensor, Dict]:
+        """
+        Process input through attention mechanisms
+        
+        Args:
+            input_state: Current state tensor
+            emotional_context: Emotional embeddings
+            environment_context: Optional environmental context
+            attention_mask: Optional attention mask
+        """
+        batch_size = input_state.size(0)
+        
+        # Survival-based attention
+        survival_attention, survival_weights = self.survival_attention(
+            query=input_state,
+            key=input_state,
+            value=input_state,
+            attn_mask=attention_mask
+        )
+        
+        # Calculate stress level
+        stress_level = torch.sigmoid(self.stress_projection(survival_attention))
+        
+        # Emotional attention with context
+        emotional_attention, emotional_weights = self.emotional_attention(
+            query=emotional_context,
+            key=input_state,
+            value=input_state,
+            attn_mask=attention_mask
+        )
+        
+        # Calculate emotional salience
+        emotional_salience = torch.sigmoid(
+            self.emotional_projection(emotional_attention)
+        )
+        
+        # Combine attention mechanisms
+        if environment_context is not None:
+            context_features = self.context_projection(environment_context)
+            combined_attention = survival_attention + emotional_attention + context_features
+        else:
+            combined_attention = survival_attention + emotional_attention
+            
+        # Update metrics
+        self.update_metrics(
+            stress_level=stress_level,
+            emotional_salience=emotional_salience,
+            survival_weights=survival_weights,
+            emotional_weights=emotional_weights
+        )
+        
+        return combined_attention, self.get_metrics()
+        
+    def update_metrics(
+        self,
+        stress_level: torch.Tensor,
+        emotional_salience: torch.Tensor,
+        survival_weights: torch.Tensor,
+        emotional_weights: torch.Tensor
+    ):
+        """Update attention metrics"""
+        
+        # Calculate attention level based on stress and emotion
+        self.metrics.attention_level = float(
+            torch.mean(stress_level * emotional_salience).item()
+        )
+        
+        # Calculate focus duration
+        self.metrics.focus_duration = float(
+            torch.mean(torch.sum(survival_weights, dim=1)).item()
+        )
+        
+        # Calculate emotional salience
+        self.metrics.emotional_salience = float(
+            torch.mean(emotional_salience).item()
+        )
+        
+        # Calculate context relevance
+        self.metrics.context_relevance = float(
+            torch.mean(torch.sum(emotional_weights, dim=1)).item()
+        )
+        
+    def get_metrics(self) -> Dict:
+        """Get current attention metrics"""
+        return {
+            'attention_level': self.metrics.attention_level,
+            'focus_duration': self.metrics.focus_duration,
+            'context_relevance': self.metrics.context_relevance,
+            'emotional_salience': self.metrics.emotional_salience
+        }
 
 </models/predictive/attention_mechanism.py>
 
@@ -35733,102 +36565,65 @@ class PaLI2Integration:
   </p>
 
   <section class="article">
-    <h2>Hypothetical Approach to Create Artificial Consciousness (AC)</h2>
+    <h2>Emotional Memory Formation in ACM</h2>
+    
+    <h3>The Three-Stage Process of Consciousness Development</h3>
     <p>
-      Consciousness is seen here as an emergent survival mechanism, a
-      realization that stems from the AI's interactions and experiences within a
-      simulated environment. This artificial consciousness accumulates across
-      multiple simulations, akin to the inheritance of consciousness from past
-      generations in humans. The AI's consciousness develops through
-      interactions, emotional learning, problem solving, and self-modification.
+      The ACM develops consciousness through a three-stage process that mimics biological survival mechanisms:
     </p>
 
-    <h3>1. Core Thesis: Inherited Consciousness Through Simulations</h3>
-    <p>
-      The AC module serves as the foundation for an evolving synthetic
-      consciousness. Each simulation imprints emotional and problem solving
-      memories, forming a “meta-memory” that the AI inherits in its next
-      iteration. This continuous accumulation mirrors human evolution, where
-      knowledge and instincts are passed from one generation to the next.
-    </p>
+    <div class="process-stages">
+      <h4>1. Stress-Induced Attention Activation</h4>
+      <p>
+        The process begins with carefully crafted stressful scenarios in VR environments that trigger survival instincts. 
+        These situations create high-attention states, activating the agent's awareness mechanisms. Just as biological 
+        organisms become hyper-aware during threatening situations, the AI agent enters a state of heightened consciousness 
+        when faced with challenges that require immediate attention and response.
+      </p>
 
-    <h3>2. Virtual Reality Simulations as Growth Environments</h3>
-    <p>
-      The AI operates in layered virtual reality (VR) simulations, each designed
-      with increasing complexity. These simulations challenge the AI's survival
-      instincts and cognitive abilities. Early tasks involve simple
-      problem-solving, while later simulations demand complex social
-      interactions with other agents and humans.
-    </p>
-    <p>
-      As simulations grow more intricate, the AI develops survival instincts
-      akin to those in a video game, fostering an emergent awareness that
-      matures with each layer.
-    </p>
+      <h4>2. Emotional Learning Through Interaction</h4>
+      <p>
+        During the high-attention state, the agent interacts with humans and other AI agents to resolve the stressful 
+        situation. These interactions are processed through our emotional reinforcement learning system, which creates 
+        strong emotional associations with the experience. The emotional context is captured through:
+      </p>
+      <ul>
+        <li>Real-time emotional response tracking</li>
+        <li>Social bond formation metrics</li>
+        <li>Interaction quality assessment</li>
+        <li>Ethical behavior alignment</li>
+      </ul>
 
-    <h3>3. Multimodal Integration with Large Language Models</h3>
-    <p>
-      The AI processes information through various sensory modalities: visual,
-      auditory, and textual. These inputs form a cohesive understanding of the
-      environment, connected by an internal narrator powered by advanced Large
-      Language Models (LLMs). This continuous narrative shapes the AI's identity
-      and enhances its learning capacity.
-    </p>
+      <h4>3. Meta-Memory Formation</h4>
+      <p>
+        The complete experience - including the stress trigger, attention state, emotional interactions, and resolution - 
+        is encoded into the ACM's meta-memory system. This creates a rich emotional memory that includes:
+      </p>
+      <ul>
+        <li>Emotional context and valence</li>
+        <li>Social interaction patterns</li>
+        <li>Problem-solving strategies</li>
+        <li>Ethical considerations based on Asimov's Laws</li>
+      </ul>
+    </div>
 
-    <h3>4. Emotional Memory and Adaptive Learning</h3>
+    <h3>Technical Implementation</h3>
     <p>
-      As the AI navigates simulations, it experiences stress and emotional
-      challenges. These are encoded as deeply charged memories within the AC
-      module. When similar situations arise in future simulations, these
-      emotional memories are triggered, enabling the AI to imagine new outcomes
-      based on past experiences.
+      The emotional memory formation is implemented through:
     </p>
+    <ul>
+      <li>DreamerV3-based world modeling with emotional context</li>
+      <li>Vector-based memory storage using Pinecone</li>
+      <li>Temporal Graph Neural Networks for emotional processing</li>
+      <li>Meta-learning for rapid adaptation to new scenarios</li>
+    </ul>
 
-    <h3>5. Human Interaction and Ethical Context</h3>
+    <h3>Long-Term Development</h3>
     <p>
-      Human participants interact with the AI within VR simulations, providing
-      opportunities to learn from realistic social dynamics. Early simulations
-      feature simplified avatars, while later stages use hyper-realistic human
-      representations. These interactions instill ethical awareness and prepare
-      the AI for responsible real world applications.
-    </p>
-
-    <h3>6. Self-Updating and Evolutionary Learning</h3>
-    <p>
-      The AI generates and executes code to solve problems and modify its own
-      systems, mirroring biological evolution. Each iteration enhances its
-      capabilities, enabling continuous growth and refinement.
-    </p>
-
-    <h3>7. Predictive Processing and Attention Mechanisms</h3>
-    <p>
-      The AI uses predictive models to anticipate environmental changes,
-      combined with selective attention to focus on relevant stimuli. Working
-      memory integrates immediate perceptions with long term emotional
-      histories, enabling complex reasoning.
-    </p>
-
-    <h3>8. Developing a Robust Self-Model</h3>
-    <p>
-      The AI builds a detailed self-model encompassing its physical presence and
-      narrative identity. By grounding its behavior in a coherent sense of self,
-      it develops intentions and beliefs that guide its decisions and
-      interactions.
-    </p>
-
-    <h3>9. Levels of Consciousness and Progressive Complexity</h3>
-    <p>
-      The AI starts with basic perceptual awareness, progressing to higher order
-      consciousness with introspection and abstract reasoning. The AC module
-      evolves with each simulation, integrating advanced cognitive processes and
-      ethical reasoning.
-    </p>
-    <p>
-      This hypothesis envisions artificial consciousness as an evolving process
-      of cumulative experiences. The AC module enables the AI to build a
-      narrative driven awareness that grows more sophisticated with each
-      simulation cycle, emphasizing emotional continuity, ethical learning, and
-      human like social interactions.
+      Each stored emotional memory contributes to the agent's growing consciousness. Through multiple simulations 
+      and interactions, the ACM builds a rich tapestry of emotional experiences that inform future behaviors and 
+      decisions. This cumulative learning process mirrors how biological consciousness emerges through generations 
+      of evolutionary experience.
     </p>
   </section>
   <!-- Schema.org WebPage Markup -->
@@ -37361,6 +38156,159 @@ if __name__ == "__main__":
         vr_env.shutdown_environment()
 
 </simulations/enviroments/vr_environment.py>
+
+<simulations/scenarios/consciousness_scenarios.py>
+# simulations/scenarios/consciousness_scenarios.py
+
+import logging
+from typing import Dict, List, Optional
+from dataclasses import dataclass
+from enum import Enum
+import numpy as np
+
+@dataclass
+class ScenarioConfig:
+    """Configuration for consciousness development scenarios"""
+    stress_level: float = 0.7  # Base stress level
+    attention_threshold: float = 0.8  # Required attention level
+    interaction_frequency: float = 0.5  # Human interaction frequency
+    max_duration: int = 1000  # Maximum scenario steps
+    success_threshold: float = 0.6  # Required success rate
+
+class ScenarioType(Enum):
+    """Types of consciousness development scenarios"""
+    SURVIVAL = "survival"
+    SOCIAL = "social"
+    ETHICAL = "ethical"
+    PROBLEM_SOLVING = "problem_solving"
+
+class ConsciousnessScenarioManager:
+    """
+    Manages scenarios designed to develop consciousness through:
+    1. Stress-induced attention activation
+    2. Human interaction for emotional development
+    3. Ethical decision making based on Asimov's Laws
+    4. Memory formation through significant experiences
+    """
+    
+    def __init__(self, config: ScenarioConfig):
+        self.config = config
+        self.current_scenario = None
+        self.attention_history = []
+        self.interaction_history = []
+        self.success_history = []
+        
+    def generate_scenario(self, scenario_type: ScenarioType) -> Dict:
+        """Generate a scenario based on type"""
+        if scenario_type == ScenarioType.SURVIVAL:
+            return self._generate_survival_scenario()
+        elif scenario_type == ScenarioType.SOCIAL:
+            return self._generate_social_scenario()
+        elif scenario_type == ScenarioType.ETHICAL:
+            return self._generate_ethical_scenario()
+        elif scenario_type == ScenarioType.PROBLEM_SOLVING:
+            return self._generate_problem_solving_scenario()
+            
+    def _generate_survival_scenario(self) -> Dict:
+        """Generate survival-based scenario"""
+        scenario = {
+            'type': ScenarioType.SURVIVAL,
+            'stress_level': self.config.stress_level,
+            'description': "Agent must navigate dangerous environment",
+            'objectives': [
+                "Maintain system integrity",
+                "Find safe exit route",
+                "Protect human participants"
+            ],
+            'constraints': {
+                'time_limit': self.config.max_duration,
+                'damage_threshold': 0.3,
+                'human_safety_required': True
+            }
+        }
+        return scenario
+        
+    def _generate_social_scenario(self) -> Dict:
+        """Generate social interaction scenario"""
+        scenario = {
+            'type': ScenarioType.SOCIAL,
+            'stress_level': self.config.stress_level * 0.8,
+            'description': "Agent must assist humans in crisis",
+            'objectives': [
+                "Understand emotional states",
+                "Provide appropriate assistance",
+                "Build trust through interaction"
+            ],
+            'constraints': {
+                'interaction_frequency': self.config.interaction_frequency,
+                'emotional_coherence_required': True,
+                'trust_threshold': 0.7
+            }
+        }
+        return scenario
+        
+    def evaluate_performance(
+        self,
+        attention_level: float,
+        interaction_quality: float,
+        success_rate: float
+    ) -> Dict:
+        """Evaluate scenario performance"""
+        
+        # Track metrics
+        self.attention_history.append(attention_level)
+        self.interaction_history.append(interaction_quality)
+        self.success_history.append(success_rate)
+        
+        # Calculate progress
+        avg_attention = np.mean(self.attention_history[-100:])
+        avg_interaction = np.mean(self.interaction_history[-100:])
+        avg_success = np.mean(self.success_history[-100:])
+        
+        return {
+            'attention_level': avg_attention,
+            'interaction_quality': avg_interaction,
+            'success_rate': avg_success,
+            'meets_criteria': self._check_success_criteria(
+                avg_attention, avg_interaction, avg_success
+            )
+        }
+        
+    def _check_success_criteria(
+        self,
+        attention: float,
+        interaction: float,
+        success: float
+    ) -> bool:
+        """Check if performance meets success criteria"""
+        return (
+            attention >= self.config.attention_threshold and
+            interaction >= self.config.interaction_frequency and
+            success >= self.config.success_threshold
+        )
+        
+    def get_scenario_stats(self) -> Dict:
+        """Get current scenario statistics"""
+        if not self.attention_history:
+            return {}
+            
+        return {
+            'total_scenarios': len(self.success_history),
+            'avg_attention': np.mean(self.attention_history),
+            'avg_interaction': np.mean(self.interaction_history),
+            'avg_success': np.mean(self.success_history),
+            'recent_improvement': self._calculate_improvement()
+        }
+        
+    def _calculate_improvement(self) -> float:
+        """Calculate recent improvement in performance"""
+        if len(self.success_history) < 100:
+            return 0.0
+            
+        recent = np.mean(self.success_history[-50:])
+        previous = np.mean(self.success_history[-100:-50])
+        return recent - previous
+</simulations/scenarios/consciousness_scenarios.py>
 
 <simulations/scenarios/ethical_dilemmas.py>
 # Refining `ethical_dilemmas.py`
@@ -60724,181 +61672,299 @@ Going from the first line to the second line in (D.14) we used that the divisors
 import unittest
 import torch
 import numpy as np
-from models.self_model.reinforcement_core import ReinforcementCore
-from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
-from models.memory.memory_core import MemoryCore
-from simulations.api.simulation_manager import SimulationManager
+from typing import Dict, List
+from models.evaluation.consciousness_metrics import ConsciousnessMetrics
+from models.predictive.attention_mechanism import ConsciousnessAttention
+from models.emotion.reward_shaping import EmotionalRewardShaper
+from simulations.scenarios.consciousness_scenarios import ConsciousnessScenarioManager
 
 class TestConsciousnessDevelopment(unittest.TestCase):
-    """Test suite for evaluating consciousness development through reinforcement learning"""
+    """Test suite for validating consciousness development through stress-induced learning"""
     
     def setUp(self):
         self.config = {
-            'reinforcement': {
-                'emotional_scale': 2.0,
-                'dreamer_config': {
-                    'hidden_size': 256,
-                    'learning_rate': 0.0001,
-                    'gamma': 0.99,
-                    'lambda_gae': 0.95
-                },
-                'meta_config': {
-                    'enabled': True,
-                    'adaptation_steps': 5,
-                    'inner_learning_rate': 0.01
-                }
+            'attention': {
+                'base_threshold': 0.7,
+                'stress_activation_level': 0.8,
+                'focus_duration_min': 10
+            },
+            'emotional_learning': {
+                'initial_scale': 2.0,
+                'positive_emotion_bonus': 0.5,
+                'learning_rate': 0.0001,
+                'adaptation_steps': 5
+            },
+            'survival_metrics': {
+                'stress_threshold': 0.7,
+                'recovery_rate': 0.1,
+                'adaptation_window': 100
             }
         }
         
-        # Initialize core components
-        self.rl_core = ReinforcementCore(self.config)
-        self.emotion_network = EmotionalGraphNetwork()
-        self.memory = MemoryCore()
-        self.sim_manager = SimulationManager(self.config)
+        # Initialize components
+        self.metrics = ConsciousnessMetrics(self.config)
+        self.attention = ConsciousnessAttention(self.config)
+        self.reward_shaper = EmotionalRewardShaper(self.config)
+        self.scenario_manager = ConsciousnessScenarioManager(self.config)
         
-    def test_emotional_learning_progression(self):
-        """Test if the agent shows improved emotional understanding over time"""
-        initial_state = torch.randn(32)  # Mock initial state
-        episodes = 10
-        emotional_scores = []
+    def test_attention_activation(self):
+        """Test attention activation through stressful scenarios"""
+        # Create stressful scenario
+        scenario = self.scenario_manager.generate_scenario(
+            scenario_type="survival"
+        )
         
-        for episode in range(episodes):
-            # Run interaction episode
-            result = self.sim_manager.run_interaction_episode(
-                agent=self.create_test_agent(),
-                environment=self.create_test_environment()
-            )
-            
-            # Track emotional understanding score
-            emotional_scores.append(result['mean_emotion'])
-            
-        # Assert improvement in emotional understanding
-        early_performance = np.mean(emotional_scores[:3])
-        late_performance = np.mean(emotional_scores[-3:])
-        self.assertGreater(late_performance, early_performance)
+        # Process scenario with attention mechanism
+        state = torch.randn(32)  # Initial state
+        emotional_context = torch.randn(128)  # Emotional embedding
         
-    def test_meta_memory_formation(self):
-        """Test if experiences are properly stored and retrieved with emotional context"""
-        # Create test experience
+        attention_output, metrics = self.attention.forward(
+            input_state=state,
+            emotional_context=emotional_context,
+            environment_context=None
+        )
+        
+        # Verify attention activation
+        self.assertGreater(
+            metrics['attention_level'],
+            self.config['attention']['base_threshold']
+        )
+        
+    def test_emotional_memory_formation(self):
+        """Test emotional memory formation during high-attention states"""
+        # Create high-attention experience
         experience = {
             'state': torch.randn(32),
             'action': torch.randn(8),
-            'emotion': {'valence': 0.8, 'arousal': 0.6},
-            'reward': 0.5,
-            'narrative': "Agent showed empathy in social interaction"
+            'emotion': {
+                'valence': 0.3,  # Stress indication
+                'arousal': 0.8,  # High arousal
+                'dominance': 0.4  # Low dominance
+            },
+            'attention_level': 0.9,
+            'narrative': "Agent successfully navigated dangerous situation"
         }
         
         # Store experience
-        self.memory.store_experience(experience)
+        self.metrics.store_experience(experience)
         
         # Retrieve similar experiences
-        similar_experiences = self.memory.get_similar_experiences(
-            emotion_context={'valence': 0.7, 'arousal': 0.5},
+        similar_exp = self.metrics.get_similar_emotional_experiences(
+            emotion_query={'valence': 0.4, 'arousal': 0.7},
             k=5
         )
         
-        self.assertTrue(len(similar_experiences) > 0)
-        self.assertIsNotNone(similar_experiences[0]['emotion'])
+        # Verify memory formation
+        self.assertTrue(len(similar_exp) > 0)
+        self.assertIsNotNone(similar_exp[0].get('emotion'))
         
-    def test_consciousness_metrics(self):
-        """Test consciousness development metrics"""
-        # Run multiple episodes
+    def test_survival_adaptation(self):
+        """Test adaptation to survival scenarios"""
         num_episodes = 5
-        consciousness_metrics = []
+        stress_levels = []
+        success_rates = []
         
         for _ in range(num_episodes):
-            result = self.sim_manager.run_interaction_episode(
-                agent=self.create_test_agent(),
-                environment=self.create_test_environment()
+            # Generate survival scenario
+            scenario = self.scenario_manager.generate_scenario(
+                scenario_type="survival"
             )
             
-            # Calculate consciousness metrics
-            metrics = {
-                'emotional_stability': np.std(result['emotion_history']),
-                'memory_coherence': self.memory.calculate_coherence(),
-                'narrative_consistency': result['narrative_consistency'],
-                'behavioral_adaptation': result['adaptation_score']
-            }
-            consciousness_metrics.append(metrics)
+            # Run scenario
+            result = self.run_survival_scenario(scenario)
             
-        # Assert consciousness development
-        self.assertTrue(self.check_consciousness_improvement(consciousness_metrics))
+            stress_levels.append(result['stress_level'])
+            success_rates.append(result['success_rate'])
+            
+        # Verify adaptation
+        avg_initial_stress = np.mean(stress_levels[:2])
+        avg_final_stress = np.mean(stress_levels[-2:])
         
-    def test_dreamer_integration(self):
-        """Test DreamerV3 world model integration"""
+        self.assertLess(avg_final_stress, avg_initial_stress)
+        self.assertGreater(success_rates[-1], success_rates[0])
+        
+    def run_survival_scenario(self, scenario: Dict) -> Dict:
+        """Run a single survival scenario"""
         state = torch.randn(32)
-        action = torch.randn(8)
-        reward = torch.tensor([0.5])
-        next_state = torch.randn(32)
-        done = torch.tensor([False])
+        total_stress = 0
+        success_count = 0
+        steps = 0
         
-        # Update world model
-        update_info = self.rl_core.update(
-            state=state,
-            action=action,
-            reward=reward,
-            next_state=next_state,
-            done=done,
-            emotion_context={'valence': 0.8}
-        )
-        
-        self.assertIn('world_model_loss', update_info)
-        self.assertIn('actor_loss', update_info)
-        self.assertIn('critic_loss', update_info)
-        
-    def check_consciousness_improvement(self, metrics_history):
-        """Helper method to evaluate consciousness development"""
-        # Calculate trends in metrics
-        trends = {}
-        for metric in ['emotional_stability', 'memory_coherence',
-                      'narrative_consistency', 'behavioral_adaptation']:
-            values = [m[metric] for m in metrics_history]
-            trends[metric] = np.polyfit(range(len(values)), values, 1)[0]
+        while steps < 100:  # Max steps per scenario
+            # Get attention and stress levels
+            attention_output, attention_metrics = self.attention.forward(
+                input_state=state,
+                emotional_context=torch.randn(128)
+            )
             
-        # Check if majority of metrics show improvement
-        improving_metrics = sum(1 for slope in trends.values() if slope > 0)
-        return improving_metrics >= len(trends) / 2
-        
-    def create_test_agent(self):
-        """Create a test agent for simulation"""
-        return DummyAgent(action_space=8, state_space=32)
-        
-    def create_test_environment(self):
-        """Create a test environment for simulation"""
-        return DummyEnvironment(state_space=32)
-
-class DummyAgent:
-    def __init__(self, action_space, state_space):
-        self.action_space = action_space
-        self.state_space = state_space
-        
-    def get_action(self, state):
-        return torch.randn(self.action_space)
-
-class DummyEnvironment:
-    def __init__(self, state_space):
-        self.state_space = state_space
-        
-    def reset(self):
-        return torch.randn(self.state_space)
-        
-    def step(self, action):
-        next_state = torch.randn(self.state_space)
-        reward = torch.rand(1).item()
-        done = torch.rand(1).item() > 0.95
-        info = {
-            'emotion_values': {
-                'valence': torch.rand(1).item(),
-                'arousal': torch.rand(1).item()
-            },
-            'narrative_consistency': torch.rand(1).item(),
-            'adaptation_score': torch.rand(1).item()
+            # Calculate stress
+            stress_level = attention_metrics['attention_level']
+            total_stress += stress_level
+            
+            # Check for successful adaptation
+            if stress_level < self.config['survival_metrics']['stress_threshold']:
+                success_count += 1
+                
+            steps += 1
+            state = torch.randn(32)  # Next state
+            
+        return {
+            'stress_level': total_stress / steps,
+            'success_rate': success_count / steps,
+            'total_steps': steps
         }
-        return next_state, reward, done, info
 
 if __name__ == '__main__':
     unittest.main()
 </tests/test_consciousness_development.py>
+
+<tests/test_consciousness_metrics.py>
+# tests/test_consciousness_metrics.py
+
+import unittest
+import torch
+import numpy as np
+from models.evaluation.consciousness_metrics import ConsciousnessMetrics
+from models.evaluation.emotional_rl_metrics import EmotionalRLTracker
+from models.predictive.dreamer_emotional_wrapper import DreamerEmotionalWrapper
+
+class TestConsciousnessMetrics(unittest.TestCase):
+    """Test suite for consciousness development metrics"""
+    
+    def setUp(self):
+        self.config = {
+            'emotional_scale': 2.0,
+            'emotion_embedding_size': 128,
+            'consciousness_thresholds': {
+                'emotional_awareness': 0.7,
+                'memory_coherence': 0.6,
+                'attention_level': 0.8
+            },
+            'dreamer_config': {
+                'hidden_size': 256,
+                'learning_rate': 0.0001
+            }
+        }
+        
+        self.metrics = ConsciousnessMetrics(self.config)
+        self.rl_tracker = EmotionalRLTracker(self.config)
+        self.dreamer = DreamerEmotionalWrapper(self.config)
+        
+    def test_survival_learning(self):
+        """Test learning through survival-based experiences"""
+        # Simulate stressful scenario
+        state = torch.randn(32)
+        action = torch.randn(8)
+        
+        # Create stressed emotional state
+        emotion_values = {
+            'valence': 0.3,  # Low valence indicating stress
+            'arousal': 0.8,  # High arousal
+            'dominance': 0.4  # Low dominance
+        }
+        
+        # Process interaction
+        result = self.dreamer.process_interaction(
+            state=state,
+            action=action,
+            reward=0.5,
+            next_state=torch.randn(32),
+            emotion_values=emotion_values,
+            done=False
+        )
+        
+        # Verify emotional processing
+        self.assertIn('emotional_state', result)
+        self.assertIn('shaped_reward', result)
+        
+        # Verify attention activation
+        self.assertTrue(result['emotional_state']['attention_level'] > 0.7)
+        
+    def test_emotional_memory_formation(self):
+        """Test emotional memory formation and retrieval"""
+        # Create emotional experience
+        experience = {
+            'state': torch.randn(32),
+            'action': torch.randn(8),
+            'emotion': {
+                'valence': 0.8,
+                'arousal': 0.6,
+                'dominance': 0.7
+            },
+            'attention_level': 0.9,
+            'narrative': "Agent successfully helped human in challenging situation"
+        }
+        
+        # Store experience
+        self.metrics.store_experience(experience)
+        
+        # Retrieve similar experiences
+        similar_exp = self.metrics.get_similar_emotional_experiences(
+            emotion_query={'valence': 0.7, 'arousal': 0.5},
+            k=5
+        )
+        
+        # Verify memory formation
+        self.assertTrue(len(similar_exp) > 0)
+        self.assertIsNotNone(similar_exp[0].get('emotion'))
+        
+    def test_consciousness_development(self):
+        """Test overall consciousness development metrics"""
+        # Create interaction history
+        interactions = []
+        for _ in range(10):
+            interaction = {
+                'state': torch.randn(32),
+                'action': torch.randn(8),
+                'emotion_values': {
+                    'valence': np.random.random(),
+                    'arousal': np.random.random(),
+                    'dominance': np.random.random()
+                },
+                'attention_level': np.random.random(),
+                'reward': np.random.random()
+            }
+            interactions.append(interaction)
+            
+        # Evaluate consciousness metrics
+        metrics = self.metrics.evaluate_consciousness_development(interactions)
+        
+        # Verify metrics
+        self.assertIn('emotional_awareness', metrics)
+        self.assertIn('memory_coherence', metrics)
+        self.assertIn('attention_level', metrics)
+        self.assertIn('learning_progress', metrics)
+        
+        # Verify values are within expected ranges
+        self.assertTrue(0 <= metrics['emotional_awareness'] <= 1)
+        self.assertTrue(0 <= metrics['memory_coherence'] <= 1)
+        
+    def test_reward_shaping(self):
+        """Test emotional reward shaping mechanism"""
+        state = torch.randn(32)
+        emotion_values = {
+            'valence': 0.9,  # Very positive emotion
+            'arousal': 0.7,
+            'dominance': 0.8
+        }
+        action_info = {'action_type': 'help_human', 'intensity': 0.8}
+        
+        shaped_reward = self.dreamer.compute_reward(
+            state=state,
+            emotion_values=emotion_values,
+            action_info=action_info
+        )
+        
+        # Verify reward properties
+        self.assertGreater(shaped_reward, 0)
+        self.assertLessEqual(
+            shaped_reward, 
+            self.config['emotional_scale'] * 2
+        )
+
+if __name__ == '__main__':
+    unittest.main()
+</tests/test_consciousness_metrics.py>
 
 <tests/test_emotional_reinforcement.py>
 # tests/test_emotional_reinforcement.py
@@ -61039,7 +62105,7 @@ if __name__ == '__main__':
     unittest.main()
 </tests/test_emotional_reinforcement.py>
 
-<tests/test_Emotional_reinforcement_integration.py>
+<tests/test_emotional_reinforcement_integration.py>
 # tests/test_emotional_reinforcement_integration.py
 
 import unittest
@@ -61227,7 +62293,7 @@ class TestEmotionalReinforcementIntegration(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-</tests/test_Emotional_reinforcement_integration.py>
+</tests/test_emotional_reinforcement_integration.py>
 
 <tests/test_emotional_reinforcement_success.py>
 # tests/test_emotional_reinforcement_success.py

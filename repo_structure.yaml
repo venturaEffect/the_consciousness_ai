@@ -1,6 +1,8 @@
   - path: /configs
     type: directory
     contents:
+    - path: /configs/consciousness_development.yaml
+      type: file
     - path: /configs/consciousness_metrics.yaml
       type: file
     - path: /configs/reinforcement.yaml
@@ -64,7 +66,11 @@
     - path: /models/evaluation
       type: directory
       contents:
+      - path: /models/evaluation/consciousness_development.py
+        type: file
       - path: /models/evaluation/consciousness_metrics.py
+        type: file
+      - path: /models/evaluation/emotional_evaluation.py
         type: file
       - path: /models/evaluation/emotional_rl_metrics.py
         type: file
@@ -205,6 +211,8 @@
     - path: /simulations/scenarios
       type: directory
       contents:
+      - path: /simulations/scenarios/consciousness_scenarios.py
+        type: file
       - path: /simulations/scenarios/ethical_dilemmas.py
         type: file
       - path: /simulations/scenarios/simple_tasks.py
@@ -428,9 +436,11 @@
     contents:
     - path: /tests/test_consciousness_development.py
       type: file
+    - path: /tests/test_consciousness_metrics.py
+      type: file
     - path: /tests/test_emotional_reinforcement.py
       type: file
-    - path: /tests/test_Emotional_reinforcement_integration.py
+    - path: /tests/test_emotional_reinforcement_integration.py
       type: file
     - path: /tests/test_emotional_reinforcement_success.py
       type: file
