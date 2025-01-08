@@ -1,5 +1,6 @@
 # models/memory/emotional_memory_core.py
 
+from time import time
 import torch
 import numpy as np
 from typing import Dict, List, Optional, Tuple
@@ -18,6 +19,8 @@ class EmotionalMemory:
     timestamp: float
     importance: float
     context: Dict[str, any]
+    temporal_context: Dict
+    stress_level: float
 
 class EmotionalMemoryCore:
     """
@@ -41,6 +44,7 @@ class EmotionalMemoryCore:
         # Memory storage
         self.memories: List[EmotionalMemory] = []
         self.memory_index = {}  # For fast retrieval
+        self.temporal_window = config.get('temporal_window_size', 100)
         
         # Thresholds
         self.attention_threshold = config.get('attention_threshold', 0.7)
@@ -86,11 +90,14 @@ class EmotionalMemoryCore:
             attention_level=attention_level,
             timestamp=context.get('timestamp', 0.0),
             importance=importance,
-            context=context
+            context=context,
+            temporal_context=self._get_temporal_context(),
+            stress_level=context.get('stress_level', 0.0)
         )
         
         self.memories.append(memory)
         self._update_index(memory)
+        self._prune_memories()
         
         return True
         
@@ -187,3 +194,20 @@ class EmotionalMemoryCore:
             # Remove least important memory
             self.memory_index[primary_emotion].sort(key=lambda x: x.importance)
             self.memory_index[primary_emotion].pop(0)
+    
+    def _calculate_emotional_intensity(self, emotion_values: Dict[str, float]) -> float:
+        return sum(abs(v) for v in emotion_values.values()) / len(emotion_values)
+    
+    def _get_temporal_context(self) -> Dict:
+        if not self.memories:
+            return {'sequence_position': 0}
+            
+        return {
+            'sequence_position': len(self.memories),
+            'recent_emotions': [m.emotion_values for m in self.memories[-self.temporal_window:]]
+        }
+    
+    def _prune_memories(self):
+        if len(self.memories) > self.config.get('max_memories', 10000):
+            self.memories.sort(key=lambda x: x.importance)
+            self.memories = self.memories[-self.config.get('max_memories'):]
