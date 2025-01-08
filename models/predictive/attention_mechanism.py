@@ -23,12 +23,14 @@ class AttentionMetrics:
 
 @dataclass
 class AttentionState:
-    """Tracks attention state and history"""
+    """Tracks attention state and temporal context"""
     current_level: float = 0.0
     baseline: float = 0.0
     decay_rate: float = 0.1
     history: List[float] = field(default_factory=list)
     stress_adaptation: float = 0.0
+    emotional_context: Optional[Dict[str, float]] = None
+    temporal_coherence: float = 0.0
 
 class PredictiveAttention(torch.nn.Module):
     def __init__(self, embed_dim, num_heads, dropout=0.1):
@@ -75,11 +77,11 @@ class PredictiveAttention(torch.nn.Module):
 
 class ConsciousnessAttention(nn.Module):
     """
-    Enhanced attention mechanism for consciousness development through:
-    1. Stress-induced attention activation
-    2. Emotional salience detection
-    3. Memory-guided attention
-    4. Temporal context integration
+    Enhanced attention mechanism for consciousness development with:
+    1. Stress-modulated attention
+    2. Emotional context integration
+    3. Temporal memory coherence
+    4. Adaptive attention thresholds
     """
     
     def __init__(self, config: Dict):
@@ -91,31 +93,64 @@ class ConsciousnessAttention(nn.Module):
         self.dropout = config.get('dropout', 0.1)
         
         # Stress-attention coupling
-        self.stress_sensitivity = nn.Parameter(torch.ones(1) * config.get('stress_sensitivity', 2.0))
+        self.stress_sensitivity = nn.Parameter(
+            torch.ones(1) * config.get('stress_sensitivity', 2.0)
+        )
         self.attention_baseline = config.get('attention_baseline', 0.5)
         self.min_attention = config.get('min_attention', 0.2)
         
-        # Main attention components
-        self.query_net = nn.Linear(self.hidden_size, self.hidden_size)
-        self.key_net = nn.Linear(self.hidden_size, self.hidden_size)
-        self.value_net = nn.Linear(self.hidden_size, self.hidden_size)
+        # Multi-head attention components
+        self.query_net = nn.Sequential(
+            nn.Linear(self.hidden_size, self.hidden_size),
+            nn.LayerNorm(self.hidden_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_size, self.hidden_size)
+        )
         
-        # Multi-head attention
+        self.key_net = nn.Sequential(
+            nn.Linear(self.hidden_size, self.hidden_size),
+            nn.LayerNorm(self.hidden_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_size, self.hidden_size)
+        )
+        
+        self.value_net = nn.Sequential(
+            nn.Linear(self.hidden_size, self.hidden_size),
+            nn.LayerNorm(self.hidden_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_size, self.hidden_size)
+        )
+        
+        # Attention mechanism
         self.attention = nn.MultiheadAttention(
             embed_dim=self.hidden_size,
             num_heads=self.num_heads,
             dropout=self.dropout
         )
         
-        # Emotional context processing
+        # Emotional context integration
         self.emotional_projection = nn.Sequential(
             nn.Linear(self.hidden_size, self.hidden_size),
+            nn.LayerNorm(self.hidden_size),
             nn.ReLU(),
             nn.Linear(self.hidden_size, self.hidden_size)
         )
         
-        # Memory integration
-        self.memory_projection = nn.Linear(self.hidden_size, self.hidden_size)
+        # Memory context integration
+        self.memory_projection = nn.Sequential(
+            nn.Linear(self.hidden_size, self.hidden_size),
+            nn.LayerNorm(self.hidden_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_size, self.hidden_size)
+        )
+        
+        # Output projection
+        self.output_projection = nn.Sequential(
+            nn.Linear(self.hidden_size * 2, self.hidden_size),
+            nn.LayerNorm(self.hidden_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_size, self.hidden_size)
+        )
         
         # State tracking
         self.state = AttentionState()
@@ -127,15 +162,8 @@ class ConsciousnessAttention(nn.Module):
         memory_context: Optional[torch.Tensor] = None,
         stress_level: Optional[float] = None
     ) -> Tuple[torch.Tensor, Dict[str, float]]:
-        """
-        Process input through enhanced attention mechanisms
+        """Process input through enhanced attention mechanism"""
         
-        Args:
-            input_state: Current state tensor
-            emotional_context: Emotional embeddings
-            memory_context: Optional memory context for temporal integration
-            stress_level: Optional stress level
-        """
         batch_size = input_state.size(0)
         
         # Project inputs
@@ -148,14 +176,14 @@ class ConsciousnessAttention(nn.Module):
             emotional_features = self.emotional_projection(emotional_context)
             key = key + emotional_features
             value = value + emotional_features
-        
+            
         # Integrate memory context
         if memory_context is not None:
             memory_features = self.memory_projection(memory_context)
             key = torch.cat([key, memory_features], dim=1)
             value = torch.cat([value, memory_features], dim=1)
-        
-        # Calculate attention
+            
+        # Calculate attention with temporal masking
         attention_output, attention_weights = self.attention(
             query=query,
             key=key,
@@ -167,17 +195,19 @@ class ConsciousnessAttention(nn.Module):
             attention_level = self._calculate_attention_level(stress_level)
         else:
             attention_level = torch.sigmoid(attention_weights.mean())
-        
+            
         # Update attention state
-        self._update_state(attention_level)
+        self._update_state(attention_level, emotional_context)
         
-        # Get metrics
-        metrics = self._get_metrics()
+        # Project output with residual connection
+        output = self.output_projection(
+            torch.cat([attention_output, input_state], dim=-1)
+        )
         
-        return attention_output, metrics
+        return output, self._get_metrics()
         
     def _calculate_attention_level(self, stress_level: float) -> float:
-        """Calculate attention level based on stress"""
+        """Calculate attention level based on stress and adaptation"""
         # Base attention from stress
         base_attention = torch.sigmoid(
             self.stress_sensitivity * torch.tensor(stress_level)
@@ -189,8 +219,12 @@ class ConsciousnessAttention(nn.Module):
         # Ensure minimum attention
         return max(self.min_attention, adapted_attention)
         
-    def _update_state(self, attention_level: float):
-        """Update attention state"""
+    def _update_state(
+        self,
+        attention_level: float,
+        emotional_context: Optional[torch.Tensor]
+    ):
+        """Update attention state with temporal context"""
         # Update history
         self.state.history.append(attention_level)
         if len(self.state.history) > 1000:
@@ -209,17 +243,8 @@ class ConsciousnessAttention(nn.Module):
         # Update stress adaptation
         self.state.stress_adaptation = self._calculate_stress_adaptation()
         
-    def _calculate_stress_adaptation(self) -> float:
-        """Calculate adaptation to stress over time"""
-        if len(self.state.history) < 100:
-            return 0.0
-            
-        recent_attention = self.state.history[-100:]
-        attention_changes = np.diff(recent_attention)
-        
-        # Calculate adaptation score
-        adaptation_score = float(np.mean(attention_changes))
-        return max(0.0, -adaptation_score)  # Higher score for reducing attention needs
+        # Update temporal coherence
+        self.state.temporal_coherence = self._calculate_temporal_coherence()
         
     def _get_metrics(self) -> Dict[str, float]:
         """Get current attention metrics"""
@@ -227,6 +252,7 @@ class ConsciousnessAttention(nn.Module):
             'attention_level': self.state.current_level,
             'attention_baseline': self.state.baseline,
             'stress_adaptation': self.state.stress_adaptation,
+            'temporal_coherence': self.state.temporal_coherence,
             'stability': self._calculate_stability()
         }
         
