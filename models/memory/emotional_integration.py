@@ -1,0 +1,187 @@
+# models/memory/emotional_integration.py
+
+import torch
+import torch.nn as nn
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+
+@dataclass
+class EmotionalMemoryState:
+    """Tracks emotional memory state for consciousness development"""
+    emotional_valence: float = 0.0
+    emotional_arousal: float = 0.0
+    emotional_dominance: float = 0.0
+    attention_level: float = 0.0
+    stress_level: float = 0.0
+    memory_coherence: float = 0.0
+
+class EmotionalMemoryIntegration(nn.Module):
+    """
+    Integrates emotional context with attention and memory systems.
+    
+    Key Features:
+    1. Bidirectional emotional-attention coupling
+    2. Stress-modulated memory formation
+    3. Temporal emotional coherence
+    4. Consciousness-weighted memory retrieval
+    """
+    
+    def __init__(self, config: Dict):
+        super().__init__()
+        self.config = config
+        
+        # Core embeddings
+        self.emotional_embedding = nn.Linear(
+            config.get('emotion_dim', 3),
+            config.get('hidden_size', 768)
+        )
+        
+        self.memory_embedding = nn.Linear(
+            config.get('memory_dim', 768),
+            config.get('hidden_size', 768)
+        )
+        
+        # Attention mechanisms
+        self.emotional_attention = nn.MultiheadAttention(
+            embed_dim=config.get('hidden_size', 768),
+            num_heads=config.get('num_heads', 12),
+            dropout=config.get('dropout', 0.1)
+        )
+        
+        # Memory fusion
+        self.memory_fusion = nn.Sequential(
+            nn.Linear(config.get('hidden_size', 768) * 2, config.get('hidden_size', 768)),
+            nn.ReLU(),
+            nn.Linear(config.get('hidden_size', 768), config.get('hidden_size', 768))
+        )
+        
+        # State tracking
+        self.state = EmotionalMemoryState()
+        self.memory_buffer = []
+        
+    def forward(
+        self,
+        emotional_input: Dict[str, torch.Tensor],
+        memory_context: Optional[torch.Tensor] = None,
+        attention_state: Optional[Dict] = None
+    ) -> Tuple[torch.Tensor, Dict]:
+        """Process emotional input with memory integration"""
+        
+        # Embed emotional state
+        emotional_values = torch.tensor([
+            emotional_input['valence'],
+            emotional_input['arousal'],
+            emotional_input['dominance']
+        ]).unsqueeze(0)
+        
+        emotional_embedding = self.emotional_embedding(emotional_values)
+        
+        # Process memory context if available
+        if memory_context is not None:
+            memory_embedding = self.memory_embedding(memory_context)
+            
+            # Attend to memories based on emotional state
+            memory_attention, attention_weights = self.emotional_attention(
+                query=emotional_embedding,
+                key=memory_embedding,
+                value=memory_embedding
+            )
+            
+            # Fuse emotional and memory representations
+            fused_state = self.memory_fusion(
+                torch.cat([emotional_embedding, memory_attention], dim=-1)
+            )
+        else:
+            fused_state = emotional_embedding
+            attention_weights = None
+            
+        # Update emotional memory state
+        self._update_state(
+            emotional_input=emotional_input,
+            attention_state=attention_state,
+            attention_weights=attention_weights
+        )
+        
+        # Store significant experiences
+        if self._is_significant_experience(emotional_input):
+            self._store_experience(
+                emotional_state=emotional_input,
+                fused_state=fused_state,
+                attention_state=attention_state
+            )
+            
+        return fused_state, self.get_state()
+        
+    def _update_state(
+        self,
+        emotional_input: Dict[str, torch.Tensor],
+        attention_state: Optional[Dict],
+        attention_weights: Optional[torch.Tensor]
+    ):
+        """Update emotional memory state"""
+        # Update emotional components
+        self.state.emotional_valence = float(emotional_input['valence'])
+        self.state.emotional_arousal = float(emotional_input['arousal'])
+        self.state.emotional_dominance = float(emotional_input['dominance'])
+        
+        # Update attention level
+        if attention_state:
+            self.state.attention_level = attention_state.get('attention_level', 0.0)
+            self.state.stress_level = attention_state.get('stress_level', 0.0)
+            
+        # Update memory coherence if attention weights available
+        if attention_weights is not None:
+            self.state.memory_coherence = float(
+                torch.mean(attention_weights).item()
+            )
+            
+    def _is_significant_experience(
+        self,
+        emotional_input: Dict[str, torch.Tensor]
+    ) -> bool:
+        """Determine if experience should be stored"""
+        # Check emotional intensity
+        emotional_intensity = sum(abs(v) for v in emotional_input.values()) / len(emotional_input)
+        
+        # Check attention significance
+        attention_significant = self.state.attention_level > self.config.get('attention_threshold', 0.7)
+        
+        # Check stress significance
+        stress_significant = self.state.stress_level > self.config.get('stress_threshold', 0.6)
+        
+        return (
+            emotional_intensity > self.config.get('emotional_threshold', 0.5) or
+            attention_significant or
+            stress_significant
+        )
+        
+    def _store_experience(
+        self,
+        emotional_state: Dict[str, torch.Tensor],
+        fused_state: torch.Tensor,
+        attention_state: Optional[Dict]
+    ):
+        """Store significant experience in memory buffer"""
+        experience = {
+            'emotional_state': emotional_state,
+            'fused_state': fused_state.detach(),
+            'attention_state': attention_state,
+            'timestamp': torch.tensor(time.time())
+        }
+        
+        self.memory_buffer.append(experience)
+        
+        # Maintain buffer size
+        if len(self.memory_buffer) > self.config.get('max_memories', 1000):
+            self.memory_buffer = self.memory_buffer[-self.config.get('max_memories', 1000):]
+            
+    def get_state(self) -> Dict:
+        """Get current emotional memory state"""
+        return {
+            'emotional_valence': self.state.emotional_valence,
+            'emotional_arousal': self.state.emotional_arousal,
+            'emotional_dominance': self.state.emotional_dominance,
+            'attention_level': self.state.attention_level,
+            'stress_level': self.state.stress_level,
+            'memory_coherence': self.state.memory_coherence
+        }
