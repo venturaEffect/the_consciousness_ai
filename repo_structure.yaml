@@ -142,3 +142,31 @@
     - path: /models/self_model
       type: directory
       contents:
+      - path: /models/self_model/belief_system.py
+        type: file
+      - path: /models/self_model/emotion_context_tracker.py
+        type: file
+      - path: /models/self_model/intention_tracker.py
+        type: file
+      - path: /models/self_model/meta_learner.py
+        type: file
+      - path: /models/self_model/reinforcement_core.py
+        type: file
+    - path: /models/speech
+      type: directory
+      contents:
+      - path: /models/speech/whisper
+        type: directory
+        contents:
+        - path: /models/speech/whisper/whisper_integration.py
+          type: file
+    - path: /models/vision-language
+      type: directory
+      contents:
+      - path: /models/vision-language/dual_patchnorm
+        type: directory
+        contents:
+        - path: /models/vision-language/dual_patchnorm/dual_patchnorm.py
+          type: file
+        - path: /models/vision-language/dual_patchnorm/example_usage.py
+          type: file
