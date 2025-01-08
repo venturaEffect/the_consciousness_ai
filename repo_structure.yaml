@@ -422,3 +422,73 @@
         type: file
       - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_1_Figure_0.jpeg
         type: file
+      - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_3_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_4_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/MobileOne An Improved One millisecond Mobile Backbone/_page_5_Figure_4.jpeg
+        type: file
+    - path: /tech documentation/The Virasoro Minimal String
+      type: directory
+      contents:
+      - path: /tech documentation/The Virasoro Minimal String/2309.10846v3.md
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/2309.10846v3_meta.json
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_13_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_15_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_19_Figure_7.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_23_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_45_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_49_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_51_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_52_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_55_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_56_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_62_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_63_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_65_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_68_Figure_6.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_6_Figure_1.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_74_Figure_0.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_75_Figure_6.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_99_Figure_6.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_9_Figure_0.jpeg
+        type: file
+  - path: /tests
+    type: directory
+    contents:
+    - path: /tests/test_consciousness_development.py
+      type: file
+    - path: /tests/test_consciousness_metrics.py
+      type: file
+    - path: /tests/test_consciousness_pipeline.py
+      type: file
+    - path: /tests/test_emotional_memory_integration.py
+      type: file
+    - path: /tests/test_emotional_reinforcement.py
+      type: file
+    - path: /tests/test_emotional_reinforcement_integration.py
+      type: file
+    - path: /tests/test_emotional_reinforcement_success.py
+      type: file
+    - path: /tests/test_emotional_rl_metrics.py
+      type: file
