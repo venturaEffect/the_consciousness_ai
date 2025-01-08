@@ -10,6 +10,9 @@ from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
 from models.narrative.narrative_engine import NarrativeEngine
 from models.memory.memory_core import MemoryCore
 from models.predictive.dreamerv3_wrapper import DreamerV3
+from simulations.enviroments.pavilion_vr_environment import PavilionVREnvironment
+from simulations.enviroments.vr_environment import VREnvironment
+import torch
 
 @dataclass
 class SimulationConfig:
@@ -20,9 +23,13 @@ class SimulationConfig:
     memory_capacity: int = 100000
     narrative_max_length: int = 128
     use_pavilion: bool = True
-    pavilion_config: Dict = None
+    pavilion_config: Optional[Dict] = None
 
 class SimulationManager:
+    """
+    Main simulation manager for consciousness development through emotional learning
+    """
+    
     def __init__(self, config: SimulationConfig):
         self.lock = Lock()
         self.config = config
