@@ -1,13 +1,14 @@
 """
 Enhanced Memory Integration Module
 
-Implements a holonic memory architecture that combines:
-1. Emotional indexing and contextual storage
-2. Experience-based learning through high-attention states
-3. Dynamic self-representation updates
-4. Temporal coherence maintenance
+Implements a holonic memory architecture integrating:
+1. Episodic experience storage with emotional context
+2. Semantic knowledge abstraction 
+3. Temporal coherence maintenance
+4. Consciousness-weighted memory formation
 
-Based on the MANN (Modular Artificial Neural Networks) architecture for self-consciousness.
+Based on Modular Artificial Neural Networks (MANN) architecture and holonic principles
+where each component functions both independently and as part of the whole system.
 """
 
 import torch
@@ -20,33 +21,25 @@ class MemoryMetrics:
     """Tracks memory system performance and coherence"""
     temporal_coherence: float = 0.0
     emotional_stability: float = 0.0
+    semantic_abstraction: float = 0.0
     retrieval_quality: float = 0.0
-    consciousness_relevance: float = 0.0
 
 class MemoryIntegrationCore(nn.Module):
-    """
-    Core memory system implementing holonic principles from the paper.
-    Each memory component acts both independently and as part of the whole.
-    """
-
     def __init__(self, config: Dict):
         super().__init__()
         
-        # Core networks
-        self.feature_encoder = nn.Sequential(
-            nn.Linear(config['input_dim'], config['hidden_dim']),
-            nn.LayerNorm(config['hidden_dim']),
-            nn.GELU(),
-            nn.Linear(config['hidden_dim'], config['embedding_dim'])
-        )
-        
-        self.emotional_encoder = EmotionalContextNetwork(config)
-        self.temporal_encoder = TemporalContextNetwork(config)
-        self.consciousness_gate = ConsciousnessGating(config)
-        
-        # Memory systems
+        # Memory subsystems
         self.episodic_memory = EpisodicMemoryStore(config)
         self.semantic_memory = SemanticMemoryStore(config)
+        self.temporal_memory = TemporalMemoryBuffer(config)
+        
+        # Processing networks
+        self.emotional_encoder = EmotionalContextNetwork(config)
+        self.semantic_abstractor = SemanticAbstractionNetwork(config)
+        self.temporal_processor = TemporalCoherenceProcessor(config)
+        
+        # Memory formation gate
+        self.consciousness_gate = ConsciousnessGate(config)
         
         self.metrics = MemoryMetrics()
 
@@ -58,85 +51,91 @@ class MemoryIntegrationCore(nn.Module):
         metadata: Optional[Dict] = None
     ) -> bool:
         """
-        Store new experience with emotional and consciousness context
+        Store experience with emotional context and consciousness gating
         
         Args:
-            experience_data: Raw experience tensors
+            experience_data: Raw experience data
             emotional_context: Emotional state values
             consciousness_level: Current consciousness level
             metadata: Optional additional context
         """
-        # Generate embeddings
-        feature_embedding = self.feature_encoder(experience_data['state'])
+        # Generate experience embeddings
         emotional_embedding = self.emotional_encoder(emotional_context)
-        temporal_embedding = self.temporal_encoder(experience_data['timestamp'])
+        temporal_embedding = self.temporal_processor(experience_data['timestamp'])
         
-        # Gate storage based on consciousness
+        # Gate storage based on consciousness level
         if self.consciousness_gate(consciousness_level):
-            # Store in memory systems
-            episodic_success = self.episodic_memory.store(
-                feature_embedding, 
+            # Store in episodic memory
+            self.episodic_memory.store(
+                experience_data['state'],
                 emotional_embedding,
                 temporal_embedding,
                 metadata
             )
             
-            semantic_success = self.semantic_memory.update(
-                feature_embedding,
+            # Abstract semantic knowledge
+            semantic_features = self.semantic_abstractor(
+                experience_data['state'],
                 emotional_embedding
             )
+            self.semantic_memory.update(semantic_features)
+            
+            # Update temporal buffer
+            self.temporal_memory.update(temporal_embedding)
             
             # Update metrics
-            self._update_metrics(
-                feature_embedding,
-                emotional_embedding, 
+            self._update_memory_metrics(
+                experience_data,
+                emotional_context,
                 consciousness_level
             )
             
-            return episodic_success and semantic_success
+            return True
             
         return False
 
-    def retrieve_memory(
+    def retrieve_memories(
         self,
         query: Dict[str, torch.Tensor],
         emotional_context: Optional[Dict[str, float]] = None,
-        consciousness_level: float = 0.0,
         k: int = 5
     ) -> List[Dict]:
         """
-        Retrieve relevant memories based on query and context
+        Retrieve relevant memories using emotional context
         """
         # Generate query embeddings
-        query_embedding = self.feature_encoder(query['state'])
         emotional_query = self.emotional_encoder(emotional_context) if emotional_context else None
         
-        # Get relevant memories
-        episodic_memories = self.episodic_memory.search(
-            query_embedding,
+        # Get episodic memories
+        episodic_results = self.episodic_memory.search(
+            query['state'],
             emotional_query,
             k=k
         )
         
-        semantic_concepts = self.semantic_memory.search(
-            query_embedding,
+        # Get semantic knowledge
+        semantic_results = self.semantic_memory.search(
+            query['state'],
             k=k
         )
         
+        # Combine results
         return {
-            'episodic': episodic_memories,
-            'semantic': semantic_concepts,
+            'episodic': episodic_results,
+            'semantic': semantic_results,
             'metrics': self.get_metrics()
         }
 
-    def _update_metrics(
+    def _update_memory_metrics(
         self,
-        feature_embedding: torch.Tensor,
-        emotional_embedding: torch.Tensor,
+        experience_data: Dict,
+        emotional_context: Dict[str, float],
         consciousness_level: float
     ):
         """Update memory system metrics"""
         self.metrics.temporal_coherence = self._calculate_temporal_coherence()
-        self.metrics.emotional_stability = self._calculate_emotional_stability()
+        self.metrics.emotional_stability = self._calculate_emotional_stability(
+            emotional_context
+        )
+        self.metrics.semantic_abstraction = self._evaluate_semantic_quality()
         self.metrics.retrieval_quality = self._evaluate_retrieval_quality()
-        self.metrics.consciousness_relevance = consciousness_level

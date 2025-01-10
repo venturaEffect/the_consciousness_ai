@@ -1,14 +1,13 @@
 """
 Semantic Memory Store Implementation
 
-Implements generalized knowledge storage and retrieval through:
-1. Concept abstraction from episodic experiences
-2. Knowledge consolidation
-3. Semantic network formation
-4. Hierarchical concept organization
+Implements semantic knowledge abstraction and storage following:
+1. Hierarchical concept organization
+2. Knowledge consolidation through abstraction
+3. Emotional context integration
+4. Consciousness-weighted learning
 
-Based on the holonic MANN architecture where memory acts both independently 
-and as part of the greater consciousness system.
+Based on MANN (Modular Artificial Neural Networks) architecture.
 """
 
 import torch
@@ -23,6 +22,85 @@ class SemanticMetrics:
     abstraction_quality: float = 0.0
     knowledge_stability: float = 0.0
     hierarchical_consistency: float = 0.0
+
+class ConceptEncodingNetwork(nn.Module):
+    """Encodes episodic experiences into abstract concepts"""
+    
+    def __init__(self, config: Dict):
+        super().__init__()
+        self.encoder = nn.Sequential(
+            nn.Linear(config['episodic_dim'], config['hidden_dim']),
+            nn.LayerNorm(config['hidden_dim']),
+            nn.GELU(),
+            nn.Linear(config['hidden_dim'], config['concept_dim'])
+        )
+        
+        self.emotional_integration = nn.Linear(
+            config['emotion_dim'],
+            config['concept_dim']
+        )
+
+    def forward(
+        self,
+        episodic_memory: torch.Tensor,
+        emotional_context: Dict[str, float]
+    ) -> torch.Tensor:
+        """Encode episodic memory into concept space"""
+        # Basic concept encoding
+        concept_features = self.encoder(episodic_memory)
+        
+        # Integrate emotional context
+        emotion_tensor = torch.tensor([v for v in emotional_context.values()])
+        emotional_features = self.emotional_integration(emotion_tensor)
+        
+        # Combine features
+        return concept_features + emotional_features
+
+class SemanticGraph:
+    """Maintains network of semantic concepts and relationships"""
+    
+    def __init__(self, config: Dict):
+        self.config = config
+        self.concepts = {}
+        self.relationships = {}
+        
+    def update(
+        self,
+        concept_embedding: torch.Tensor,
+        consciousness_level: float
+    ):
+        """Update semantic graph with new concept"""
+        concept_id = self._generate_concept_id()
+        
+        # Store concept with consciousness weighting
+        self.concepts[concept_id] = {
+            'embedding': concept_embedding,
+            'consciousness_level': consciousness_level,
+            'timestamp': time.time()
+        }
+        
+        # Update relationships
+        self._update_relationships(concept_id, concept_embedding)
+        
+    def _update_relationships(
+        self,
+        concept_id: str,
+        concept_embedding: torch.Tensor
+    ):
+        """Update relationships between concepts"""
+        for existing_id, existing_concept in self.concepts.items():
+            if existing_id != concept_id:
+                similarity = torch.cosine_similarity(
+                    concept_embedding,
+                    existing_concept['embedding'],
+                    dim=0
+                )
+                
+                if similarity > self.config['relationship_threshold']:
+                    self.relationships[f"{concept_id}-{existing_id}"] = {
+                        'similarity': similarity.item(),
+                        'timestamp': time.time()
+                    }
 
 class SemanticMemoryStore(nn.Module):
     """

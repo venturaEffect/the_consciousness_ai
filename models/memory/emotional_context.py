@@ -1,57 +1,75 @@
 """
-Emotional Context Network
+Emotional Context Processing
 
-Implements emotional state encoding and processing for memory formation.
-Provides emotional context for consciousness development.
+Implements emotional state processing for memory formation through:
+1. Emotional state encoding
+2. Context-based memory indexing
+3. Temporal emotional coherence
+4. Consciousness-weighted processing
+
+Based on holonic principles where emotional context influences both 
+local processing and global system behavior.
 """
+
+import torch
+import torch.nn as nn
+from typing import Dict, List, Optional, Tuple
 
 class EmotionalContextNetwork(nn.Module):
     """
-    Processes emotional context for memory integration
+    Processes emotional context for memory formation and retrieval
     """
     
     def __init__(self, config: Dict):
         super().__init__()
         
-        self.emotion_embedding = nn.Linear(
-            config['emotion_dim'],
-            config['emotion_hidden_dim']
+        # Emotion embedding 
+        self.emotion_embedder = nn.Sequential(
+            nn.Linear(config['emotion_dim'], config['hidden_dim']),
+            nn.LayerNorm(config['hidden_dim']),
+            nn.GELU(),
+            nn.Linear(config['hidden_dim'], config['embedding_dim'])
         )
         
-        self.context_processor = nn.TransformerEncoder(
-            encoder_layer=nn.TransformerEncoderLayer(
-                d_model=config['emotion_hidden_dim'],
-                nhead=config['n_heads']
-            ),
+        # Temporal processing
+        self.temporal_processor = nn.GRU(
+            input_size=config['embedding_dim'],
+            hidden_size=config['hidden_dim'],
             num_layers=config['n_layers']
         )
         
-        self.output_projection = nn.Linear(
-            config['emotion_hidden_dim'],
-            config['embedding_dim']
+        # Context integration
+        self.context_integration = nn.MultiheadAttention(
+            embed_dim=config['hidden_dim'],
+            num_heads=config['n_heads']
         )
 
-    def forward(self, emotion_values: Dict[str, float]) -> torch.Tensor:
-        """
-        Process emotional context into embedding
+    def forward(
+        self,
+        emotional_state: Dict[str, float],
+        memory_context: Optional[torch.Tensor] = None
+    ) -> Tuple[torch.Tensor, Dict]:
+        """Process emotional state with optional memory context"""
         
-        Args:
-            emotion_values: Dictionary of emotion dimensions and values
-        """
-        # Convert emotion values to tensor
-        emotion_tensor = self._dict_to_tensor(emotion_values)
-        
-        # Get initial embedding
-        emotion_embedding = self.emotion_embedding(emotion_tensor)
-        
-        # Process through transformer
-        context_features = self.context_processor(emotion_embedding)
-        
-        # Project to output space
-        return self.output_projection(context_features)
-
-    def _dict_to_tensor(self, emotion_dict: Dict[str, float]) -> torch.Tensor:
-        """Convert emotion dictionary to tensor"""
-        return torch.tensor([
-            emotion_dict[k] for k in sorted(emotion_dict.keys())
+        # Get emotion embedding
+        emotion_values = torch.tensor([
+            emotional_state[k] for k in sorted(emotional_state.keys())
         ])
+        emotion_embedding = self.emotion_embedder(emotion_values)
+        
+        # Process temporal context if available
+        if memory_context is not None:
+            temporal_features, _ = self.temporal_processor(
+                memory_context.unsqueeze(0)
+            )
+            
+            # Integrate with current emotion
+            context_integrated, attention_weights = self.context_integration(
+                emotion_embedding.unsqueeze(0),
+                temporal_features,
+                temporal_features
+            )
+            
+            emotion_embedding = context_integrated.squeeze(0)
+            
+        return emotion_embedding
