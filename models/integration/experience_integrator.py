@@ -170,3 +170,34 @@ class ExperienceIntegrator:
             'narrative_consistency': self.metrics.narrative_consistency,
             'consciousness_level': self.metrics.consciousness_level
         }
+
+class SocialLearningPipeline:
+    def __init__(self, config: Dict):
+        self.self_model = SelfRepresentationCore(config)
+        self.emotional_core = EmotionalDevelopmentCore(config)
+        
+    def process_interaction(
+        self,
+        interaction_data: Dict,
+        emotion_values: Dict[str, float],
+        attention_level: float
+    ):
+        # Extract social feedback
+        social_feedback = self._extract_social_signals(interaction_data)
+        
+        # Update self model
+        self.self_model.update_self_model(
+            internal_state={
+                'emotion': emotion_values,
+                'behavior': interaction_data['behavior']
+            },
+            social_feedback=social_feedback,
+            attention_level=attention_level
+        )
+        
+        # Integrate into emotional development
+        self.emotional_core.process_experience(
+            emotion_values=emotion_values,
+            social_context=social_feedback,
+            attention=attention_level
+        )

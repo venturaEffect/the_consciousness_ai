@@ -185,3 +185,28 @@ class EmotionalMemoryIntegration(nn.Module):
             'stress_level': self.state.stress_level,
             'memory_coherence': self.state.memory_coherence
         }
+
+class EmotionalIntegrator:
+    def __init__(self):
+        self.short_term = EmotionalBuffer()
+        self.long_term = EmotionalMemoryStore()
+        
+    def integrate_experience(
+        self,
+        state: Dict,
+        emotion_values: Dict[str, float],
+        social_context: Optional[Dict] = None
+    ):
+        # Process emotional context
+        emotional_embedding = self._embed_emotional_state(emotion_values)
+        
+        # Add social learning if available
+        if social_context:
+            social_embedding = self._embed_social_context(social_context)
+            combined = self._integrate_embeddings(emotional_embedding, social_embedding)
+        else:
+            combined = emotional_embedding
+            
+        # Store in memory systems
+        self.short_term.add(combined)
+        self.long_term.store(combined)

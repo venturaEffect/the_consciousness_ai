@@ -8,6 +8,8 @@ from models.emotion.reward_shaping import EmotionalRewardShaper
 from models.memory.memory_core import MemoryCore
 from models.evaluation.consciousness_metrics import ConsciousnessMetrics
 from models.predictive.dreamer_emotional_wrapper import DreamerEmotionalWrapper
+from models.self.self_representation_core import SelfRepresentationCore
+from models.social.social_learning_pipeline import SocialLearningPipeline
 
 @dataclass
 class DevelopmentMetrics:
@@ -35,6 +37,8 @@ class ConsciousnessDevelopment:
         self.reward_shaper = EmotionalRewardShaper(config)
         self.memory = MemoryCore(config['memory_config'])
         self.consciousness_metrics = ConsciousnessMetrics(config)
+        self.self_model = SelfRepresentationCore(config)
+        self.social_learning = SocialLearningPipeline(config)
         
         # Development tracking
         self.metrics = DevelopmentMetrics()
@@ -141,3 +145,24 @@ class ConsciousnessDevelopment:
             'behavioral_adaptation': self.metrics.behavioral_adaptation,
             'survival_success': self.metrics.survival_success
         }
+
+    def evaluate_development(
+        self,
+        current_state: Dict,
+        social_interactions: List[Dict],
+        attention_metrics: Dict[str, float]
+    ):
+        # Process current experiences
+        for interaction in social_interactions:
+            self.social_learning.process_interaction(
+                interaction_data=interaction,
+                emotion_values=current_state['emotion'],
+                attention_level=attention_metrics['attention']
+            )
+            
+        # Update development metrics
+        self.metrics.update(
+            self_model_coherence=self.self_model.get_coherence(),
+            social_learning_progress=self.social_learning.get_progress(),
+            attention_stability=attention_metrics['stability']
+        )
