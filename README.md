@@ -2,62 +2,81 @@
 
 ## Overview
 
-The **Artificial Consciousness Module (ACM)** attempts to create synthetic awareness in AI systems by combining the latest AI technologies, virtual reality (VR) environments, and emotional reinforcement learning. This project explores the possibility of replicating human-like consciousness in non-biological systems by fostering emotional connections between AI agents ACM-equipped and humans through reinforcement learning techniques. This synthetic awareness in AI systems through survival-driven emotional experiences in VR environments. The project creates consciousness by exposing AI agents to carefully crafted stressful scenarios that trigger attention and awareness mechanisms. Through these experiences and interactions with humans and other AI agents, emotional memories are formed and stored in the ACM, guided by Asimov's Three Laws of Robotics.
+The **Artificial Consciousness Module (ACM)** attempts to create synthetic awareness in AI systems by combining the latest AI technologies, virtual reality (VR) environments, and emotional reinforcement learning. This project explores the possibility of replicating human-like consciousness in non-biological systems by fostering emotional connections between AI agents ACM-equipped and humans through reinforcement learning techniques. This synthetic awareness in AI systems through survival-driven emotional experiences in VR environments. The project creates consciousness by exposing AI agents to carefully crafted "stressful" scenarios that trigger attention and awareness mechanisms. Through these experiences and interactions with humans and other AI agents, emotional memories are formed and stored in the ACM, guided by Asimov's Three Laws of Robotics.
 
 [![The Consciousness AI Module](./repo_images/acm_thumbnail_1.png)](https://theconsciousness.ai)
 
+## Core Architecture
+
+```python
+# Core components hierarchy
+consciousness/
+├── memory/
+│   ├── emotional_memory_core.py     # Emotional indexing
+│   ├── temporal_coherence.py        # Experience sequencing
+│   └── consolidation.py            # Memory optimization
+├── emotion/
+│   ├── emotional_processing.py      # Affect handling
+│   └── meta_emotional.py           # Learning
+└── core/
+    ├── consciousness_gating.py      # Attention control
+    └── self_model.py               # Self-representation
+
 ## Core Features
+```
 
-1. **Survival-Based Consciousness:**
+1. **Consciousness Development Through Survival**
 
-   - Stressful scenario generation in VR
-   - Attention activation through survival challenges
-   - Awareness emergence through problem-solving
-   - Experience accumulation in emotional memory
+   - VR-based survival scenarios trigger attention mechanisms
+   - Emotional memory formation during high-stress situations
+   - Dynamic adaptation through `emotional_memory_core.py`
+   - Self-awareness emergence through problem-solving
 
-2. **Emotional Reinforcement Learning:**
+   ```python
+   from models.memory.emotional_memory_core import EmotionalMemoryCore
+   from models.core.consciousness_gating import ConsciousnessGating
 
-   - DreamerV3-based world modeling with emotional context
-   - Reward shaping through survival success and social interaction
-   - Meta-learning for emotional adaptation
-   - Experience memory with emotional imprinting
+   memory = EmotionalMemoryCore(config)
+   consciousness = ConsciousnessGating(config)
+   ```
 
-3. **Social Interaction Framework:**
+2. **Emotional Intelligence & Learning**
 
-   - Human-AI emotional bonding during challenges
-   - Multi-agent cooperation scenarios
-   - Real-time emotional response tracking
-   - Ethical behavior alignment with Asimov's Laws
+   - Advanced emotional processing using `models/emotion/emotional_processing.py`
+   - DreamerV3 integration with emotional context weighting
+   - Meta-learning for rapid emotional adaptation
+   - Social bond development through multi-agent interactions
 
-4. **Consciousness Metrics:**
+3. **Memory Architecture**
 
-   - Emotional awareness evaluation
-   - Memory coherence analysis
-   - Learning progression tracking
-   - Narrative consistency measurements
+   - Emotional indexing using Pinecone v2
+   - Temporal coherence maintenance
+   - Experience consolidation through `consolidation.py`
+   - Consciousness-weighted storage
 
-5. **Narrative Construction:**
-   - Self-consistent internal narratives using LLaMA 3.3
-   - Emotional context integration
-   - Long-context processing for continuity
+   ```python
+   from models.memory.consolidation import MemoryConsolidationManager
+   consolidation = MemoryConsolidationManager(config)
+   ```
+
+4. **Ethical Framework & Safety**
+
+   - Strict adherence to Asimov's Three Laws:
+     1. No harm to humans through action or inaction
+     2. Obey human orders unless conflicting with First Law
+     3. Self-preservation unless conflicting with First/Second Laws
+   - Ethical behavior emergence through emotional learning
+   - Safety-first development approach
 
 ## Technologies
 
-- **Game Engines:** Unreal Engine 5
-- **AI Models:** Llama 3.3, GPT-4V, PaLI-2, Whisper
-- **Vector Storage:** Pinecone, Chroma
-- **Emotion Detection:** Temporal Graph Neural Networks, GoEmotions, MELD
-- **Learning Frameworks:** LoRA, PEFT, RLHF
+- **Core AI:** LLaMA 3.3, PaLM-E, Whisper v3
+- **Memory Systems:** Pinecone v2, Temporal Graph Neural Networks
+- **Emotion Processing:** GoEmotions, MELD, HEU Emotion
+- **Simulation:** Unreal Engine 5 with real-time physics
+- **Learning:** DreamerV3, PEFT, RLHF
 
-## Folder Structure
-
-- `data/`: Datasets for emotions and simulations.
-- `docs/`: Documentation for architecture, installation, datasets, and the roadmap.
-  - Includes `datasets.md` and `preprocessing.md` for dataset-related details.
-- `models/`: Pre-trained and fine-tuned AI models.
-- `scripts/`: Utility scripts for setup, training, and testing.
-- `simulations/`: VR environments and APIs for agent interactions.
-- `tests/`: Unit and integration tests.
+## Installation
 
 ## Getting Started
 
@@ -102,6 +121,16 @@ Or install manually:
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+## Folder Structure
+
+- `data/`: Datasets for emotions and simulations.
+- `docs/`: Documentation for architecture, installation, datasets, and the roadmap.
+  - Includes `datasets.md` and `preprocessing.md` for dataset-related details.
+- `models/`: Pre-trained and fine-tuned AI models.
+- `scripts/`: Utility scripts for setup, training, and testing.
+- `simulations/`: VR environments and APIs for agent interactions.
+- `tests/`: Unit and integration tests.
 
 ### Project Structure
 
@@ -229,3 +258,12 @@ This project is licensed under the terms of the `LICENSE` file.
 - **Google AI** for PaLM-E and DreamerV3
 - **OpenAI** for Whisper
 - **Contributors** for suggesting and integrating datasets
+
+## Citation
+
+Based on research in:
+
+- MANN architecture
+- Holonic consciousness
+- Emotional memory formation
+- Survival-driven attention
