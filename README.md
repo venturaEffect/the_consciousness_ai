@@ -132,21 +132,6 @@ pip install -r requirements.txt
 - `simulations/`: VR environments and APIs for agent interactions.
 - `tests/`: Unit and integration tests.
 
-### Project Structure
-
-acm/
-├── configs/ # Configuration files
-├── data/ # Datasets and simulation data
-├── docs/ # Documentation
-├── models/ # Core AI models
-│ ├── emotion/ # Emotional processing
-│ ├── language/ # LLM integrations
-│ ├── memory/ # Memory systems
-│ └── predictive/ # World modeling
-├── scripts/ # Utility scripts
-├── simulations/ # VR environments
-└── tests/ # Test suites
-
 ### Download and Preprocess Datasets
 
 Datasets are hosted externally and need to be downloaded and preprocessed locally:
