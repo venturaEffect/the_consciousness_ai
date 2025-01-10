@@ -259,11 +259,41 @@ This project is licensed under the terms of the `LICENSE` file.
 - **OpenAI** for Whisper
 - **Contributors** for suggesting and integrating datasets
 
-## Citation
-
-Based on research in:
+## Based on research in:
 
 - MANN architecture
 - Holonic consciousness
 - Emotional memory formation
 - Survival-driven attention
+
+## Citation & Credits
+
+If you use ACM in your research, please cite:
+
+```bibtex
+@software{acm2024consciousness,
+    title = {Artificial Consciousness Module (ACM)},
+    author = {The Consciousness AI Team},
+    year = {2024},
+    publisher = {GitHub},
+    url = {https://github.com/venturaEffect/the_consciousness_ai},
+    version = {1.0.0}
+}
+```
+
+## Code Usage
+
+When using this code, please include the following:
+
+This project includes code from the Artificial Consciousness Module (ACM)
+Copyright (c) 2024 The Consciousness AI
+https://github.com/venturaEffect/the_consciousness_ai
+
+Licensed under MIT License (non-commercial)
+For commercial use, please contact the authors.
+
+## License
+
+<img alt="License: MIT NC" src="https://img.shields.io/badge/License-MIT NC-blue.svg">
+
+This project is licensed under MIT with non-commercial use restrictions. For commercial licensing inquiries, please contact: <a href="mailto:info@theconsciousness.ai">info@theconsciousness.ai</a>
