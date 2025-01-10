@@ -1,13 +1,13 @@
 """
-Consciousness Gating Module
+Enhanced Consciousness Gating Module
 
-Implements attention-based gating mechanisms for consciousness development through:
-1. Stress-activated attention gating
-2. Emotional salience detection 
-3. Temporal coherence maintenance
-4. Meta-memory formation gates
+Implements advanced gating mechanisms for consciousness development:
+1. Adaptive attention control based on stress and emotional salience
+2. Memory-aware gating through temporal coherence
+3. Dynamic threshold adjustment
+4. Meta-learning for gate optimization
 
-Based on the MANN (Modular Artificial Neural Networks) architecture and holonic principles.
+Based on MANN architecture for holonic consciousness development.
 """
 
 import torch
@@ -17,112 +17,132 @@ from dataclasses import dataclass
 
 @dataclass
 class GatingMetrics:
-    """Tracks gating mechanism performance"""
+    """Tracks comprehensive gating performance"""
     attention_activation: float = 0.0
     emotional_salience: float = 0.0
     stress_response: float = 0.0
     temporal_coherence: float = 0.0
+    memory_relevance: float = 0.0
+    gating_efficiency: float = 0.0
 
-class ConsciousnessGating(nn.Module):
+class AdaptiveGatingNetwork(nn.Module):
     """
-    Implements gating mechanisms for consciousness development.
-    Controls information flow based on attention, emotion and stress levels.
+    Implements adaptive gating based on multiple context factors
     """
     
     def __init__(self, config: Dict):
         super().__init__()
         
-        # Core networks
-        self.attention_gate = AttentionGate(config)
-        self.emotional_gate = EmotionalGate(config)
-        self.stress_gate = StressGate(config)
-        self.temporal_gate = TemporalCoherenceGate(config)
+        # Context processing networks
+        self.emotion_processor = nn.Sequential(
+            nn.Linear(config['emotion_dim'], config['hidden_dim']),
+            nn.LayerNorm(config['hidden_dim']),
+            nn.GELU(),
+            nn.Linear(config['hidden_dim'], config['gate_dim'])
+        )
         
-        # Fusion layer
+        self.memory_processor = nn.Sequential(
+            nn.Linear(config['memory_dim'], config['hidden_dim']),
+            nn.LayerNorm(config['hidden_dim']),
+            nn.GELU(),
+            nn.Linear(config['hidden_dim'], config['gate_dim'])
+        )
+        
+        # Gating networks
+        self.gate_generator = nn.Sequential(
+            nn.Linear(config['gate_dim'] * 3, config['hidden_dim']),
+            nn.LayerNorm(config['hidden_dim']),
+            nn.GELU(),
+            nn.Linear(config['hidden_dim'], 1),
+            nn.Sigmoid()
+        )
+
+    def forward(
+        self,
+        emotional_context: torch.Tensor,
+        memory_context: torch.Tensor,
+        attention_level: float
+    ) -> torch.Tensor:
+        """Generate adaptive gating signal"""
+        # Process contexts
+        emotional_features = self.emotion_processor(emotional_context)
+        memory_features = self.memory_processor(memory_context)
+        
+        # Combine features
+        combined_features = torch.cat([
+            emotional_features,
+            memory_features,
+            torch.tensor([attention_level])
+        ])
+        
+        # Generate gate values
+        return self.gate_generator(combined_features)
+
+class ConsciousnessGating(nn.Module):
+    """
+    Main gating module for consciousness development
+    """
+    
+    def __init__(self, config: Dict):
+        super().__init__()
+        
+        # Gating networks
+        self.adaptive_gate = AdaptiveGatingNetwork(config)
+        self.memory_gate = TemporalMemoryGate(config)
+        self.attention_modulator = AttentionModulationNetwork(config)
+        
+        # Fusion network
         self.gate_fusion = GateFusion(config)
         
         # Metrics tracking
         self.metrics = GatingMetrics()
         
-        # Thresholds
-        self.attention_threshold = config.get('attention_threshold', 0.7)
-        self.stress_threshold = config.get('stress_threshold', 0.8)
+        # Adaptive thresholds
+        self.min_attention = config.get('min_attention_threshold', 0.5)
+        self.base_threshold = config.get('base_threshold', 0.7)
+        self.adaptation_rate = config.get('threshold_adaptation_rate', 0.1)
 
     def forward(
         self,
         current_state: torch.Tensor,
         emotional_context: Dict[str, float],
-        stress_level: float,
-        attention_level: float,
-        temporal_context: Optional[torch.Tensor] = None
+        memory_context: Optional[torch.Tensor] = None,
+        attention_level: float = 0.0,
+        stress_level: float = 0.0
     ) -> Tuple[torch.Tensor, Dict[str, float]]:
         """
-        Process input through gating mechanisms
-        
-        Args:
-            current_state: Current input state tensor
-            emotional_context: Current emotional state values
-            stress_level: Current stress level (0-1)
-            attention_level: Current attention level (0-1)
-            temporal_context: Optional temporal context tensor
+        Process input through enhanced gating mechanism
         """
-        # Process through individual gates
-        attention_gate = self.attention_gate(
-            current_state, 
-            attention_level
+        # Generate base gating signal
+        base_gate = self.adaptive_gate(
+            emotional_context=torch.tensor([v for v in emotional_context.values()]),
+            memory_context=memory_context if memory_context is not None else torch.zeros(self.config['memory_dim']),
+            attention_level=attention_level
         )
         
-        emotional_gate = self.emotional_gate(
-            current_state,
-            emotional_context
+        # Apply memory-based modulation
+        if memory_context is not None:
+            memory_gate = self.memory_gate(
+                current_state=current_state,
+                memory_context=memory_context
+            )
+            base_gate = base_gate * memory_gate
+            
+        # Modulate with attention
+        attention_modulation = self.attention_modulator(
+            attention_level=attention_level,
+            stress_level=stress_level
         )
         
-        stress_gate = self.stress_gate(
-            current_state,
-            stress_level
-        )
-        
-        temporal_gate = self.temporal_gate(
-            current_state,
-            temporal_context
-        ) if temporal_context is not None else None
-
-        # Fuse gate outputs
-        gated_output = self.gate_fusion(
-            attention=attention_gate,
-            emotional=emotional_gate,
-            stress=stress_gate,
-            temporal=temporal_gate
-        )
+        gated_output = current_state * base_gate * attention_modulation
         
         # Update metrics
         self._update_metrics(
-            attention_level=attention_level,
+            base_gate=base_gate,
+            memory_gate=memory_gate if memory_context is not None else None,
+            attention_modulation=attention_modulation,
             emotional_context=emotional_context,
             stress_level=stress_level
         )
         
         return gated_output, self.get_metrics()
-
-    def _update_metrics(
-        self,
-        attention_level: float,
-        emotional_context: Dict[str, float],
-        stress_level: float
-    ):
-        """Update gating mechanism metrics"""
-        self.metrics.attention_activation = attention_level
-        self.metrics.emotional_salience = self._calculate_emotional_salience(
-            emotional_context
-        )
-        self.metrics.stress_response = stress_level
-        self.metrics.temporal_coherence = self._calculate_temporal_coherence()
-
-    def get_metrics(self) -> Dict[str, float]:
-        """Get current gating metrics"""
-        return {
-            'attention_activation': self.metrics.attention_activation,
-            'emotional_salience': self.metrics.emotional_salience,
-            'stress_response': self.metrics.stress_response,
-            'temporal_coherence': self.metrics.temporal_coherence
-        }
