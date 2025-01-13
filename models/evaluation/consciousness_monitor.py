@@ -1,5 +1,20 @@
 # models/evaluation/consciousness_monitor.py
 
+"""
+Consciousness Development Monitor for the ACM
+
+This module tracks and evaluates consciousness emergence through:
+1. Emotional coherence metrics 
+2. Memory stability evaluation
+3. Attention consistency tracking
+4. Behavioral adaptation analysis
+
+Dependencies:
+- models/evaluation/emotional_evaluation.py for emotion metrics
+- models/evaluation/memory_evaluation.py for memory stability
+- models/core/consciousness_metrics.py for core metrics
+"""
+
 import torch
 import numpy as np
 from typing import Dict, List, Optional, Tuple
@@ -29,7 +44,14 @@ class ConsciousnessMonitor:
     """
     
     def __init__(self, config: Dict):
+        """Initialize consciousness monitoring"""
         self.config = config
+        self.metrics_history = []
+        
+        # Initialize evaluators
+        self.emotional_eval = EmotionalEvaluator(config)
+        self.memory_eval = MemoryEvaluator(config)
+        self.attention_eval = AttentionEvaluator(config)
         
         # Core components
         self.evaluator = EmotionalEvaluator(config)

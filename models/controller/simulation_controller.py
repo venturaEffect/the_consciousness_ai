@@ -12,6 +12,21 @@ from simulations.scenarios.consciousness_scenarios import ConsciousnessScenarioM
 from simulations.api.simulation_manager import SimulationManager
 from simulations.enviroments.pavilion_vr_environment import PavilionVREnvironment
 
+"""
+Simulation Controller for the Artificial Consciousness Module (ACM)
+
+This module manages the simulation environment and consciousness development by:
+1. Coordinating interactions between agents and environment
+2. Managing consciousness development cycles
+3. Tracking metrics and development progress
+4. Integrating with Unreal Engine 5 for VR simulations
+
+Dependencies:
+- models/core/consciousness_core.py for main consciousness system
+- models/evaluation/consciousness_monitor.py for metrics tracking
+- models/memory/emotional_memory_core.py for experience storage
+"""
+
 @dataclass
 class SimulationMetrics:
     """Tracks simulation and consciousness development metrics"""
@@ -29,125 +44,53 @@ class ConsciousnessSimulationController:
     """
     
     def __init__(self, config: Dict):
+        """Initialize simulation controller"""
         self.config = config
         
-        # Initialize core components
-        self.dreamer = DreamerEmotionalWrapper(config)
-        self.fusion = EmotionalMemoryFusion(config)
-        self.evaluator = EmotionalEvaluator(config)
-        self.narrative = NarrativeEngine()
-        self.scenario_manager = ConsciousnessScenarioManager(config)
+        # Initialize key components
+        self.consciousness = ConsciousnessCore(config)
+        self.monitor = ConsciousnessMonitor(config)
+        self.memory = EmotionalMemoryCore(config)
         
-        # Metrics tracking
+        # Setup metrics tracking
         self.metrics = SimulationMetrics()
-        self.episode_history = []
+        self.episode_count = 0
         
-        # Setup logging
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s [%(levelname)s] %(message)s',
-            handlers=[
-                logging.FileHandler('consciousness_development.log'),
-                logging.StreamHandler()
-            ]
-        )
-        
-    def run_episode(self, scenario_type: str) -> Dict:
+    def run_development_episode(
+        self,
+        scenario_config: Dict,
+        agent_config: Dict
+    ) -> Dict[str, float]:
         """Run a single consciousness development episode"""
-        
         # Generate scenario
-        scenario = self.scenario_manager.generate_scenario(scenario_type)
+        scenario = self._generate_scenario(scenario_config)
         
-        # Track episode metrics
-        episode_data = []
-        total_reward = 0.0
-        
-        # Initial state
-        state = self._get_initial_state(scenario)
-        done = False
-        step = 0
-        
-        while not done and step < self.config['max_steps']:
-            # Process multimodal inputs
-            fusion_output, fusion_info = self.fusion.forward(
-                text_input=state.get('text'),
-                vision_input=state.get('vision'),
-                audio_input=state.get('audio'),
-                emotional_context=state.get('emotion')
+        # Run episode steps
+        episode_metrics = []
+        for step in range(self.config.max_steps):
+            # Get agent action
+            action = self.consciousness.get_action(
+                state=scenario.get_state(),
+                context=self._get_context()
             )
             
-            # Get action from policy
-            action = self.dreamer.get_action(
-                fusion_output,
-                emotion_context=fusion_info['emotional_context']
-            )
+            # Execute in environment
+            next_state, reward = scenario.step(action)
             
-            # Execute action and get next state
-            next_state, reward, done, info = self._execute_action(
-                action, 
-                scenario
-            )
-            
-            # Evaluate emotional state
-            evaluation = self.evaluator.evaluate_interaction(
-                state=state,
-                action=action,
-                emotion_values=info['emotion'],
-                attention_level=info['attention'],
-                narrative=info.get('narrative', ''),
-                stress_level=info.get('stress', 0.0)
-            )
-            
-            # Generate narrative
-            narrative = self.narrative.generate_experience_narrative(
-                state=state,
-                action=action,
-                emotion=evaluation['emotional_context'],
-                include_context=True
-            )
-            
-            # Store experience
-            self._store_experience(
-                state=state,
-                action=action,
-                next_state=next_state,
-                reward=reward,
-                emotion=evaluation['emotional_context'],
-                narrative=narrative,
-                done=done
-            )
-            
-            # Update metrics
-            total_reward += reward
-            episode_data.append({
-                'step': step,
-                'state': state,
+            # Process experience
+            experience = {
+                'state': next_state,
                 'action': action,
                 'reward': reward,
-                'emotion': evaluation['emotional_context'],
-                'attention': info['attention'],
-                'narrative': narrative
-            })
+                'emotion': self._detect_emotions(next_state),
+                'attention': self._get_attention_metrics()
+            }
             
-            # Update state
-            state = next_state
-            step += 1
+            # Update consciousness
+            metrics = self._process_experience(experience)
+            episode_metrics.append(metrics)
             
-        # Update episode metrics
-        self.metrics.episode_count += 1
-        self.metrics.total_reward += total_reward
-        
-        # Calculate episode results
-        results = self._calculate_episode_results(
-            episode_data=episode_data,
-            total_reward=total_reward,
-            evaluation=evaluation
-        )
-        
-        # Log progress
-        self._log_episode_progress(results)
-        
-        return results
+        return self._summarize_metrics(episode_metrics)
         
     def _get_initial_state(self, scenario: Dict) -> Dict:
         """Get initial state for scenario"""
