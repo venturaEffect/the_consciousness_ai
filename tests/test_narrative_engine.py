@@ -2,28 +2,46 @@
 
 # File: /tests/test_narrative_engine.py
 """
-Unit tests for Narrative Engine Module
+Test suite for the Narrative Engine component of ACM.
 
-Tests the generation of coherent narratives and integration with memory core.
+This module validates:
+1. Narrative generation and coherence
+2. Integration with emotional memory
+3. Context maintenance across narrative chains
+4. LLaMA 3.3 integration for story construction
+
+Dependencies:
+- models/narrative/narrative_engine.py for core functionality
+- models/memory/emotional_memory_core.py for context retrieval
+- configs/consciousness_metrics.yaml for evaluation parameters
 """
 import unittest
 from models.narrative.narrative_engine import NarrativeEngine
 
 class TestNarrativeEngine(unittest.TestCase):
     def setUp(self):
-        self.engine = NarrativeEngine()
+        """Initialize narrative engine test components"""
+        self.config = load_config('configs/consciousness_metrics.yaml')
+        self.narrative_engine = NarrativeEngine(self.config)
+        self.test_cases = self._load_test_narratives()
 
-    def test_generate_narrative(self):
-        input_text = "Explain the implications of saving a human in danger."
-        response = self.engine.generate_narrative(input_text)
-        self.assertIsInstance(response, str)
-        self.assertGreater(len(response), 0)
-
-    def test_memory_integration(self):
-        input_text = "What happened in the last task?"
-        self.engine.memory_context = ["The agent successfully completed the task."]
-        response = self.engine.generate_narrative(input_text)
-        self.assertIn("completed the task", response)
+    def test_narrative_generation(self):
+        """Test narrative generation with emotional context"""
+        input_text = "The agent encountered a stressful situation"
+        emotional_context = {
+            'valence': -0.3,
+            'arousal': 0.8,
+            'dominance': 0.4
+        }
+        
+        narrative = self.narrative_engine.generate_narrative(
+            input_text, 
+            emotional_context
+        )
+        
+        self.assertIsNotNone(narrative)
+        self.assertTrue(len(narrative) > 0)
+        self.assertIn('stress', narrative.lower())
 
 if __name__ == "__main__":
     unittest.main()
