@@ -1,9 +1,16 @@
+# models/memory/emotional_memory_core.py  
 """
-Emotional Memory Core Module
+Emotional memory system that stores and indexes experiences.
+Key functionalities:
+- Vector storage using Pinecone for memory indexing
+- Emotional context integration
+- Temporal coherence tracking
+- Memory consolidation and optimization
 
-Implements memory storage and retrieval with emotional context indexing.
-Based on the holonic architecture described in the research paper for 
-creating dynamic self-representation through experience.
+Dependencies:
+- models/memory/temporal_coherence.py for sequencing
+- models/memory/consolidation.py for optimization
+- External: Pinecone v2 for vector storage
 """
 
 import torch
