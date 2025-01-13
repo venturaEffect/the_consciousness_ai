@@ -1,3 +1,24 @@
+"""
+Emotional Graph Neural Network for processing emotional relationships and social interactions.
+
+Key components:
+1. Graph-based emotional state representation
+2. Social relationship modeling through node connections  
+3. Emotional state propagation across the network
+4. Integration with consciousness development
+
+Dependencies:
+- torch.nn.Module for neural network implementation
+- models/evaluation/emotional_evaluation.py for metrics
+- models/memory/emotional_memory_core.py for memory storage
+
+The EmotionalGraphNN class uses a Graph Convolutional Network (GCN) to:
+- Model emotional relationships between agents
+- Process multimodal emotional inputs
+- Enable social learning through graph message passing
+- Support consciousness emergence through emotional interactions
+"""
+
 class EmotionalGraphNN(torch.nn.Module):
     def __init__(self, num_features, hidden_dim, num_classes):
         super(EmotionalGraphNN, self).__init__()
