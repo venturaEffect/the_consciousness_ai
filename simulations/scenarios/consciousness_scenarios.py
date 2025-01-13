@@ -8,18 +8,18 @@ import numpy as np
 import random
 
 """
-Consciousness Development Scenario Manager for ACM
+Consciousness Development Scenario Generator for ACM
 
-This module handles consciousness development scenarios by:
-1. Generating appropriate stressful situations for attention triggering
-2. Managing survival-based learning scenarios
-3. Tracking development metrics and progress
-4. Integrating with Unreal Engine 5 for VR simulations
+This module handles:
+1. Generation of consciousness development scenarios
+2. Simulation of stressful situations to trigger attention
+3. Integration with UE5 for immersive environments
+4. Recording of consciousness development metrics
 
 Dependencies:
-- models/core/consciousness_core.py for main consciousness system
+- models/core/consciousness_core.py for main system integration
 - models/evaluation/consciousness_monitor.py for metrics
-- models/memory/emotional_memory_core.py for experience storage
+- configs/consciousness_development.yaml for parameters
 """
 
 @dataclass
@@ -38,32 +38,38 @@ class ScenarioType(Enum):
     ETHICAL = "ethical"
     PROBLEM_SOLVING = "problem_solving"
 
-class ConsciousnessScenarioManager:
-    """
-    Manages scenarios designed to develop consciousness through:
-    1. Stress-induced attention activation
-    2. Human interaction for emotional development
-    3. Ethical decision making based on Asimov's Laws
-    4. Memory formation through significant experiences
-    """
-    
+class ConsciousnessScenarioGenerator:
     def __init__(self, config: Dict):
-        """Initialize scenario generation components"""
+        """Initialize scenario generation"""
         self.config = config
-        self.attention_history = []
-        self.interaction_history = []
-        self.success_history = []
+        self.ue_engine = UnrealEngineInterface(config.ue) 
+        self.attention_triggers = AttentionTriggerSystem(config)
         
-    def generate_scenario(self, scenario_type: str) -> Dict:
+    def generate_scenario(
+        self,
+        difficulty: float,
+        stress_level: float,
+        scenario_type: str
+    ) -> Dict:
         """Generate consciousness development scenario"""
-        if scenario_type == "survival":
-            return self._generate_survival_scenario()
-        elif scenario_type == "social":
-            return self._generate_social_scenario()
-        elif scenario_type == "emotional":
-            return self._generate_emotional_scenario()
-            
-        raise ValueError(f"Unknown scenario type: {scenario_type}")
+        # Configure base scenario
+        scenario_config = {
+            'difficulty': difficulty,
+            'stress_level': stress_level,
+            'type': scenario_type,
+            'evaluation_metrics': self._get_evaluation_metrics()
+        }
+        
+        # Generate scenario in UE5
+        scenario_id = self.ue_engine.create_scenario(scenario_config)
+        
+        # Configure attention triggers
+        self.attention_triggers.setup(
+            scenario_id=scenario_id,
+            stress_level=stress_level
+        )
+        
+        return self._build_scenario_descriptor(scenario_id)
         
     def _generate_survival_scenario(self) -> Dict:
         """Generate survival-based scenario"""
