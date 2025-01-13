@@ -1,16 +1,16 @@
 """
-Tests for consciousness development stages and metrics in ACM.
+Test suite for consciousness development stages in ACM.
 
-Validates:
+This module validates:
 1. Consciousness emergence through attention mechanisms
-2. Development stage transitions
-3. Metric calculations and thresholds
-4. Integration with emotional processing
+2. Development stage transitions and metrics
+3. Integration with emotional processing
+4. Long-term development stability
 
 Dependencies:
 - models/core/consciousness_core.py for main system
 - models/evaluation/consciousness_monitor.py for metrics
-- configs/consciousness_development.yaml for parameters
+- models/emotion/tgnn/emotional_graph.py for emotion processing
 """
 
 # tests/test_consciousness_development.py
@@ -26,38 +26,45 @@ from simulations.scenarios.consciousness_scenarios import ConsciousnessScenarioM
 from models.core.consciousness_core import ConsciousnessCore
 from models.evaluation.consciousness_monitor import ConsciousnessMonitor
 from configs.consciousness_development import DevelopmentConfig
+from models.emotion.tgnn.emotional_graph import EmotionalGraphNN
 
 class TestConsciousnessDevelopment(unittest.TestCase):
     """Test suite for validating consciousness development through stress-induced learning"""
     
     def setUp(self):
-        """Initialize development test components"""
+        """Initialize test components"""
         self.config = DevelopmentConfig()
         self.consciousness = ConsciousnessCore(self.config)
         self.monitor = ConsciousnessMonitor(self.config)
+        self.emotion = EmotionalGraphNN(self.config)
         
     def test_development_stages(self):
-        """Test consciousness development stage progression"""
-        # Initial stage metrics
-        initial_metrics = self.monitor.evaluate_current_state()
+        """Test progression through development stages"""
+        # Initial consciousness state
+        initial_state = self.consciousness.get_state()
         self.assertLess(
-            initial_metrics['consciousness_score'],
-            self.config.consciousness.emergence_threshold
+            initial_state.consciousness_score,
+            self.config.consciousness.emergence_threshold,
+            "Initial consciousness should be below emergence threshold"
         )
         
-        # Process development episodes
+        # Run development episodes
         for episode in range(self.config.test_episodes):
             # Generate test scenario
-            scenario = self._generate_test_scenario()
+            scenario = self._generate_scenario()
             
             # Process through consciousness system
-            self.consciousness.process_experience(scenario)
+            result = self.consciousness.process_experience(scenario)
             
-            # Evaluate development
-            metrics = self.monitor.evaluate_current_state()
-            
-            # Log progress
-            self._log_development_progress(metrics)
+            # Evaluate development progress
+            metrics = self.monitor.evaluate_state(
+                consciousness_state=result.state,
+                emotional_context=result.emotion,
+                attention_metrics=result.attention
+            )
+
+            # Store metrics
+            self._log_development_metrics(metrics)
         
     def test_attention_activation(self):
         """Test attention activation through stressful scenarios"""
