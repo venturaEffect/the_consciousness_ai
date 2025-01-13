@@ -8,6 +8,21 @@ from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
 from models.memory.memory_core import MemoryCore
 from simulations.api.simulation_manager import SimulationManager
 
+"""
+Tests for emotional reinforcement learning integration in ACM.
+
+This test suite validates:
+1. Emotional reward shaping
+2. Integration with emotional memory
+3. Reinforcement learning with emotional context
+4. Learning progress tracking
+
+Dependencies:
+- models/emotion/reward_shaping.py for reward functions
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/core/consciousness_core.py for main system
+"""
+
 class TestEmotionalReinforcementLearning(unittest.TestCase):
     def setUp(self):
         """Initialize test components"""
