@@ -1,13 +1,16 @@
 """
-Modular Self-Representation Network
+Modular Self Representation System for ACM
 
-Implements dynamic self-representation through modular neural networks following
-the research paper's holonic architecture principles. Key aspects:
+This module implements:
+1. Core self-model representation and updating
+2. Integration of emotional and memory contexts
+3. Self-awareness development tracking
+4. Modular architecture for self-model components
 
-1. Modular Architecture: Separate networks for different aspects of self-modeling
-2. Direct & Observational Learning: Learning from both self-experience and others
-3. Dynamic Adaptation: Self-representation evolves through interactions
-4. Holonic Structure: Each component acts both autonomously and as part of the whole
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for memory integration
+- models/evaluation/consciousness_monitor.py for metrics
 
 Reference: Martinez-Luaces et al. "Using modular neural networks to model self-consciousness 
 and self-representation for artificial entities"
@@ -33,6 +36,14 @@ class HolonicState:
     state_values: Dict[str, float] = None
     self_confidence: float = 0.5
     interaction_history: List[Dict] = None
+
+@dataclass
+class SelfModelState:
+    """Tracks current self-model state"""
+    emotional_state: Dict[str, float]
+    attention_focus: float
+    memory_context: List[Dict]
+    consciousness_level: float
 
 class ModularSelfRepresentation(nn.Module):
     """
@@ -64,6 +75,19 @@ class ModularSelfRepresentation(nn.Module):
         
         # Initialize adaptation parameters
         self._init_adaptation_params()
+
+        # Initialize core components
+        self.emotion_network = EmotionalGraphNN(config)
+        self.memory = EmotionalMemoryCore(config)
+        self.monitor = ConsciousnessMonitor(config)
+        
+        # Current state
+        self.current_state = SelfModelState(
+            emotional_state={},
+            attention_focus=0.0,
+            memory_context=[],
+            consciousness_level=0.0
+        )
 
     def update_self_representation(
         self,
@@ -116,6 +140,42 @@ class ModularSelfRepresentation(nn.Module):
             'learning_metrics': self.get_learning_metrics(),
             'holonic_state': self.state
         }
+
+    def update_self_model(
+        self,
+        input_state: Dict[str, torch.Tensor],
+        emotional_context: Dict[str, float]
+    ) -> Tuple[SelfModelState, Dict[str, float]]:
+        """Update self-model based on new experience"""
+        # Process emotional state
+        emotional_features = self.emotion_network.process(
+            input_state,
+            emotional_context
+        )
+        
+        # Update memory context
+        memory_context = self.memory.retrieve_relevant(
+            input_state,
+            emotional_features,
+            k=self.config.memory.context_size
+        )
+        
+        # Update consciousness metrics
+        consciousness_metrics = self.monitor.evaluate_state(
+            current_state=self.current_state,
+            new_emotional_state=emotional_features,
+            memory_context=memory_context
+        )
+        
+        # Update current state
+        self.current_state = SelfModelState(
+            emotional_state=emotional_features,
+            attention_focus=consciousness_metrics['attention_level'],
+            memory_context=memory_context,
+            consciousness_level=consciousness_metrics['consciousness_score']
+        )
+        
+        return self.current_state, consciousness_metrics
 
     def _integrate_social_learning(self, social_embedding: torch.Tensor):
         """Integrate learning from social interactions"""
