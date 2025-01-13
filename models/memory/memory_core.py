@@ -1,10 +1,30 @@
-import torch
-import numpy as np
+"""
+Core Memory Management System for ACM
+
+This module implements:
+1. Base memory management functionality
+2. Memory storage and retrieval operations
+3. Memory indexing and optimization
+4. Integration with emotional context
+
+Dependencies:
+- models/memory/optimizations.py for memory optimization
+- models/memory/emotional_indexing.py for emotional context
+- models/memory/temporal_coherence.py for sequence tracking
+"""
+
 from typing import Dict, List, Optional, Tuple
+import torch
 from dataclasses import dataclass
-from pinecone import Pinecone, Index
-from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
-from models.evaluation.consciousness_metrics import ConsciousnessMetrics
+import numpy as np
+
+@dataclass
+class MemoryConfig:
+    """Memory system configuration parameters"""
+    max_memories: int = 100000
+    cleanup_threshold: float = 0.4
+    vector_dim: int = 768
+    index_batch_size: int = 256
 
 @dataclass
 class MemoryMetrics:
@@ -24,8 +44,12 @@ class MemoryCore:
     4. Meta-learning capabilities
     """
     
-    def __init__(self, config: Dict):
+    def __init__(self, config: MemoryConfig):
+        """Initialize memory management system"""
         self.config = config
+        self.storage = {}
+        self.index = {}
+        self.temporal_index = []
         self.emotion_network = EmotionalGraphNetwork()
         self.consciousness_metrics = ConsciousnessMetrics(config)
         
@@ -41,6 +65,34 @@ class MemoryCore:
         self.recent_experiences = []
         self.attention_threshold = config.get('attention_threshold', 0.7)
         
+    def store(
+        self,
+        memory_content: torch.Tensor,
+        metadata: Dict[str, float]
+    ) -> str:
+        """Store new memory entry"""
+        # Generate memory ID
+        memory_id = self._generate_id()
+        
+        # Create memory entry
+        memory_entry = {
+            'content': memory_content,
+            'metadata': metadata,
+            'timestamp': self._get_timestamp()
+        }
+        
+        # Store memory
+        self.storage[memory_id] = memory_entry
+        
+        # Update indices
+        self._update_indices(memory_id, memory_entry)
+        
+        # Cleanup if needed
+        if len(self.storage) > self.config.max_memories:
+            self._cleanup_old_memories()
+            
+        return memory_id
+
     def store_experience(
         self,
         state: torch.Tensor,
