@@ -1,18 +1,21 @@
 """
-Temporal Coherence Module
+Temporal Coherence Management for Memory Formation in ACM
 
-Implements temporal coherence maintenance through:
-1. Sequential experience tracking
-2. Memory consolidation 
-3. Narrative consistency
-4. Consciousness-weighted temporal binding
+This module implements:
+1. Temporal sequence tracking in memory formation
+2. Memory coherence validation
+3. Time-based memory organization
+4. Integration with emotional context
 
-Based on MANN architecture and holonic principles for consciousness development.
+Dependencies:
+- models/memory/emotional_memory_core.py for memory storage
+- models/memory/temporal_context.py for context tracking
+- models/evaluation/memory_metrics.py for coherence metrics
 """
 
-import torch
-import torch.nn as nn
 from typing import Dict, List, Optional, Tuple
+import torch
+import numpy as np
 from dataclasses import dataclass
 
 @dataclass
@@ -23,6 +26,14 @@ class TemporalMetrics:
     consolidation_quality: float = 0.0
     binding_strength: float = 0.0
 
+@dataclass
+class TemporalContext:
+    """Tracks temporal context for memory sequences"""
+    timestamp: float
+    sequence_id: str
+    previous_memory: Optional[str]
+    next_memory: Optional[str]
+    
 class TemporalCoherenceProcessor(nn.Module):
     """
     Maintains temporal coherence across experiences and memories.
@@ -48,7 +59,10 @@ class TemporalCoherenceProcessor(nn.Module):
         
         # Metrics tracking
         self.metrics = TemporalMetrics()
-
+        self.config = config
+        self.sequences = {}
+        self.temporal_index = {}
+        
     def process_sequence(
         self,
         experiences: List[Dict],
@@ -90,6 +104,32 @@ class TemporalCoherenceProcessor(nn.Module):
         )
         
         return bound_sequence, self.get_metrics()
+
+    def add_temporal_context(
+        self,
+        memory_id: str,
+        current_state: Dict[str, torch.Tensor],
+        previous_state: Optional[Dict] = None
+    ) -> TemporalContext:
+        """Add temporal context to memory"""
+        # Generate sequence ID if new sequence
+        sequence_id = self._get_or_create_sequence(
+            current_state,
+            previous_state
+        )
+        
+        # Create temporal context
+        context = TemporalContext(
+            timestamp=self._get_timestamp(),
+            sequence_id=sequence_id,
+            previous_memory=self._get_previous_memory(sequence_id),
+            next_memory=None
+        )
+        
+        # Update indices
+        self._update_indices(memory_id, context)
+        
+        return context
 
     def _update_metrics(
         self,
