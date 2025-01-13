@@ -1,13 +1,16 @@
 """
-Integration Tests for Complete Consciousness System
+System-wide integration tests for the Artificial Consciousness Module (ACM).
 
-Tests the full consciousness development pipeline including:
-1. Memory formation and emotional learning
-2. Self-representation development 
-3. Temporal coherence maintenance
-4. System-wide metrics tracking
+Tests the integration between core components:
+1. Consciousness development through stress response
+2. Emotional memory formation and retrieval
+3. Attention gating mechanisms
+4. Overall development metrics
 
-Based on the MANN architecture and holonic principles from the research paper.
+Dependencies:
+- models/core/consciousness_core.py for main consciousness system
+- models/evaluation/consciousness_metrics.py for evaluation
+- models/memory/emotional_memory_core.py for memory storage
 """
 
 import unittest
@@ -46,6 +49,7 @@ class TestConsciousnessSystem(unittest.TestCase):
     """System-wide integration tests for consciousness development"""
 
     def setUp(self):
+        """Initialize test components"""
         self.config = IntegrationTestConfig()
         
         # Initialize core components
