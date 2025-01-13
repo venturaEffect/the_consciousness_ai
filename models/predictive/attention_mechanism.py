@@ -1,79 +1,68 @@
 """
-Predictive Attention Mechanism for ACM Project
+Attention Mechanism for ACM's Predictive Processing
 
-Implements advanced attention processing for multimodal data.
-Supports visualization, debugging, and flexible configurations.
+This module implements:
+1. Attention modulation for predictive processing
+2. Integration with consciousness development
+3. Stress-based attention gating
+4. Dynamic attention allocation
+
+Dependencies:
+- models/core/consciousness_gating.py for gating control
+- models/evaluation/consciousness_monitor.py for metrics
+- models/memory/emotional_memory_core.py for context
 """
 
 import torch
-from torch.nn import MultiheadAttention
 import torch.nn as nn
-import numpy as np
-from typing import Dict, Optional, List, Tuple
-from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
 
 @dataclass
 class AttentionMetrics:
-    """Tracks attention-related metrics for consciousness development"""
-    attention_level: float = 0.0
-    focus_duration: float = 0.0 
-    emotional_salience: float = 0.0
-    context_relevance: float = 0.0
-    stress_adaptation: float = 0.0
+    """Tracks attention mechanism metrics"""
+    focus_level: float = 0.0
+    stability_score: float = 0.0
+    stress_modulation: float = 0.0
+    emotional_weight: float = 0.0
 
-@dataclass
-class AttentionState:
-    """Tracks attention state and temporal context"""
-    current_level: float = 0.0
-    baseline: float = 0.0
-    decay_rate: float = 0.1
-    history: List[float] = field(default_factory=list)
-    stress_adaptation: float = 0.0
-    emotional_context: Optional[Dict[str, float]] = None
-    temporal_coherence: float = 0.0
-
-class PredictiveAttention(torch.nn.Module):
-    def __init__(self, embed_dim, num_heads, dropout=0.1):
-        """
-        Initialize Predictive Attention Mechanism.
-        Args:
-            embed_dim (int): Dimension of input embeddings.
-            num_heads (int): Number of attention heads.
-            dropout (float): Dropout rate for regularization.
-        """
-        super(PredictiveAttention, self).__init__()
-        self.attention = MultiheadAttention(embed_dim, num_heads, dropout=dropout, batch_first=True)
-
-    def forward(self, query, key, value, mask=None):
-        """
-        Forward pass for the attention mechanism.
-        Args:
-            query (Tensor): Query tensor.
-            key (Tensor): Key tensor.
-            value (Tensor): Value tensor.
-            mask (Tensor): Optional attention mask.
-        Returns:
-            Tuple: (attention output, attention weights)
-        """
-        attn_output, attn_weights = self.attention(query, key, value, attn_mask=mask)
-        return attn_output, attn_weights
-
-    @staticmethod
-    def visualize_attention(attn_weights, labels=None):
-        """
-        Visualize attention weights using heatmaps.
-        Args:
-            attn_weights (Tensor): Attention weights matrix.
-            labels (list): Optional labels for axes.
-        """
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-
-        sns.heatmap(attn_weights.squeeze().cpu().detach().numpy(), xticklabels=labels, yticklabels=labels, cmap="coolwarm")
-        plt.title("Attention Weights")
-        plt.xlabel("Keys")
-        plt.ylabel("Queries")
-        plt.show()
+class PredictiveAttention(nn.Module):
+    def __init__(self, config: Dict):
+        """Initialize predictive attention mechanism"""
+        super().__init__()
+        self.config = config
+        self.metrics = AttentionMetrics()
+        
+        # Initialize attention components
+        self.focus_network = nn.Sequential(
+            nn.Linear(config.input_dim, config.hidden_dim),
+            nn.ReLU(),
+            nn.Linear(config.hidden_dim, 1),
+            nn.Sigmoid()
+        )
+        
+    def forward(
+        self,
+        input_state: torch.Tensor,
+        stress_level: Optional[float] = None,
+        emotional_context: Optional[Dict] = None
+    ) -> Tuple[torch.Tensor, Dict[str, float]]:
+        """Process input through attention mechanism"""
+        # Calculate base attention
+        attention = self.focus_network(input_state)
+        
+        # Apply stress modulation if provided
+        if stress_level is not None:
+            attention = self._modulate_attention(
+                attention,
+                stress_level
+            )
+            
+        # Update metrics
+        self.metrics.focus_level = attention.mean().item()
+        self.metrics.stress_modulation = stress_level or 0.0
+        
+        return attention, self.metrics.__dict__
 
 class ConsciousnessAttention(nn.Module):
     """
