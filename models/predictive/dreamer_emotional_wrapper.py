@@ -10,6 +10,21 @@ from models.emotion.reward_shaping import EmotionalRewardShaper
 from models.memory.memory_core import MemoryCore
 from models.evaluation.consciousness_metrics import ConsciousnessMetrics
 
+"""
+DreamerV3 Integration Wrapper for Emotional Processing in ACM
+
+This module implements:
+1. Emotional context integration with DreamerV3 world model
+2. Dream-based emotion prediction and simulation
+3. Emotional reward shaping for world model learning
+4. Integration with consciousness development
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing  
+- models/memory/emotional_memory_core.py for memory storage
+- models/evaluation/emotional_rl_metrics.py for metrics tracking
+"""
+
 @dataclass
 class EmotionalMetrics:
     """Tracks emotional learning metrics"""
@@ -19,12 +34,21 @@ class EmotionalMetrics:
     reward_history: List[float] = None
     consciousness_score: float = 0.0
 
+@dataclass
+class EmotionalDreamState:
+    """Tracks emotional state during dream generation"""
+    valence: float = 0.0
+    arousal: float = 0.0
+    dominance: float = 0.0
+    attention: float = 0.0
+
 class DreamerEmotionalWrapper:
     """
     Integrates DreamerV3 with emotional learning capabilities for ACM
     """
     
     def __init__(self, config: Dict):
+        """Initialize emotional dreamer wrapper"""
         # Core components
         self.config = config
         self.dreamer = DreamerV3(config['dreamer_config'])
@@ -32,6 +56,7 @@ class DreamerEmotionalWrapper:
         self.reward_shaper = EmotionalRewardShaper(config)
         self.memory = MemoryCore(config['memory_config'])
         self.consciousness_metrics = ConsciousnessMetrics(config)
+        self.dream_state = EmotionalDreamState()
         
         # Initialize metrics
         self.metrics = EmotionalMetrics(
@@ -184,7 +209,47 @@ class DreamerEmotionalWrapper:
         self.emotion_network.load_state_dict(checkpoint['emotion_network_state'])
         self.metrics = checkpoint['metrics']
         self.config = checkpoint['config']
-<<<<<<< HEAD:models/predictive/dreamer_Emotional_wrapper.py
+
+    def imagine_trajectory(
+        self,
+        current_state: torch.Tensor,
+        emotional_context: Dict[str, float],
+        horizon: int = 10
+    ) -> Tuple[torch.Tensor, Dict]:
+        """Generate imagined trajectory with emotional context"""
+        imagined_trajectory = []
+        for _ in range(horizon):
+            action = self.get_action(current_state, emotional_context)
+            next_state = self.dreamer.predict_next_state(current_state, action)
+            imagined_trajectory.append((current_state, action, next_state))
+            current_state = next_state
+        return imagined_trajectory, self.get_emotional_state()
+
+    def process_dream(
+        self,
+        dream_state: torch.Tensor,
+        emotional_context: Optional[Dict] = None
+    ) -> Tuple[torch.Tensor, Dict]:
+        """Process dream state with emotional context"""
+        # Extract emotional features
+        emotional_features = self.emotion_network.extract_features(dream_state)
+        
+        # Update dream emotional state
+        self.dream_state = self._update_dream_state(
+            emotional_features,
+            emotional_context
+        )
+        
+        # Shape reward based on emotional state
+        shaped_reward = self._shape_emotional_reward(
+            dream_state,
+            self.dream_state
+        )
+        
+        return shaped_reward, {
+            'emotional_state': self.dream_state,
+            'reward_scaling': shaped_reward / self.config.base_reward
+        }
 
     def _layer(self, x):
         try:
@@ -195,5 +260,3 @@ class DreamerEmotionalWrapper:
             return x
         except Exception as e:
             raise RuntimeError(f"Layer computation failed: {str(e)}")
-=======
->>>>>>> c753d0abc01a96f5d2e6eafe30f80fb16c58c3c2:models/predictive/dreamer_emotional_wrapper.py
