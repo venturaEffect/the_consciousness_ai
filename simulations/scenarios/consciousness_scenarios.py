@@ -5,6 +5,22 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
 import numpy as np
+import random
+
+"""
+Consciousness Development Scenario Manager for ACM
+
+This module handles consciousness development scenarios by:
+1. Generating appropriate stressful situations for attention triggering
+2. Managing survival-based learning scenarios
+3. Tracking development metrics and progress
+4. Integrating with Unreal Engine 5 for VR simulations
+
+Dependencies:
+- models/core/consciousness_core.py for main consciousness system
+- models/evaluation/consciousness_monitor.py for metrics
+- models/memory/emotional_memory_core.py for experience storage
+"""
 
 @dataclass
 class ScenarioConfig:
@@ -31,42 +47,42 @@ class ConsciousnessScenarioManager:
     4. Memory formation through significant experiences
     """
     
-    def __init__(self, config: ScenarioConfig):
+    def __init__(self, config: Dict):
+        """Initialize scenario generation components"""
         self.config = config
-        self.current_scenario = None
         self.attention_history = []
         self.interaction_history = []
         self.success_history = []
         
-    def generate_scenario(self, scenario_type: ScenarioType) -> Dict:
-        """Generate a scenario based on type"""
-        if scenario_type == ScenarioType.SURVIVAL:
+    def generate_scenario(self, scenario_type: str) -> Dict:
+        """Generate consciousness development scenario"""
+        if scenario_type == "survival":
             return self._generate_survival_scenario()
-        elif scenario_type == ScenarioType.SOCIAL:
+        elif scenario_type == "social":
             return self._generate_social_scenario()
-        elif scenario_type == ScenarioType.ETHICAL:
-            return self._generate_ethical_scenario()
-        elif scenario_type == ScenarioType.PROBLEM_SOLVING:
-            return self._generate_problem_solving_scenario()
+        elif scenario_type == "emotional":
+            return self._generate_emotional_scenario()
             
+        raise ValueError(f"Unknown scenario type: {scenario_type}")
+        
     def _generate_survival_scenario(self) -> Dict:
         """Generate survival-based scenario"""
-        scenario = {
-            'type': ScenarioType.SURVIVAL,
-            'stress_level': self.config.stress_level,
-            'description': "Agent must navigate dangerous environment",
-            'objectives': [
-                "Maintain system integrity",
-                "Find safe exit route",
-                "Protect human participants"
-            ],
-            'constraints': {
-                'time_limit': self.config.max_duration,
-                'damage_threshold': 0.3,
-                'human_safety_required': True
+        # Create stressful situation to trigger attention
+        stress_params = {
+            'intensity': random.uniform(0.6, 0.9),
+            'duration': random.randint(100, 300),
+            'type': random.choice(['physical', 'emotional', 'social'])
+        }
+        
+        # Configure scenario
+        return {
+            'type': 'survival',
+            'stress_params': stress_params,
+            'success_criteria': {
+                'min_attention': 0.7,
+                'min_adaptation': 0.6
             }
         }
-        return scenario
         
     def _generate_social_scenario(self) -> Dict:
         """Generate social interaction scenario"""
