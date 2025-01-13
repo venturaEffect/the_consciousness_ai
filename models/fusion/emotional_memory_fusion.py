@@ -1,4 +1,17 @@
-# models/fusion/emotional_memory_fusion.py
+"""
+Emotional Memory Fusion Module for ACM
+
+This module implements:
+1. Fusion of emotional features across modalities
+2. Memory integration with emotional context
+3. Multimodal feature alignment
+4. Memory consolidation with emotional weighting
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for storage
+- models/evaluation/consciousness_monitor.py for metrics
+"""
 
 import torch
 import torch.nn as nn
@@ -20,6 +33,13 @@ class FusionConfig:
     dropout: float = 0.1
     emotional_weight: float = 0.8
 
+@dataclass
+class FusionMetrics:
+    """Tracks fusion performance metrics"""
+    alignment_score: float = 0.0
+    fusion_confidence: float = 0.0
+    modality_weights: Dict[str, float] = None
+
 class EmotionalMemoryFusion(nn.Module):
     """
     Fuses multimodal inputs with emotional context for memory formation
@@ -34,6 +54,7 @@ class EmotionalMemoryFusion(nn.Module):
     def __init__(self, config: FusionConfig):
         super().__init__()
         self.config = config
+        self.metrics = FusionMetrics()
         
         # Initialize core components
         self.emotion_network = EmotionalGraphNetwork()
@@ -121,10 +142,15 @@ class EmotionalMemoryFusion(nn.Module):
             emotional_context=emotional_context
         )
         
+        # Update metrics
+        self.metrics.modality_weights = self._calculate_weights(embeddings, emotional_context)
+        self.metrics.alignment_score = self._calculate_alignment(embeddings)
+        
         return emotional_output, {
             'response': response,
             'emotional_context': emotional_context,
-            'fusion_quality': self._calculate_fusion_quality(embeddings)
+            'fusion_quality': self._calculate_fusion_quality(embeddings),
+            'metrics': self.metrics.__dict__
         }
         
     def _apply_memory_attention(
@@ -156,3 +182,20 @@ class EmotionalMemoryFusion(nn.Module):
                 similarities.append(sim)
                 
         return float(torch.mean(torch.stack(similarities)).item())
+        
+    def _calculate_weights(
+        self,
+        encoded_features: List[torch.Tensor],
+        emotional_context: Optional[Dict]
+    ) -> Dict[str, float]:
+        """Calculate modality weights based on encoded features and emotional context"""
+        # Placeholder implementation
+        return {name: 1.0 for name in encoded_features.keys()}
+        
+    def _calculate_alignment(
+        self,
+        encoded_features: List[torch.Tensor]
+    ) -> float:
+        """Calculate alignment score between encoded features"""
+        # Placeholder implementation
+        return 1.0
