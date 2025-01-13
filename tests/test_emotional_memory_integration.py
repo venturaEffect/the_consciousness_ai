@@ -9,10 +9,26 @@ from models.fusion.emotional_memory_fusion import EmotionalMemoryFusion
 from models.generative.generative_emotional_core import GenerativeEmotionalCore
 from models.evaluation.emotional_evaluation import EmotionalEvaluator
 
+"""
+Integration tests for emotional memory formation and retrieval in ACM.
+
+Tests the integration between:
+1. Emotional state detection
+2. Memory indexing with emotional context
+3. Temporal coherence in memory formation
+4. Memory retrieval with emotional context
+
+Dependencies:
+- models/memory/emotional_memory_core.py for memory operations
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/core/consciousness_core.py for core system integration
+"""
+
 class TestEmotionalMemoryIntegration(unittest.TestCase):
     """Test suite for validating emotional memory formation and integration"""
     
     def setUp(self):
+        """Initialize test components"""
         self.config = {
             'memory_config': {
                 'capacity': 10000,
@@ -39,6 +55,8 @@ class TestEmotionalMemoryIntegration(unittest.TestCase):
         self.fusion = EmotionalMemoryFusion(self.config)
         self.generative_core = GenerativeEmotionalCore(self.config)
         self.evaluator = EmotionalEvaluator(self.config)
+        self.memory = EmotionalMemoryCore(self.config)
+        self.emotion = EmotionalGraphNN(self.config)
         
     def test_memory_formation_during_stress(self):
         """Test memory formation during high-stress situations"""
@@ -180,6 +198,28 @@ class TestEmotionalMemoryIntegration(unittest.TestCase):
             consciousness_scores[0],
             "Consciousness score should improve over time"
         )
+        
+    def test_memory_formation(self):
+        """Test emotional memory formation process"""
+        test_input = {
+            'visual': torch.randn(1, 3, 224, 224),
+            'text': 'Test emotional experience',
+            'attention': 0.8
+        }
+        
+        # Process emotional context
+        emotional_context = self.emotion.process(test_input)
+        
+        # Store in memory
+        memory_id = self.memory.store(
+            input_data=test_input,
+            emotional_context=emotional_context,
+            attention_level=test_input['attention']
+        )
+        
+        # Verify storage
+        retrieved = self.memory.retrieve(memory_id)
+        self.assertIsNotNone(retrieved)
 
 if __name__ == '__main__':
     unittest.main()
