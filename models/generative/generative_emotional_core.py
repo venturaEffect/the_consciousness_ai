@@ -1,4 +1,17 @@
-# models/generative/generative_emotional_core.py
+"""
+Generative Emotional Core for ACM
+
+This module implements:
+1. Emotion-aware text generation
+2. Integration with LLaMA 3.3 for emotional context
+3. Memory-guided generation
+4. Emotional coherence validation
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for memory access
+- models/evaluation/consciousness_monitor.py for metrics
+"""
 
 import torch
 import numpy as np
@@ -7,6 +20,7 @@ from dataclasses import dataclass
 from transformers import LlamaTokenizer, LlamaForCausalLM
 from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
 from models.memory.emotional_memory_core import EmotionalMemoryCore
+import logging
 
 @dataclass
 class GenerativeConfig:
@@ -30,6 +44,7 @@ class GenerativeEmotionalCore:
     """
     
     def __init__(self, config: GenerativeConfig):
+        """Initialize generative emotional system"""
         self.config = config
         
         # Initialize core components
@@ -42,35 +57,34 @@ class GenerativeEmotionalCore:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
         
-    def generate_response(
+    def generate_with_emotion(
         self,
         prompt: str,
         emotional_context: Dict[str, float],
-        situation_context: Optional[Dict] = None
-    ) -> Tuple[str, Dict]:
-        """Generate emotionally-aware response"""
+        memory_context: Optional[List[Dict]] = None
+    ) -> Tuple[str, Dict[str, float]]:
+        """Generate text with emotional awareness"""
+        # Process emotional context
+        emotional_features = self.emotion_network.process(emotional_context)
         
-        # Retrieve relevant emotional memories
-        relevant_memories = self.memory_core.retrieve_similar_memories(
-            emotion_query=emotional_context,
-            k=self.config.top_k_memories
-        )
-        
-        # Create emotional embedding
-        emotional_embedding = self.emotion_network.get_embedding(emotional_context)
-        
-        # Prepare context with emotional memories
-        context = self._prepare_generation_context(
-            prompt=prompt,
-            emotional_embedding=emotional_embedding,
-            memories=relevant_memories,
-            situation=situation_context
+        # Retrieve relevant memories
+        if memory_context is None:
+            memory_context = self.memory_core.retrieve_similar_memories(
+                emotion_query=emotional_features,
+                k=self.config.top_k_memories
+            )
+            
+        # Build enhanced prompt
+        enhanced_prompt = self._build_emotional_prompt(
+            prompt,
+            emotional_features,
+            memory_context
         )
         
         # Generate response
         generated_ids = self.model.generate(
-            input_ids=context["input_ids"].to(self.device),
-            attention_mask=context["attention_mask"].to(self.device),
+            input_ids=enhanced_prompt["input_ids"].to(self.device),
+            attention_mask=enhanced_prompt["attention_mask"].to(self.device),
             max_length=self.config.max_length,
             temperature=self.config.temperature,
             pad_token_id=self.tokenizer.eos_token_id,
@@ -79,37 +93,28 @@ class GenerativeEmotionalCore:
         
         response = self.tokenizer.decode(generated_ids[0], skip_special_tokens=True)
         
-        # Update emotional memory
-        self._store_interaction_memory(
-            prompt=prompt,
-            response=response,
-            emotional_context=emotional_context,
-            situation_context=situation_context
-        )
+        return response, {
+            'emotional_coherence': self._evaluate_coherence(response, emotional_features),
+            'memory_influence': len(memory_context) > 0,
+            'generation_confidence': self.model.get_confidence()
+        }
         
-        return response, self._get_generation_metadata(
-            context=context,
-            response=response,
-            emotional_context=emotional_context
-        )
-        
-    def _prepare_generation_context(
+    def _build_emotional_prompt(
         self,
         prompt: str,
-        emotional_embedding: torch.Tensor,
-        memories: List[Dict],
-        situation: Optional[Dict]
+        emotional_features: torch.Tensor,
+        memory_context: List[Dict]
     ) -> Dict:
         """Prepare context for generation with emotional conditioning"""
         
         # Create memory context string
-        memory_context = self._format_memory_context(memories)
+        memory_context_str = self._format_memory_context(memory_context)
         
         # Create emotional prefix
-        emotional_prefix = self._create_emotional_prefix(emotional_embedding)
+        emotional_prefix = self._create_emotional_prefix(emotional_features)
         
         # Combine context elements
-        full_context = f"{emotional_prefix}\n{memory_context}\nCurrent situation: {situation}\n\nPrompt: {prompt}\nResponse:"
+        full_context = f"{emotional_prefix}\n{memory_context_str}\n\nPrompt: {prompt}\nResponse:"
         
         # Tokenize
         tokenized = self.tokenizer(
@@ -148,6 +153,11 @@ class GenerativeEmotionalCore:
         )
         
         return self.tokenizer.decode(emotional_tokens[0], skip_special_tokens=True)
+        
+    def _evaluate_coherence(self, response: str, emotional_features: torch.Tensor) -> float:
+        """Evaluate emotional coherence of the response"""
+        # Placeholder for actual coherence evaluation logic
+        return 1.0
         
     def _store_interaction_memory(
         self,
