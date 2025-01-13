@@ -1,3 +1,18 @@
+"""
+Experience Integration Module for ACM
+
+This module implements:
+1. Integration of multimodal experiences
+2. Memory consolidation from experiences
+3. Emotional context binding
+4. Temporal sequence tracking
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for memory storage  
+- models/evaluation/consciousness_monitor.py for metrics
+"""
+
 # models/integration/experience_integrator.py
 
 import torch
@@ -8,6 +23,7 @@ from models.fusion.emotional_memory_fusion import EmotionalMemoryFusion
 from models.generative.generative_emotional_core import GenerativeEmotionalCore
 from models.evaluation.emotional_evaluation import EmotionalEvaluator
 from models.predictive.attention_mechanism import ConsciousnessAttention
+import logging
 
 @dataclass
 class ExperienceMetrics:
@@ -28,18 +44,46 @@ class ExperienceIntegrator:
     """
     
     def __init__(self, config: Dict):
+        """Initialize experience integration"""
         self.config = config
+        self.emotion_network = EmotionalGraphNN(config)
+        self.memory = EmotionalMemoryCore(config)
+        self.monitor = ConsciousnessMonitor(config)
         
-        # Initialize core components
-        self.fusion = EmotionalMemoryFusion(config)
-        self.generative = GenerativeEmotionalCore(config)
-        self.evaluator = EmotionalEvaluator(config)
-        self.attention = ConsciousnessAttention(config)
+    def integrate_experience(
+        self,
+        sensory_input: Dict[str, torch.Tensor],
+        emotional_context: Dict[str, float],
+        attention_level: float
+    ) -> Tuple[Dict, Dict[str, float]]:
+        """Integrate new experience with emotional context"""
+        # Process emotional features
+        emotional_features = self.emotion_network.process(
+            sensory_input,
+            emotional_context
+        )
         
-        # Metrics tracking
-        self.metrics = ExperienceMetrics()
-        self.experience_history = []
+        # Store in memory if attention is high
+        if attention_level > self.config.memory_threshold:
+            memory_id = self.memory.store(
+                input_data=sensory_input,
+                emotional_context=emotional_features,
+                attention_level=attention_level
+            )
+            
+        # Update consciousness metrics
+        metrics = self.monitor.evaluate_state(
+            current_state=sensory_input,
+            emotional_context=emotional_features,
+            attention_level=attention_level
+        )
         
+        return {
+            'memory_id': memory_id if 'memory_id' in locals() else None,
+            'emotional_features': emotional_features,
+            'metrics': metrics
+        }
+
     def process_experience(
         self,
         state: Dict[str, torch.Tensor],
