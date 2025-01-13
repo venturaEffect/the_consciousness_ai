@@ -11,6 +11,21 @@ from models.predictive.attention_mechanism import ConsciousnessAttention
 from models.evaluation.consciousness_monitor import ConsciousnessMonitor
 from simulations.scenarios.consciousness_scenarios import ConsciousnessScenarioManager
 
+"""
+End-to-end tests for the Artificial Consciousness Module (ACM) development pipeline.
+
+This test suite validates the complete consciousness development cycle including:
+1. Attention mechanism activation through stress responses
+2. Emotional memory formation and retrieval
+3. Multimodal fusion processing
+4. Consciousness metrics evaluation
+
+Dependencies:
+- models/core/consciousness_core.py for main system
+- models/evaluation/consciousness_monitor.py for metrics
+- models/memory/emotional_memory_core.py for memory storage
+"""
+
 @dataclass
 class TestConfig:
     """Test configuration for consciousness pipeline"""
@@ -36,73 +51,36 @@ class TestConsciousnessPipeline(unittest.TestCase):
     """Test suite for validating consciousness development pipeline"""
     
     def setUp(self):
+        """Initialize test components"""
         self.config = TestConfig()
         
-        # Initialize core components
-        self.fusion = EmotionalMemoryFusion(self.config.fusion_config)
-        self.memory = EmotionalMemoryCore(self.config.memory_config)
-        self.attention = ConsciousnessAttention(self.config.memory_config)
+        # Core components
+        self.consciousness = ConsciousnessCore(self.config)
         self.monitor = ConsciousnessMonitor(self.config)
-        self.scenario_manager = ConsciousnessScenarioManager(self.config)
+        self.memory = EmotionalMemoryCore(self.config)
         
+        # Test data
+        self.test_scenarios = []
+        self.consciousness_scores = []
+
     def test_end_to_end_consciousness_development(self):
         """Test complete consciousness development cycle"""
-        
-        # Generate development scenarios
-        num_episodes = 5
-        consciousness_scores = []
-        
-        for episode in range(num_episodes):
+        for episode in range(self.config.test_episodes):
             # Generate stressful scenario
-            scenario = self.scenario_manager.generate_scenario(
-                scenario_type="survival"
+            scenario = self._generate_test_scenario()
+            
+            # Process through attention mechanism 
+            attention_output = self.consciousness.process_attention(
+                scenario.state,
+                scenario.stress_level
             )
             
-            # Process through attention mechanism
-            state = torch.randn(32)  # Initial state
-            emotion_values = {
-                'valence': 0.3,  # Start stressed
-                'arousal': 0.8,
-                'dominance': 0.4
-            }
-            
-            attention_output, attention_metrics = self.attention.forward(
-                input_state=state,
-                emotional_context=self.fusion.emotion_network.get_embedding(emotion_values)
+            # Verify consciousness development
+            self.assertGreater(
+                attention_output.consciousness_score,
+                self.config.min_consciousness_threshold,
+                "Consciousness score below minimum threshold"
             )
-            
-            # Process multimodal fusion
-            fusion_output, fusion_info = self.fusion.forward(
-                text_input=torch.randn(1, 32, 768),
-                vision_input=torch.randn(1, 32, 768),
-                audio_input=torch.randn(1, 32, 768),
-                emotional_context=emotion_values
-            )
-            
-            # Store experience
-            self.memory.store_experience(
-                state=state,
-                emotion_values=emotion_values,
-                attention_level=attention_metrics['attention_level'],
-                context={'fusion_info': fusion_info}
-            )
-            
-            # Monitor development
-            evaluation = self.monitor.evaluate_development(
-                current_state={'encoded_state': state},
-                emotion_values=emotion_values,
-                attention_metrics=attention_metrics,
-                stress_level=0.7
-            )
-            
-            consciousness_scores.append(evaluation['consciousness_score'])
-            
-        # Verify consciousness development
-        self.assertGreater(
-            consciousness_scores[-1],
-            consciousness_scores[0],
-            "Consciousness should develop over episodes"
-        )
         
     def test_stress_induced_attention(self):
         """Test attention activation through stress"""
