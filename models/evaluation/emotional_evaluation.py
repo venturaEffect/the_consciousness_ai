@@ -1,3 +1,18 @@
+"""
+Emotional Evaluation System for ACM
+
+This module implements:
+1. Evaluation of emotional responses
+2. Emotional coherence metrics
+3. Integration testing for emotional modules
+4. Performance tracking over time
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for memory access
+- models/evaluation/consciousness_monitor.py for metrics
+"""
+
 # models/evaluation/emotional_evaluation.py
 
 import torch
@@ -18,11 +33,20 @@ class ConsciousnessMetrics:
     interaction_quality: float = 0.0
     narrative_consistency: float = 0.0
 
+@dataclass
+class EmotionalMetrics:
+    """Tracks emotional evaluation metrics"""
+    coherence_score: float = 0.0
+    stability_score: float = 0.0
+    adaptation_rate: float = 0.0
+    integration_quality: float = 0.0
+
 class EmotionalEvaluator:
     """
     Evaluates consciousness development through emotional learning metrics
     """
     def __init__(self, config: Dict):
+        """Initialize emotional evaluation system"""
         self.config = config
         self.emotion_network = EmotionalGraphNetwork()
         self.memory = MemoryCore(config['memory_config'])
@@ -30,7 +54,9 @@ class EmotionalEvaluator:
         
         # Initialize metrics
         self.metrics = ConsciousnessMetrics()
+        self.emotional_metrics = EmotionalMetrics()
         self.experience_history = []
+        self.history = []
         
     def evaluate_interaction(
         self,
@@ -216,3 +242,35 @@ class EmotionalEvaluator:
             getattr(self.metrics, metric) * weight
             for metric, weight in weights.items()
         )
+        
+    def evaluate_emotional_state(
+        self,
+        current_state: Dict[str, torch.Tensor],
+        memory_context: Optional[Dict] = None
+    ) -> Dict[str, float]:
+        """Evaluate current emotional state"""
+        # Calculate coherence
+        coherence = self._calculate_coherence(
+            current_state,
+            memory_context
+        )
+        
+        # Calculate stability
+        stability = self._calculate_stability(
+            current_state,
+            self.history
+        )
+        
+        # Update metrics
+        self.emotional_metrics.coherence_score = coherence
+        self.emotional_metrics.stability_score = stability
+        
+        # Store state
+        self.history.append(current_state)
+        
+        return {
+            'coherence': coherence,
+            'stability': stability,
+            'adaptation': self.emotional_metrics.adaptation_rate,
+            'integration': self.emotional_metrics.integration_quality
+        }
