@@ -5,6 +5,20 @@ import numpy as np
 from typing import Dict, Optional
 from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
 
+"""
+Shapes rewards based on emotional responses and learning progress.
+
+Key functionalities:
+1. Emotional reward scaling
+2. Positive emotion bonuses
+3. Learning progress rewards
+4. Survival-based reward shaping
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/evaluation/emotional_rl_metrics.py for progress tracking
+"""
+
 class EmotionalRewardShaper:
     """Shapes rewards based on emotional responses and learning progress"""
     
