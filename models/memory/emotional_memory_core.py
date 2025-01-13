@@ -1,16 +1,17 @@
 # models/memory/emotional_memory_core.py  
 """
-Emotional memory system that stores and indexes experiences.
-Key functionalities:
-- Vector storage using Pinecone for memory indexing
-- Emotional context integration
-- Temporal coherence tracking
-- Memory consolidation and optimization
+Core memory system for the Artificial Consciousness Module (ACM)
+
+This module handles emotional memory formation and retrieval through:
+1. Vector storage using Pinecone v2 for high-dimensional memory indexing
+2. Emotional context integration with memories
+3. Temporal sequence tracking 
+4. Memory consolidation and optimization
 
 Dependencies:
-- models/memory/temporal_coherence.py for sequencing
-- models/memory/consolidation.py for optimization
-- External: Pinecone v2 for vector storage
+- pinecone-client==2.2.1 for vector storage
+- models/emotion/emotional_processing.py for affect analysis
+- models/core/consciousness_core.py for attention gating
 """
 
 import torch
@@ -31,84 +32,33 @@ class EmotionalMemory:
     temporal_context: Dict
     stress_level: float
 
-class EmotionalMemoryCore(nn.Module):
-    """
-    Core class for emotion-aware memory storage and retrieval.
-    
-    Features:
-    - Emotional context indexing
-    - Attention-based memory gating
-    - Temporal coherence tracking
-    """
-
+class EmotionalMemoryCore:
     def __init__(self, config: Dict):
-        """
-        Initialize memory systems.
-
-        Args:
-            config: Configuration containing:
-                - memory_size: Maximum memory capacity
-                - embedding_dim: Dimension of memory vectors
-                - emotion_dim: Dimension of emotional context
-        """
-        super().__init__()
-        self.memory_index = PineconeIndex(config)  # Vector store for experiences
-        self.emotional_indexer = EmotionalContextIndexer(config)  # Emotion embedding
-        self.attention_gate = AttentionGatingMechanism(config)  # Memory gating
-
-    def store(
+        """Initialize memory systems"""
+        self.config = config
+        self.vector_size = config.memory.vector_dimension
+        self.pinecone = initialize_pinecone(config.memory.pinecone_key)
+        
+        # Initialize memory indices
+        self.episodic_index = self.pinecone.Index("episodic-memories")
+        self.semantic_index = self.pinecone.Index("semantic-memories")
+        
+    def store_experience(
         self,
-        state: torch.Tensor,
-        emotion: Dict[str, float],
-        attention: float
-    ):
-        """
-        Store experience with emotional context.
-        
-        Implements the memory formation process described in the paper,
-        using attention levels to gate storage and emotional context for indexing.
-
-        Args:
-            state: Current experience state vector
-            emotion: Emotional context values
-            attention: Attention level for gating
-        """
-        # Generate emotional embedding for indexing
-        emotional_context = self.emotional_indexer(emotion)
-        
-        # Gate storage based on attention level
-        if self.attention_gate(attention):
-            # Store in vector database with metadata
-            self.memory_index.upsert(
-                vectors=state,
-                metadata={
-                    'emotional_context': emotional_context,
-                    'attention_level': attention,
-                    'timestamp': time.time()
-                }
-            )
-
-    def retrieve_relevant(
-        self,
-        current_emotion: Dict[str, float],
-        k: int = 5
-    ) -> List[Dict]:
-        """
-        Retrieve emotionally relevant memories.
-        
-        Uses emotional context to find similar past experiences,
-        implementing the emotional memory retrieval described in the paper.
-
-        Args:
-            current_emotion: Current emotional state
-            k: Number of memories to retrieve
-
-        Returns:
-            List of relevant memories with metadata
-        """
-        emotional_query = self.emotional_indexer(current_emotion)
-        return self.memory_index.query(
-            vector=emotional_query,
-            top_k=k,
-            include_metadata=True
+        experience_data: Dict[str, torch.Tensor],
+        emotional_context: Dict[str, float],
+        attention_level: float
+    ) -> bool:
+        """Store new experience with emotional context"""
+        # Generate memory embedding
+        memory_vector = self._generate_memory_embedding(
+            experience_data,
+            emotional_context
         )
+        
+        # Store in episodic memory if attention is high
+        if attention_level > self.config.memory.attention_threshold:
+            self.episodic_index.upsert(
+                vectors=[(str(uuid4()), memory_vector)],
+                namespace="experiences"
+            )

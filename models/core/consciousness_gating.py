@@ -1,13 +1,16 @@
 """
-Enhanced Consciousness Gating Module
+Attention and consciousness gating system for ACM
 
-Implements advanced gating mechanisms for consciousness development:
-1. Adaptive attention control based on stress and emotional salience
-2. Memory-aware gating through temporal coherence
-3. Dynamic threshold adjustment
-4. Meta-learning for gate optimization
+This module controls information flow through:
+1. Stress-modulated attention gating
+2. Emotional salience weighting 
+3. Survival-driven attention mechanisms
+4. Integration with consciousness development
 
-Based on MANN architecture for holonic consciousness development.
+Dependencies:
+- models/emotion/emotional_processing.py for affect detection
+- models/memory/emotional_memory_core.py for memory storage
+- configs/consciousness_development.yaml for parameters
 """
 
 import torch
@@ -85,6 +88,17 @@ class ConsciousnessGating(nn.Module):
     
     def __init__(self, config: Dict):
         super().__init__()
+        self.config = config
+        
+        # Initialize gating components
+        self.attention_network = AttentionNetwork(
+            input_dim=config.model.hidden_size,
+            attention_dim=config.model.attention_dim
+        )
+        
+        # Stress and emotion modulation
+        self.stress_modulation = StressModulation(config)
+        self.emotional_weighting = EmotionalWeighting(config)
         
         # Gating networks
         self.adaptive_gate = AdaptiveGatingNetwork(config)
@@ -104,15 +118,26 @@ class ConsciousnessGating(nn.Module):
 
     def forward(
         self,
-        current_state: torch.Tensor,
-        emotional_context: Dict[str, float],
+        input_state: torch.Tensor,
+        emotional_context: torch.Tensor,
+        stress_level: Optional[float] = None,
+        current_state: torch.Tensor = None,
         memory_context: Optional[torch.Tensor] = None,
-        attention_level: float = 0.0,
-        stress_level: float = 0.0
+        attention_level: float = 0.0
     ) -> Tuple[torch.Tensor, Dict[str, float]]:
         """
         Process input through enhanced gating mechanism
         """
+        # Calculate base attention
+        attention_weights = self.attention_network(input_state)
+        
+        # Modulate with stress if provided
+        if stress_level is not None:
+            attention_weights = self.stress_modulation(
+                attention_weights,
+                stress_level
+            )
+        
         # Generate base gating signal
         base_gate = self.adaptive_gate(
             emotional_context=torch.tensor([v for v in emotional_context.values()]),
