@@ -1,20 +1,32 @@
 """
-Enhanced Consciousness Metrics Module
+Enhanced Consciousness Metrics System for ACM
 
-Implements comprehensive consciousness evaluation through:
-1. Multi-dimensional consciousness assessment
-2. Development stage tracking
-3. Temporal coherence analysis
-4. System-wide integration metrics
+This module implements:
+1. Advanced consciousness development tracking
+2. Multi-dimensional metric analysis
+3. Development stage validation
+4. Integration with emotional and memory systems
 
-Based on holonic principles where metrics contribute both independently 
-and to overall consciousness evaluation.
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion metrics
+- models/memory/emotional_memory_core.py for memory validation
+- models/evaluation/consciousness_monitor.py for base metrics
 """
 
+from typing import Dict, List, Optional, Tuple
 import torch
 import numpy as np
-from typing import Dict, List, Optional
 from dataclasses import dataclass
+
+@dataclass
+class EnhancedMetrics:
+    """Enhanced metrics for consciousness tracking"""
+    emotional_coherence: float = 0.0
+    memory_stability: float = 0.0
+    attention_consistency: float = 0.0
+    behavioral_adaptation: float = 0.0
+    learning_progress: float = 0.0
+    social_awareness: float = 0.0
 
 @dataclass
 class ConsciousnessMetrics:
