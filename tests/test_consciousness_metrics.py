@@ -7,6 +7,22 @@ from models.evaluation.consciousness_metrics import ConsciousnessMetrics
 from models.evaluation.emotional_rl_metrics import EmotionalRLTracker
 from models.predictive.dreamer_emotional_wrapper import DreamerEmotionalWrapper
 
+"""
+Unit tests for consciousness development metrics in ACM.
+
+Tests the following metrics:
+1. Emotional awareness scoring
+2. Attention stability metrics
+3. Memory coherence evaluation
+4. Development stage progression
+5. Integration with consciousness core
+
+Dependencies:
+- models/core/consciousness_core.py for main system
+- models/evaluation/consciousness_monitor.py for metrics
+- models/memory/emotional_memory_core.py for memory validation
+"""
+
 class TestConsciousnessMetrics(unittest.TestCase):
     """Test suite for consciousness development metrics"""
     
@@ -140,6 +156,22 @@ class TestConsciousnessMetrics(unittest.TestCase):
             shaped_reward, 
             self.config['emotional_scale'] * 2
         )
+
+    def test_emotional_awareness_scoring(self):
+        """Test emotional awareness metric calculation"""
+        test_state = {
+            'emotion': {
+                'valence': 0.7,
+                'arousal': 0.6,
+                'dominance': 0.5
+            },
+            'attention': 0.8
+        }
+        
+        metrics = self.monitor.evaluate_emotional_awareness(test_state)
+        
+        assert 0.0 <= metrics['emotional_awareness'] <= 1.0, "Emotional awareness out of range"
+        assert 'confidence' in metrics, "Confidence score missing"
 
 if __name__ == '__main__':
     unittest.main()
