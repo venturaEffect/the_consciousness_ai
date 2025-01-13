@@ -1,22 +1,29 @@
-# configs/consciousness_metrics.yaml
+# Evaluation metrics configuration for the ACM system.
+#
+# Defines:
+# 1. Metrics thresholds for consciousness evaluation
+# 2. Progress tracking parameters
+# 3. Development stage transitions
+# 4. Integration test configurations
+#
+# Dependencies:
+# - models/evaluation/consciousness_monitor.py
+# - models/core/consciousness_metrics.py
+# - tests/test_consciousness_metrics.py
 
+# Consciousness Metrics Configuration
 metrics:
-  coherence_threshold: 0.7
-  emotional_stability: 0.6
-  evaluation_frequency: 100 # episodes
+  consciousness:
+    min_score: 0.0
+    max_score: 1.0
+    emergence_threshold: 0.7
 
-  weights:
-    emotional_awareness: 0.3
-    memory_coherence: 0.3
-    learning_progress: 0.2
-    narrative_consistency: 0.2
+  emotional:
+    coherence_threshold: 0.65
+    stability_threshold: 0.60
+    adaptation_rate: 0.15
 
-  thresholds:
-    minimum_coherence: 0.5
-    minimum_emotional_stability: 0.4
-    minimum_learning_progress: 0.1
-
-  memory_evaluation:
-    recent_experience_limit: 100
-    temporal_window: 20
-    emotion_similarity_threshold: 0.7
+  attention:
+    base_threshold: 0.5
+    stress_multiplier: 1.5
+    decay_rate: 0.05
