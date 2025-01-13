@@ -1,18 +1,21 @@
 """
-Memory Optimization Module
+Memory Optimization System for ACM
 
-Implements advanced memory optimization techniques:
-1. Dynamic index rebalancing
-2. Adaptive partitioning
-3. Access pattern optimization
-4. Cache management
+This module implements:
+1. Memory storage optimization strategies
+2. Cleanup of outdated memories
+3. Index maintenance and updates
+4. Memory consolidation algorithms
 
-Based on holonic principles for maintaining system-wide efficiency.
+Dependencies:
+- models/memory/memory_core.py for base functionality
+- models/memory/temporal_coherence.py for sequence tracking
+- models/evaluation/memory_metrics.py for optimization metrics
 """
 
+from typing import Dict, List, Optional, Tuple
 import torch
-from typing import Dict, List, Optional
-from dataclasses import dataclass
+import numpy as np
 
 @dataclass
 class OptimizationMetrics:
@@ -28,13 +31,41 @@ class MemoryOptimizer:
     """
 
     def __init__(self, config: Dict):
+        """Initialize memory optimization system"""
         self.config = config
+        self.consolidation_threshold = config.memory.consolidation_threshold
+        self.cleanup_threshold = config.memory.cleanup_threshold
+        self.max_memories = config.memory.max_memories
         self.metrics = OptimizationMetrics()
         
         # Initialize optimization components
         self.cache_manager = CacheManager(config)
         self.index_balancer = IndexBalancer(config)
         self.partition_optimizer = PartitionOptimizer(config)
+
+    def optimize_storage(
+        self,
+        memories: Dict[str, torch.Tensor],
+        usage_stats: Dict[str, float]
+    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, float]]:
+        """Optimize memory storage"""
+        # Find redundant memories
+        redundant_ids = self._find_redundant_memories(memories)
+        
+        # Remove outdated memories
+        cleaned_memories = self._cleanup_old_memories(
+            memories,
+            usage_stats
+        )
+        
+        # Consolidate similar memories
+        consolidated = self._consolidate_memories(cleaned_memories)
+        
+        return consolidated, {
+            'redundant_removed': len(redundant_ids),
+            'memories_consolidated': len(consolidated),
+            'compression_ratio': len(consolidated) / len(memories)
+        }
 
     def optimize_indices(
         self,
