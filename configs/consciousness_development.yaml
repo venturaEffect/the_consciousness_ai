@@ -1,12 +1,36 @@
-# configs/consciousness_development.yaml
+# Core configuration for consciousness development parameters in ACM.
+#
+# Defines:
+# 1. Consciousness emergence thresholds
+# 2. Attention gating parameters
+# 3. Memory formation settings
+# 4. Emotional processing configuration
+#
+# Dependencies:
+# - models/core/consciousness_core.py
+# - models/evaluation/consciousness_monitor.py
+# - configs/consciousness_metrics.yaml for evaluation
 
-# Core Development Parameters
+# Consciousness Development Settings
 consciousness:
+  emergence:
+    base_threshold: 0.65
+    attention_threshold: 0.75
+    emotional_threshold: 0.70
+    memory_threshold: 0.80
+
   attention:
+    initial_focus: 0.3
+    stress_activation: 0.7
     base_threshold: 0.7
     stress_activation_level: 0.8
     focus_duration_min: 10
     emotional_salience_weight: 0.6
+
+  memory:
+    consolidation_interval: 1000
+    cleanup_threshold: 0.4
+    max_memories: 100000
 
   # New emotional metadata system
   emotional_metadata:
