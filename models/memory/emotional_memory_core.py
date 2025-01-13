@@ -1,17 +1,17 @@
 # models/memory/emotional_memory_core.py  
 """
-Core memory system for the Artificial Consciousness Module (ACM)
+Emotional Memory Core for the ACM's memory management system.
 
-This module handles emotional memory formation and retrieval through:
-1. Vector storage using Pinecone v2 for high-dimensional memory indexing
-2. Emotional context integration with memories
-3. Temporal sequence tracking 
-4. Memory consolidation and optimization
+This module handles:
+1. Storage and retrieval of emotional memories
+2. Integration with Pinecone for vector storage
+3. Memory consolidation and optimization
+4. Emotional context indexing
 
 Dependencies:
-- pinecone-client==2.2.1 for vector storage
-- models/emotion/emotional_processing.py for affect analysis
-- models/core/consciousness_core.py for attention gating
+- models/evaluation/memory_evaluation.py for memory metrics
+- models/memory/memory_store.py for base memory functionality
+- models/memory/emotional_indexing.py for emotion-based indexing
 """
 
 import torch
@@ -34,14 +34,13 @@ class EmotionalMemory:
 
 class EmotionalMemoryCore:
     def __init__(self, config: Dict):
-        """Initialize memory systems"""
+        """Initialize emotional memory system"""
         self.config = config
-        self.vector_size = config.memory.vector_dimension
-        self.pinecone = initialize_pinecone(config.memory.pinecone_key)
         
-        # Initialize memory indices
-        self.episodic_index = self.pinecone.Index("episodic-memories")
-        self.semantic_index = self.pinecone.Index("semantic-memories")
+        # Initialize memory components
+        self.memory_store = MemoryStore(config)
+        self.emotional_indexer = EmotionalIndexing(config)
+        self.evaluator = MemoryEvaluator(config)
         
     def store_experience(
         self,
