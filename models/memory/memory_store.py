@@ -1,4 +1,67 @@
 """
+Base Memory Storage System for the ACM
+
+This module implements:
+1. Core memory storage functionality
+2. Memory indexing and retrieval
+3. Storage optimization 
+4. Memory consolidation
+
+Dependencies:
+- models/memory/optimizations.py for storage optimization
+- models/memory/memory_integration.py for system integration
+- configs/consciousness_development.yaml for parameters
+"""
+
+from typing import Dict, List, Optional, Tuple
+import torch
+from dataclasses import dataclass
+import numpy as np
+
+@dataclass
+class MemoryEntry:
+    """Memory entry containing experience data and metadata"""
+    content: torch.Tensor
+    context: Dict[str, float]
+    timestamp: float
+    attention: float
+
+class MemoryStore:
+    def __init__(self, config: Dict):
+        """Initialize memory storage system"""
+        self.config = config
+        self.storage = {}
+        self.index = {}
+        self.optimization = MemoryOptimization(config)
+        
+    def store(
+        self,
+        content: torch.Tensor,
+        context: Dict[str, float],
+        attention: float
+    ) -> str:
+        """Store new memory entry"""
+        # Generate memory ID
+        memory_id = self._generate_id()
+        
+        # Create memory entry
+        entry = MemoryEntry(
+            content=content,
+            context=context,
+            timestamp=self._get_timestamp(),
+            attention=attention
+        )
+        
+        # Store and index
+        self.storage[memory_id] = entry
+        self._update_index(memory_id, entry)
+        
+        # Run optimization if needed
+        self.optimization.optimize_if_needed(self.storage)
+        
+        return memory_id
+
+"""
 Memory Store Implementation
 
 Implements specialized memory stores for different types of experiences:
