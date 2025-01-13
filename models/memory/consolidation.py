@@ -1,13 +1,16 @@
 """
-Memory Consolidation Module
+Memory Consolidation System for ACM
 
-Implements memory consolidation through:
-1. Pattern extraction from recent experiences
-2. Semantic abstraction and compression
-3. Temporal coherence maintenance
-4. Knowledge base integration
+This module implements:
+1. Memory optimization and cleanup
+2. Consolidation of related memories
+3. Temporal sequence management
+4. Integration with emotional context
 
-Based on the MANN architecture principles for developing self-awareness.
+Dependencies:
+- models/memory/emotional_memory_core.py for base storage
+- models/memory/temporal_coherence.py for sequence tracking
+- models/emotion/tgnn/emotional_graph.py for emotional context
 """
 
 import torch
@@ -17,93 +20,38 @@ from dataclasses import dataclass
 
 @dataclass
 class ConsolidationMetrics:
-    """Tracks memory consolidation performance"""
-    compression_ratio: float = 0.0
-    pattern_extraction_quality: float = 0.0
-    knowledge_integration: float = 0.0
-    temporal_stability: float = 0.0
+    """Tracks memory consolidation metrics"""
+    consolidated_count: int = 0
+    optimization_ratio: float = 0.0
+    coherence_score: float = 0.0
+    emotional_alignment: float = 0.0
 
-class MemoryConsolidationManager:
-    """
-    Manages memory consolidation process and pattern abstraction.
-    Follows holonic principles where each consolidated memory maintains 
-    both individual significance and contributes to the whole.
-    """
-
+class MemoryConsolidation:
     def __init__(self, config: Dict):
+        """Initialize memory consolidation"""
         self.config = config
         self.metrics = ConsolidationMetrics()
         
-        # Pattern extraction networks
-        self.pattern_extractor = PatternExtractionNetwork(config)
-        self.semantic_abstractor = SemanticAbstractionNetwork(config)
-        self.knowledge_integrator = KnowledgeIntegrationNetwork(config)
-
-    def consolidate_partition(
+    def consolidate_memories(
         self,
         memories: List[Dict],
-        emotional_context: Dict[str, float],
-        consciousness_state: Dict
-    ) -> Dict:
-        """
-        Consolidate memories within a partition through abstraction
+        emotional_context: Optional[Dict] = None
+    ) -> Tuple[List[Dict], ConsolidationMetrics]:
+        """Consolidate related memories"""
+        # Group related memories
+        memory_groups = self._group_related_memories(memories)
         
-        Args:
-            memories: List of memories to consolidate
-            emotional_context: Current emotional state
-            consciousness_state: Current consciousness metrics
-        """
-        if len(memories) < self.config['min_memories_for_consolidation']:
-            return None
+        # Consolidate each group
+        consolidated = []
+        for group in memory_groups:
+            merged = self._merge_memory_group(
+                group,
+                emotional_context
+            )
+            consolidated.append(merged)
             
-        # Extract patterns
-        patterns = self.pattern_extractor(
-            memory_sequence=memories,
-            emotional_context=emotional_context
-        )
-        
-        # Generate semantic abstractions
-        abstractions = self.semantic_abstractor(
-            patterns=patterns,
-            consciousness_state=consciousness_state
-        )
-        
-        # Integrate into knowledge base
-        consolidated = self.knowledge_integrator(
-            abstractions=abstractions,
-            emotional_context=emotional_context
-        )
-        
         # Update metrics
-        self._update_consolidation_metrics(
-            original_memories=memories,
-            consolidated_output=consolidated
-        )
+        self.metrics.consolidated_count = len(consolidated)
+        self.metrics.optimization_ratio = len(consolidated) / len(memories)
         
-        return consolidated
-
-    def _update_consolidation_metrics(
-        self,
-        original_memories: List[Dict],
-        consolidated_output: Dict
-    ):
-        """Track consolidation performance metrics"""
-        # Calculate compression ratio
-        self.metrics.compression_ratio = (
-            len(consolidated_output['patterns']) / len(original_memories)
-        )
-        
-        # Evaluate pattern extraction
-        self.metrics.pattern_extraction_quality = self._evaluate_pattern_quality(
-            consolidated_output['patterns']
-        )
-        
-        # Assess knowledge integration
-        self.metrics.knowledge_integration = self._assess_knowledge_integration(
-            consolidated_output['knowledge_updates']
-        )
-        
-        # Measure temporal stability
-        self.metrics.temporal_stability = self._calculate_temporal_stability(
-            consolidated_output['temporal_coherence']
-        )
+        return consolidated, self.metrics
