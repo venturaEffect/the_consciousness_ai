@@ -1,5 +1,20 @@
 # models/evaluation/emotional_rl_metrics.py
 
+"""
+Reinforcement Learning Metrics for Emotional Development in ACM
+
+This module implements:
+1. Emotional learning curve tracking
+2. Reward shaping evaluation
+3. Policy adaptation metrics
+4. Integration with consciousness development
+
+Dependencies:
+- models/emotion/reward_shaping.py for reward calculations
+- models/evaluation/consciousness_metrics.py for core metrics
+- models/predictive/dreamer_emotional_wrapper.py for RL integration
+"""
+
 import torch
 import numpy as np
 from typing import Dict, List, Optional
@@ -14,6 +29,15 @@ class EmotionalMetrics:
     learning_progress: float = 0.0
     memory_coherence: float = 0.0
     narrative_consistency: float = 0.0
+
+@dataclass 
+class EmotionalRLMetrics:
+    """Tracks emotional reinforcement learning metrics"""
+    emotional_reward: float = 0.0
+    policy_adaptation: float = 0.0
+    learning_stability: float = 0.0
+    exploration_ratio: float = 0.0
+    consciousness_alignment: float = 0.0
 
 class EmotionalRLTracker:
     """
@@ -155,3 +179,41 @@ class EmotionalRLTracker:
             metrics.reward_stability >= self.reward_stability_threshold and
             metrics.learning_progress > 0
         )
+
+class EmotionalRLEvaluator:
+    def __init__(self, config: Dict):
+        """Initialize RL evaluation"""
+        self.config = config
+        self.metrics = EmotionalRLMetrics()
+        self.history = []
+        
+    def evaluate_learning(
+        self,
+        episode_data: Dict,
+        emotion_values: Dict[str, float],
+        policy_info: Dict
+    ) -> Dict:
+        """Evaluate emotional reinforcement learning progress"""
+        # Calculate emotional reward
+        emotional_reward = self._calculate_emotional_reward(
+            episode_data['rewards'],
+            emotion_values
+        )
+        
+        # Evaluate policy adaptation
+        policy_adaptation = self._evaluate_policy_adaptation(
+            policy_info,
+            emotion_values
+        )
+        
+        # Calculate learning stability
+        learning_stability = self._calculate_learning_stability(
+            episode_data['losses']
+        )
+        
+        # Update metrics
+        self.metrics.emotional_reward = emotional_reward
+        self.metrics.policy_adaptation = policy_adaptation
+        self.metrics.learning_stability = learning_stability
+        
+        return self.get_metrics()
