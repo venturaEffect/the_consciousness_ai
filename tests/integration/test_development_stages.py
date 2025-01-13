@@ -1,11 +1,16 @@
 """
-Development Stages Integration Tests
+Integration tests for consciousness development stages in ACM.
 
-Tests the progression through consciousness development stages:
-1. Attention activation
-2. Emotional learning
-3. Memory coherence
-4. Self-representation
+This test suite validates:
+1. Stage progression through development cycle
+2. Integration between components during development
+3. Metric tracking across stages
+4. Learning progress validation
+
+Dependencies:
+- models/core/consciousness_core.py for main system
+- models/evaluation/consciousness_monitor.py for metrics
+- models/memory/emotional_memory_core.py for memory storage
 """
 
 import unittest
@@ -34,41 +39,32 @@ class TestDevelopmentStages(unittest.TestCase):
     """Tests consciousness development stage progression"""
 
     def setUp(self):
+        """Initialize development stage test components"""
         self.config = DevelopmentTestConfig()
+        self.consciousness = ConsciousnessCore(self.config)
         self.monitor = ConsciousnessMonitor(self.config)
-        self.evaluator = EnhancedConsciousnessEvaluator(self.config)
-        self.memory = MemoryIntegrationCore(self.config)
-        self.self_model = ModularSelfRepresentation(self.config)
+        self.memory = EmotionalMemoryCore(self.config)
 
     def test_stage_progression(self):
         """Test progression through development stages"""
-        development_history = []
+        initial_metrics = self.monitor.evaluate_current_state()
         
         # Run development episodes
-        for episode in range(200):
-            # Generate increasingly complex experience
-            experience = self._generate_staged_experience(episode)
+        for episode in range(self.config.test_episodes):
+            # Generate test scenario 
+            scenario = self._generate_test_scenario()
             
-            # Process through consciousness pipeline
-            consciousness_state = self._process_consciousness_cycle(experience)
+            # Process through consciousness system
+            result = self.consciousness.process_experience(scenario)
             
             # Evaluate development
-            metrics = self.evaluator.evaluate_consciousness(
-                current_state=consciousness_state,
-                memory_state=self.memory.get_state(),
-                self_model_state=self.self_model.get_state(),
-                emotional_context=experience['emotion']
+            metrics = self.monitor.evaluate_state(
+                consciousness_state=result.state,
+                emotional_context=result.emotion,
+                attention_metrics=result.attention
             )
             
-            development_history.append(metrics)
-            
-            # Verify stage transitions
-            if episode > 0:
-                self._verify_stage_transition(
-                    previous_metrics=development_history[-2],
-                    current_metrics=metrics,
-                    episode=episode
-                )
+            self._validate_stage_progress(metrics)
 
     def _verify_stage_transition(
         self,
