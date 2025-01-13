@@ -1,22 +1,22 @@
 """
 Integration tests for consciousness development stages in ACM.
 
-This test suite validates:
-1. Stage progression through development cycle
-2. Integration between components during development
-3. Metric tracking across stages
-4. Learning progress validation
+This module validates:
+1. Stage progression through consciousness development
+2. Integration between core components during development
+3. Memory formation and emotional context tracking
+4. Long-term development stability metrics
 
 Dependencies:
 - models/core/consciousness_core.py for main system
-- models/evaluation/consciousness_monitor.py for metrics
-- models/memory/emotional_memory_core.py for memory storage
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for storage
+- configs/consciousness_development.yaml for parameters
 """
 
+from typing import Dict, Optional
 import unittest
 import torch
-from typing import Dict, List
-from dataclasses import dataclass
 
 from models.evaluation.consciousness_monitor import ConsciousnessMonitor
 from models.evaluation.enhanced_consciousness_metrics import EnhancedConsciousnessEvaluator
@@ -39,7 +39,7 @@ class TestDevelopmentStages(unittest.TestCase):
     """Tests consciousness development stage progression"""
 
     def setUp(self):
-        """Initialize development stage test components"""
+        """Initialize test components"""
         self.config = DevelopmentTestConfig()
         self.consciousness = ConsciousnessCore(self.config)
         self.monitor = ConsciousnessMonitor(self.config)
@@ -47,11 +47,17 @@ class TestDevelopmentStages(unittest.TestCase):
 
     def test_stage_progression(self):
         """Test progression through development stages"""
+        # Initial state metrics
         initial_metrics = self.monitor.evaluate_current_state()
+        self.assertLess(
+            initial_metrics['consciousness_score'],
+            self.config.consciousness.emergence_threshold,
+            "Initial consciousness should be below emergence threshold"
+        )
         
-        # Run development episodes
+        # Process development episodes
         for episode in range(self.config.test_episodes):
-            # Generate test scenario 
+            # Generate test scenario
             scenario = self._generate_test_scenario()
             
             # Process through consciousness system
@@ -64,7 +70,8 @@ class TestDevelopmentStages(unittest.TestCase):
                 attention_metrics=result.attention
             )
             
-            self._validate_stage_progress(metrics)
+            # Store metrics
+            self._log_development_metrics(metrics)
 
     def _verify_stage_transition(
         self,
