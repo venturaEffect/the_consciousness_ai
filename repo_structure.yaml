@@ -44,6 +44,8 @@
       type: file
   - path: /INVE_MEM_2008_124320.pdf
     type: file
+  - path: /INVE_MEM_2008_124320.txt
+    type: file
   - path: /LICENSE.md
     type: file
   - path: /models
@@ -58,6 +60,17 @@
       type: directory
       contents:
       - path: /models/core/consciousness_core.py
+        type: file
+      - path: /models/core/consciousness_gating.py
+        type: file
+      - path: /models/core/gate_fusion.py
+        type: file
+      - path: /models/core/gating_components.py
+        type: file
+    - path: /models/development
+      type: directory
+      contents:
+      - path: /models/development/stage_transitions.py
         type: file
     - path: /models/emotion
       type: directory
@@ -74,13 +87,25 @@
       contents:
       - path: /models/evaluation/consciousness_development.py
         type: file
+      - path: /models/evaluation/consciousness_evaluation.py
+        type: file
       - path: /models/evaluation/consciousness_metrics.py
         type: file
       - path: /models/evaluation/consciousness_monitor.py
         type: file
+      - path: /models/evaluation/development_tracking.py
+        type: file
       - path: /models/evaluation/emotional_evaluation.py
         type: file
       - path: /models/evaluation/emotional_rl_metrics.py
+        type: file
+      - path: /models/evaluation/enhanced_consciousness_metrics.py
+        type: file
+      - path: /models/evaluation/memory_evaluation.py
+        type: file
+      - path: /models/evaluation/memory_metrics.py
+        type: file
+      - path: /models/evaluation/self_awareness_evaluation.py
         type: file
     - path: /models/fusion
       type: directory
@@ -110,18 +135,51 @@
         contents:
       - path: /models/language/long_context_integration.py
         type: file
+    - path: /models/learning
+      type: directory
+      contents:
+      - path: /models/learning/meta_learning.py
+        type: file
     - path: /models/memory
       type: directory
       contents:
+      - path: /models/memory/consolidation.py
+        type: file
+      - path: /models/memory/emotional_context.py
+        type: file
       - path: /models/memory/emotional_indexing.py
         type: file
       - path: /models/memory/emotional_integration.py
         type: file
       - path: /models/memory/emotional_memory_core.py
         type: file
+      - path: /models/memory/emotional_processing.py
+        type: file
       - path: /models/memory/emotional_sync.py
         type: file
+      - path: /models/memory/enhanced_emotional_context.py
+        type: file
       - path: /models/memory/memory_core.py
+        type: file
+      - path: /models/memory/memory_integration.py
+        type: file
+      - path: /models/memory/memory_store.py
+        type: file
+      - path: /models/memory/optimizations.py
+        type: file
+      - path: /models/memory/optimization_components.py
+        type: file
+      - path: /models/memory/optimized_store.py
+        type: file
+      - path: /models/memory/optmized_indexing.py
+        type: file
+      - path: /models/memory/semantic_components.py
+        type: file
+      - path: /models/memory/semantic_store.py
+        type: file
+      - path: /models/memory/temporal_coherence.py
+        type: file
+      - path: /models/memory/temporal_context.py
         type: file
     - path: /models/narrative
       type: directory
@@ -150,7 +208,18 @@
         type: file
       - path: /models/self_model/meta_learner.py
         type: file
+      - path: /models/self_model/meta_learning.py
+        type: file
+      - path: /models/self_model/modular_self_representation.py
+        type: file
+      - path: /models/self_model/networks
+        type: directory
+        contents:
+        - path: /models/self_model/networks/feature_networks.py
+          type: file
       - path: /models/self_model/reinforcement_core.py
+        type: file
+      - path: /models/self_model/self_representation_core.py
         type: file
     - path: /models/speech
       type: directory
@@ -185,12 +254,16 @@
         contents:
         - path: /models/vision-language/palm-e/palm_e_integration.py
           type: file
+  - path: /pdf_to_text.py
+    type: file
   - path: /README.md
     type: file
   - path: /repo_images
     type: directory
     contents:
     - path: /repo_images/acm_thumbnail_1.png
+      type: file
+    - path: /repo_images/NIQM2NDZ._for_github.png
       type: file
   - path: /requirements.txt
     type: file
@@ -476,11 +549,20 @@
   - path: /tests
     type: directory
     contents:
+    - path: /tests/integration
+      type: directory
+      contents:
+      - path: /tests/integration/test_development_stages.py
+        type: file
     - path: /tests/test_consciousness_development.py
+      type: file
+    - path: /tests/test_consciousness_integration.py
       type: file
     - path: /tests/test_consciousness_metrics.py
       type: file
     - path: /tests/test_consciousness_pipeline.py
+      type: file
+    - path: /tests/test_consciousness_system.py
       type: file
     - path: /tests/test_emotional_memory_integration.py
       type: file

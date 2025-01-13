@@ -1,4 +1,17 @@
 # models/core/consciousness_core.py
+"""
+Core consciousness implementation that integrates all ACM components.
+Key functionalities:
+- Manages consciousness emergence through attention mechanisms
+- Integrates emotional, memory and learning subsystems
+- Implements the consciousness gating system
+- Coordinates with DreamerV3 for world modeling
+
+Dependencies:
+- models/memory/emotional_memory_core.py for emotional memory storage
+- models/emotion/emotional_processing.py for affect handling
+- models/predictive/dreamer_emotional_wrapper.py for world modeling
+"""
 
 import torch
 import torch.nn as nn
