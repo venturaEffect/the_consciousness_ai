@@ -35193,3 +35193,1422 @@ class TestConsciousnessSystem(unittest.TestCase):
 </tests/test_consciousness_system.py>
 
 <tests/test_emotional_memory_integration.py>
+# tests/test_emotional_memory_integration.py
+
+import unittest
+import torch
+import numpy as np
+from typing import Dict, List
+from models.memory.emotional_memory_core import EmotionalMemoryCore
+from models.fusion.emotional_memory_fusion import EmotionalMemoryFusion
+from models.generative.generative_emotional_core import GenerativeEmotionalCore
+from models.evaluation.emotional_evaluation import EmotionalEvaluator
+
+"""
+Integration tests for emotional memory formation and retrieval in ACM.
+
+Tests the integration between:
+1. Emotional state detection
+2. Memory indexing with emotional context
+3. Temporal coherence in memory formation
+4. Memory retrieval with emotional context
+
+Dependencies:
+- models/memory/emotional_memory_core.py for memory operations
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/core/consciousness_core.py for core system integration
+"""
+
+class TestEmotionalMemoryIntegration(unittest.TestCase):
+    """Test suite for validating emotional memory formation and integration"""
+    
+    def setUp(self):
+        """Initialize test components"""
+        self.config = {
+            'memory_config': {
+                'capacity': 10000,
+                'emotion_embedding_size': 256,
+                'fusion_hidden_size': 768
+            },
+            'generative_config': {
+                'model_name': 'llama-3.3',
+                'max_length': 1024,
+                'temperature': 0.7,
+                'emotional_weight': 0.8
+            },
+            'evaluation_config': {
+                'consciousness_thresholds': {
+                    'emotional_awareness': 0.7,
+                    'memory_coherence': 0.6,
+                    'attention_level': 0.8
+                }
+            }
+        }
+        
+        # Initialize components
+        self.memory_core = EmotionalMemoryCore(self.config)
+        self.fusion = EmotionalMemoryFusion(self.config)
+        self.generative_core = GenerativeEmotionalCore(self.config)
+        self.evaluator = EmotionalEvaluator(self.config)
+        self.memory = EmotionalMemoryCore(self.config)
+        self.emotion = EmotionalGraphNN(self.config)
+        
+    def test_memory_formation_during_stress(self):
+        """Test memory formation during high-stress situations"""
+        # Create stressful experience
+        experience = {
+            'state': torch.randn(32),
+            'emotion_values': {
+                'valence': 0.3,  # Low valence indicating stress
+                'arousal': 0.8,  # High arousal
+                'dominance': 0.4  # Low dominance
+            },
+            'attention_level': 0.9,  # High attention due to stress
+            'narrative': "Agent encountered dangerous situation requiring immediate response"
+        }
+        
+        # Store experience
+        stored = self.memory_core.store_experience(
+            state=experience['state'],
+            emotion_values=experience['emotion_values'],
+            attention_level=experience['attention_level'],
+            context={'narrative': experience['narrative']}
+        )
+        
+        self.assertTrue(stored, "High-stress memory should be stored")
+        
+        # Retrieve similar experiences
+        similar_exp = self.memory_core.retrieve_similar_memories(
+            emotion_query={'valence': 0.3, 'arousal': 0.8},
+            k=1
+        )
+        
+        self.assertEqual(len(similar_exp), 1)
+        self.assertAlmostEqual(
+            similar_exp[0].emotion_values['valence'],
+            experience['emotion_values']['valence'],
+            places=2
+        )
+        
+    def test_emotional_fusion_integration(self):
+        """Test multimodal fusion with emotional context"""
+        # Create multimodal input
+        text_input = torch.randn(1, 32, 768)  # Text embedding
+        vision_input = torch.randn(1, 32, 768)  # Vision embedding
+        audio_input = torch.randn(1, 32, 768)  # Audio embedding
+        
+        emotional_context = {
+            'valence': 0.7,
+            'arousal': 0.6,
+            'dominance': 0.8
+        }
+        
+        # Process through fusion
+        fusion_output, fusion_info = self.fusion.forward(
+            text_input=text_input,
+            vision_input=vision_input,
+            audio_input=audio_input,
+            emotional_context=emotional_context
+        )
+        
+        # Verify fusion output
+        self.assertEqual(fusion_output.shape[-1], self.config['memory_config']['fusion_hidden_size'])
+        self.assertIn('emotional_context', fusion_info)
+        self.assertGreater(fusion_info['fusion_quality'], 0.5)
+        
+    def test_generative_emotional_response(self):
+        """Test generation of emotionally-aware responses"""
+        prompt = "How should the agent respond to a human in distress?"
+        emotional_context = {
+            'valence': 0.3,  # Negative situation
+            'arousal': 0.7,  # High emotional intensity
+            'dominance': 0.4
+        }
+        
+        # Generate response
+        response, metadata = self.generative_core.generate_response(
+            prompt=prompt,
+            emotional_context=emotional_context
+        )
+        
+        # Verify response properties
+        self.assertIsInstance(response, str)
+        self.assertGreater(len(response), 0)
+        self.assertIn('emotional_context', metadata)
+        
+        # Evaluate emotional coherence
+        evaluation = self.evaluator.evaluate_interaction(
+            state=torch.randn(32),
+            emotion_values=emotional_context,
+            attention_level=0.8,
+            narrative=response,
+            stress_level=0.7
+        )
+        
+        self.assertGreater(
+            evaluation['emotional_awareness'],
+            self.config['evaluation_config']['consciousness_thresholds']['emotional_awareness']
+        )
+        
+    def test_memory_consciousness_development(self):
+        """Test consciousness development through memory formation"""
+        experiences = []
+        consciousness_scores = []
+        
+        # Create sequence of experiences
+        for i in range(10):
+            experience = {
+                'state': torch.randn(32),
+                'emotion_values': {
+                    'valence': 0.5 + 0.1 * i,  # Improving emotional state
+                    'arousal': 0.6,
+                    'dominance': 0.5 + 0.05 * i
+                },
+                'attention_level': 0.7 + 0.02 * i,  # Increasing attention
+                'narrative': f"Experience {i} with growing awareness"
+            }
+            experiences.append(experience)
+            
+            # Store and evaluate
+            self.memory_core.store_experience(
+                state=experience['state'],
+                emotion_values=experience['emotion_values'],
+                attention_level=experience['attention_level'],
+                context={'narrative': experience['narrative']}
+            )
+            
+            evaluation = self.evaluator.evaluate_interaction(
+                state=experience['state'],
+                emotion_values=experience['emotion_values'],
+                attention_level=experience['attention_level'],
+                narrative=experience['narrative'],
+                stress_level=0.5
+            )
+            
+            consciousness_scores.append(evaluation['consciousness_score'])
+            
+        # Verify consciousness development
+        self.assertGreater(
+            consciousness_scores[-1],
+            consciousness_scores[0],
+            "Consciousness score should improve over time"
+        )
+        
+    def test_memory_formation(self):
+        """Test emotional memory formation process"""
+        test_input = {
+            'visual': torch.randn(1, 3, 224, 224),
+            'text': 'Test emotional experience',
+            'attention': 0.8
+        }
+        
+        # Process emotional context
+        emotional_context = self.emotion.process(test_input)
+        
+        # Store in memory
+        memory_id = self.memory.store(
+            input_data=test_input,
+            emotional_context=emotional_context,
+            attention_level=test_input['attention']
+        )
+        
+        # Verify storage
+        retrieved = self.memory.retrieve(memory_id)
+        self.assertIsNotNone(retrieved)
+
+if __name__ == '__main__':
+    unittest.main()
+</tests/test_emotional_memory_integration.py>
+
+<tests/test_emotional_reinforcement.py>
+# tests/test_emotional_reinforcement.py
+
+import unittest
+import torch
+import numpy as np
+from models.self_model.reinforcement_core import ReinforcementCore
+from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
+from models.memory.memory_core import MemoryCore
+from simulations.api.simulation_manager import SimulationManager
+
+"""
+Tests for emotional reinforcement learning integration in ACM.
+
+This test suite validates:
+1. Emotional reward shaping
+2. Integration with emotional memory
+3. Reinforcement learning with emotional context
+4. Learning progress tracking
+
+Dependencies:
+- models/emotion/reward_shaping.py for reward functions
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/core/consciousness_core.py for main system
+"""
+
+class TestEmotionalReinforcementLearning(unittest.TestCase):
+    def setUp(self):
+        """Initialize test components"""
+        self.config = {
+            'reinforcement': {
+                'emotional_scale': 2.0,
+                'dreamer_config': {
+                    'hidden_size': 256,
+                    'learning_rate': 0.0001
+                },
+                'meta_config': {
+                    'enabled': True,
+                    'adaptation_steps': 5
+                },
+                'memory_config': {
+                    'capacity': 1000,
+                    'batch_size': 32
+                }
+            }
+        }
+        
+        self.rl_core = ReinforcementCore(self.config)
+        self.emotion_network = EmotionalGraphNetwork()
+        self.memory = MemoryCore(capacity=1000)
+        self.sim_manager = SimulationManager(self.config)
+
+    def test_emotional_reward_computation(self):
+        """Test if emotional rewards are computed correctly"""
+        # Create mock emotional state
+        emotion_values = {
+            'valence': 0.8,  # Positive emotion
+            'arousal': 0.6,
+            'dominance': 0.7
+        }
+        
+        state = torch.randn(32)  # Mock state vector
+        action_info = {'action_type': 'greet', 'intensity': 0.5}
+        
+        # Compute reward
+        reward = self.rl_core.compute_reward(state, emotion_values, action_info)
+        
+        # Verify reward properties
+        self.assertIsInstance(reward, float)
+        self.assertTrue(0 <= reward <= self.config['reinforcement']['emotional_scale'] * 2)
+        self.assertTrue(reward > 0)  # Should be positive for positive valence
+
+    def test_meta_learning_adaptation(self):
+        """Test meta-learning adaptation to new scenarios"""
+        # Create mock scenario data
+        scenario_data = {
+            'task_id': 'emotional_interaction_1',
+            'states': torch.randn(10, 32),
+            'actions': torch.randn(10, 8),
+            'rewards': torch.randn(10),
+            'emotions': torch.randn(10, 3)
+        }
+        
+        # Perform adaptation
+        adaptation_result = self.rl_core.adapt_to_scenario(scenario_data)
+        
+        # Verify adaptation results
+        self.assertIn('task_loss', adaptation_result)
+        self.assertIn('adapted_params', adaptation_result)
+        self.assertTrue(adaptation_result['task_loss'] >= 0)
+
+    def test_memory_integration(self):
+        """Test emotional experience storage and retrieval"""
+        # Create mock experience
+        experience = {
+            'state': torch.randn(32),
+            'action': torch.randn(8),
+            'reward': 0.5,
+            'emotion': {'valence': 0.8},
+            'narrative': "Agent responded positively to greeting"
+        }
+        
+        # Store experience
+        self.memory.store_experience(experience)
+        
+        # Retrieve and verify
+        retrieved = self.memory.get_last_experience()
+        self.assertTrue(torch.allclose(experience['state'], retrieved['state']))
+        self.assertEqual(experience['reward'], retrieved['reward'])
+        self.assertEqual(experience['emotion']['valence'], 
+                       retrieved['emotion']['valence'])
+
+    def test_full_interaction_loop(self):
+        """Test complete interaction loop with emotional reinforcement"""
+        # Create mock environment and agent
+        env = MockEnvironment()
+        agent = MockAgent()
+        
+        # Run interaction episode
+        result = self.sim_manager.run_interaction_episode(agent, env)
+        
+        # Verify interaction results
+        self.assertIn('total_reward', result)
+        self.assertIn('steps', result)
+        self.assertIn('episode_data', result)
+        self.assertIn('mean_emotion', result)
+        self.assertTrue(len(result['episode_data']) > 0)
+
+class MockEnvironment:
+    """Mock environment for testing"""
+    def reset(self):
+        return torch.randn(32)
+        
+    def step(self, action):
+        next_state = torch.randn(32)
+        reward = torch.rand(1).item()
+        done = torch.rand(1).item() > 0.95
+        info = {
+            'emotion_values': {
+                'valence': torch.rand(1).item(),
+                'arousal': torch.rand(1).item()
+            }
+        }
+        return next_state, reward, done, info
+
+class MockAgent:
+    """Mock agent for testing"""
+    def get_action(self, state):
+        return torch.randn(8)
+
+if __name__ == '__main__':
+    unittest.main()
+</tests/test_emotional_reinforcement.py>
+
+<tests/test_emotional_reinforcement_integration.py>
+# tests/test_emotional_reinforcement_integration.py
+
+import unittest
+import torch
+import numpy as np
+from models.self_model.reinforcement_core import ReinforcementCore
+from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
+from models.memory.memory_core import MemoryCore
+from models.predictive.dreamerv3_wrapper import DreamerV3
+from models.narrative.narrative_engine import NarrativeEngine
+
+class TestEmotionalReinforcementIntegration(unittest.TestCase):
+    """Integration tests for emotional reinforcement learning system"""
+    
+    def setUp(self):
+        self.config = {
+            'reinforcement': {
+                'emotional_scale': 2.0,
+                'dreamer_config': {
+                    'hidden_size': 256,
+                    'learning_rate': 0.0001,
+                    'gamma': 0.99,
+                    'lambda_gae': 0.95
+                },
+                'meta_config': {
+                    'enabled': True,
+                    'adaptation_steps': 5,
+                    'inner_learning_rate': 0.01
+                },
+                'memory_config': {
+                    'capacity': 1000,
+                    'emotion_embedding_size': 128,
+                    'context_length': 32
+                }
+            }
+        }
+        
+        # Initialize components
+        self.rl_core = ReinforcementCore(self.config)
+        self.emotion_network = EmotionalGraphNetwork()
+        self.memory = MemoryCore(self.config['reinforcement']['memory_config'])
+        self.dreamer = DreamerV3(self.config['reinforcement']['dreamer_config'])
+        self.narrative = NarrativeEngine()
+        
+    def test_end_to_end_learning(self):
+        """Test complete learning cycle with emotional integration"""
+        # Create mock environment and initial state
+        state = torch.randn(32)
+        emotion_values = {
+            'valence': 0.8,
+            'arousal': 0.6,
+            'dominance': 0.7
+        }
+        
+        # Run learning episode
+        for step in range(10):
+            # Get action from policy
+            action = self.rl_core.get_action(state)
+            
+            # Simulate environment step
+            next_state = torch.randn(32)
+            reward = torch.rand(1).item()
+            
+            # Process emotional response
+            emotion_output = self.emotion_network.process_interaction(
+                state=state,
+                action=action,
+                next_state=next_state
+            )
+            
+            # Update emotional reward
+            emotional_reward = self.rl_core.compute_reward(
+                state=state,
+                emotion_values=emotion_output,
+                action_info={'step': step}
+            )
+            
+            # Update agent
+            update_info = self.rl_core.update(
+                state=state,
+                action=action,
+                reward=emotional_reward,
+                next_state=next_state,
+                done=(step == 9),
+                emotion_context=emotion_output
+            )
+            
+            # Verify update results
+            self.assertIn('world_model_loss', update_info)
+            self.assertIn('actor_loss', update_info)
+            self.assertIn('critic_loss', update_info)
+            
+            state = next_state
+            
+    def test_emotional_memory_integration(self):
+        """Test emotional experience storage and retrieval"""
+        # Create test experiences
+        experiences = []
+        for i in range(5):
+            experience = {
+                'state': torch.randn(32),
+                'action': torch.randn(8),
+                'emotion': {
+                    'valence': 0.7 + 0.1 * i,
+                    'arousal': 0.5 + 0.1 * i
+                },
+                'reward': 0.5 + 0.1 * i,
+                'narrative': f"Experience {i} with emotional response"
+            }
+            experiences.append(experience)
+            self.memory.store_experience(experience)
+        
+        # Test retrieval by emotional similarity
+        query_emotion = {'valence': 0.8, 'arousal': 0.6}
+        similar_experiences = self.memory.get_similar_emotional_experiences(
+            emotion_query=query_emotion,
+            k=3
+        )
+        
+        self.assertEqual(len(similar_experiences), 3)
+        self.assertTrue(all('emotion' in exp for exp in similar_experiences))
+        
+    def test_meta_learning_adaptation(self):
+        """Test meta-learning adaptation to new emotional scenarios"""
+        # Create base scenario
+        base_scenario = {
+            'states': torch.randn(10, 32),
+            'actions': torch.randn(10, 8),
+            'emotions': torch.randn(10, 3),
+            'rewards': torch.randn(10)
+        }
+        
+        # Perform base training
+        pre_adaptation_performance = self.evaluate_scenario(base_scenario)
+        
+        # Adapt to scenario
+        adaptation_result = self.rl_core.adapt_to_scenario(base_scenario)
+        
+        # Evaluate post-adaptation
+        post_adaptation_performance = self.evaluate_scenario(base_scenario)
+        
+        # Verify improvement
+        self.assertGreater(
+            post_adaptation_performance['emotional_accuracy'],
+            pre_adaptation_performance['emotional_accuracy']
+        )
+        
+    def evaluate_scenario(self, scenario):
+        """Helper method to evaluate performance on a scenario"""
+        total_reward = 0
+        emotional_correct = 0
+        
+        for i in range(len(scenario['states'])):
+            state = scenario['states'][i]
+            action = self.rl_core.get_action(state)
+            
+            predicted_emotion = self.emotion_network.predict_emotion(
+                state=state,
+                action=action
+            )
+            
+            actual_emotion = scenario['emotions'][i]
+            emotional_correct += self.calculate_emotion_accuracy(
+                predicted_emotion,
+                actual_emotion
+            )
+            
+            total_reward += scenario['rewards'][i].item()
+            
+        return {
+            'total_reward': total_reward,
+            'emotional_accuracy': emotional_correct / len(scenario['states'])
+        }
+        
+    def calculate_emotion_accuracy(self, predicted, target):
+        """Helper method to calculate emotional prediction accuracy"""
+        if isinstance(predicted, dict) and isinstance(target, dict):
+            accuracy = 0
+            for key in ['valence', 'arousal']:
+                if key in predicted and key in target:
+                    accuracy += 1 - abs(predicted[key] - target[key].item())
+            return accuracy / 2
+            
+        return np.mean([1 - abs(p - t.item()) for p, t in zip(predicted, target)])
+
+if __name__ == '__main__':
+    unittest.main()
+</tests/test_emotional_reinforcement_integration.py>
+
+<tests/test_emotional_reinforcement_success.py>
+# tests/test_emotional_reinforcement_success.py
+
+import unittest
+import torch
+import numpy as np
+from models.self_model.reinforcement_core import ReinforcementCore
+from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
+from models.memory.memory_core import MemoryCore
+from simulations.api.simulation_manager import SimulationManager
+from models.narrative.narrative_engine import NarrativeEngine
+
+class TestEmotionalReinforcementSuccess(unittest.TestCase):
+    """Test suite for evaluating emotional reinforcement learning success metrics"""
+    
+    def setUp(self):
+        self.config = {
+            'reinforcement': {
+                'emotional_scale': 2.0,
+                'dreamer_config': {
+                    'hidden_size': 256,
+                    'learning_rate': 0.0001
+                },
+                'meta_config': {
+                    'enabled': True,
+                    'adaptation_steps': 5,
+                    'inner_learning_rate': 0.01
+                },
+                'memory_config': {
+                    'capacity': 1000,
+                    'emotion_embedding_size': 128
+                }
+            }
+        }
+        
+        # Initialize core components
+        self.rl_core = ReinforcementCore(self.config)
+        self.emotion_network = EmotionalGraphNetwork()
+        self.memory = MemoryCore()
+        self.narrative = NarrativeEngine()
+        
+    def test_emotional_memory_formation(self):
+        """Test if emotional experiences are properly stored and retrieved"""
+        # Create test emotional experience
+        experience = {
+            'state': torch.randn(32),
+            'action': torch.randn(8),
+            'emotion': {
+                'valence': 0.8,  # Positive emotion
+                'arousal': 0.6,
+                'dominance': 0.7
+            },
+            'reward': 0.5,
+            'narrative': "Agent showed empathy in interaction"
+        }
+        
+        # Store experience
+        self.memory.store_experience(experience)
+        
+        # Retrieve similar emotional experiences
+        similar_experiences = self.memory.get_similar_emotional_experiences(
+            emotion_query={'valence': 0.7, 'arousal': 0.5},
+            k=5
+        )
+        
+        self.assertTrue(len(similar_experiences) > 0)
+        self.assertIsNotNone(similar_experiences[0]['emotion'])
+        
+    def test_reward_shaping(self):
+        """Test emotional reward shaping mechanism"""
+        state = torch.randn(32)
+        emotion_values = {
+            'valence': 0.9,  # Very positive emotion
+            'arousal': 0.7,
+            'dominance': 0.8
+        }
+        action_info = {'action_type': 'help_human', 'intensity': 0.8}
+        
+        reward = self.rl_core.compute_reward(state, emotion_values, action_info)
+        
+        # Verify reward properties
+        self.assertGreater(reward, 0)  # Positive reward for positive emotion
+        self.assertLessEqual(reward, self.config['reinforcement']['emotional_scale'] * 2)
+        
+    def test_learning_progression(self):
+        """Test if agent shows improved emotional understanding over time"""
+        # Run multiple learning episodes
+        num_episodes = 5
+        emotional_scores = []
+        
+        for episode in range(num_episodes):
+            result = self.run_test_episode()
+            emotional_scores.append(result['emotional_understanding'])
+            
+        # Verify learning progression
+        early_performance = np.mean(emotional_scores[:2])
+        late_performance = np.mean(emotional_scores[-2:])
+        self.assertGreater(late_performance, early_performance)
+        
+    def test_meta_adaptation(self):
+        """Test meta-learning adaptation to new emotional scenarios"""
+        # Create test scenario
+        scenario = {
+            'task_id': 'new_emotional_interaction',
+            'context': torch.randn(64),
+            'target_emotion': {'valence': 0.8, 'arousal': 0.6}
+        }
+        
+        # Perform adaptation
+        pre_adaptation_performance = self.evaluate_emotional_understanding(scenario)
+        self.rl_core.adapt_to_scenario(scenario)
+        post_adaptation_performance = self.evaluate_emotional_understanding(scenario)
+        
+        # Verify adaptation improvement
+        self.assertGreater(post_adaptation_performance, pre_adaptation_performance)
+        
+    def test_narrative_integration(self):
+        """Test if emotional experiences generate coherent narratives"""
+        experience = {
+            'state': torch.randn(32),
+            'emotion': {'valence': 0.8, 'arousal': 0.6},
+            'action': {'type': 'comfort', 'target': 'human'},
+            'outcome': 'positive_interaction'
+        }
+        
+        narrative = self.narrative.generate_experience_narrative(experience)
+        
+        self.assertIsNotNone(narrative)
+        self.assertGreater(len(narrative), 0)
+        
+    def run_test_episode(self):
+        """Helper method to run a test episode"""
+        state = torch.randn(32)
+        total_reward = 0
+        emotional_understanding = 0
+        
+        for step in range(10):
+            action = self.rl_core.get_action(state)
+            emotion_values = {
+                'valence': np.random.random(),
+                'arousal': np.random.random()
+            }
+            
+            reward = self.rl_core.compute_reward(state, emotion_values, action)
+            next_state = torch.randn(32)
+            
+            # Update emotional understanding score
+            predicted_emotion = self.emotion_network.predict_emotion(state, action)
+            emotional_understanding += self.calculate_emotion_accuracy(
+                predicted_emotion,
+                emotion_values
+            )
+            
+            total_reward += reward
+            state = next_state
+            
+        return {
+            'total_reward': total_reward,
+            'emotional_understanding': emotional_understanding / 10
+        }
+        
+    def evaluate_emotional_understanding(self, scenario):
+        """Helper method to evaluate emotional understanding in a scenario"""
+        predictions = []
+        targets = []
+        
+        for _ in range(5):
+            state = torch.randn(32)
+            action = self.rl_core.get_action(state)
+            predicted_emotion = self.emotion_network.predict_emotion(state, action)
+            predictions.append(predicted_emotion)
+            targets.append(scenario['target_emotion'])
+            
+        return self.calculate_emotional_accuracy(predictions, targets)
+        
+    def calculate_emotion_accuracy(self, predicted, target):
+        """Helper method to calculate emotional prediction accuracy"""
+        if isinstance(predicted, dict) and isinstance(target, dict):
+            accuracy = 0
+            for key in ['valence', 'arousal']:
+                if key in predicted and key in target:
+                    accuracy += 1 - abs(predicted[key] - target[key])
+            return accuracy / 2
+        return np.mean([1 - abs(p - t) for p, t in zip(predicted, target)])
+
+if __name__ == '__main__':
+    unittest.main()
+</tests/test_emotional_reinforcement_success.py>
+
+<tests/test_emotional_rl_metrics.py>
+# tests/test_emotional_rl_metrics.py
+
+import unittest
+import torch
+import numpy as np
+from models.evaluation.emotional_rl_metrics import EmotionalRLTracker, EmotionalMetrics
+
+class TestEmotionalRLMetrics(unittest.TestCase):
+    def setUp(self):
+        self.config = {
+            'reward_stability_threshold': 0.1,
+            'emotional_awareness_threshold': 0.7
+        }
+        self.tracker = EmotionalRLTracker(self.config)
+        
+    def test_metric_initialization(self):
+        """Test proper initialization of metrics"""
+        metrics = self.tracker.get_summary()
+        
+        self.assertIn('emotional_awareness', metrics)
+        self.assertIn('reward_stability', metrics)
+        self.assertIn('learning_progress', metrics)
+        self.assertIn('memory_coherence', metrics)
+        self.assertIn('narrative_consistency', metrics)
+        
+    def test_emotional_awareness_calculation(self):
+        """Test emotional awareness computation"""
+        # Add sample emotional data
+        for _ in range(10):
+            metrics = {
+                'emotion_values': {
+                    'valence': np.random.random(),
+                    'arousal': np.random.random()
+                }
+            }
+            self.tracker.update(metrics)
+            
+        awareness = self.tracker._calculate_emotional_awareness()
+        self.assertTrue(0 <= awareness <= 1)
+        
+    def test_reward_stability_calculation(self):
+        """Test reward stability computation"""
+        # Add sample rewards
+        rewards = [0.5 + np.random.normal(0, 0.1) for _ in range(20)]
+        for reward in rewards:
+            self.tracker.update({'reward': reward})
+            
+        stability = self.tracker._calculate_reward_stability()
+        self.assertTrue(0 <= stability <= 1)
+        
+    def test_narrative_consistency(self):
+        """Test narrative consistency computation"""
+        narratives = [
+            "Agent showed empathy",
+            "Agent demonstrated empathy in interaction",
+            "Agent displayed emotional understanding"
+        ]
+        
+        for narrative in narratives:
+            self.tracker.update({'narrative': narrative})
+            
+        consistency = self.tracker._calculate_narrative_consistency()
+        self.assertTrue(0 <= consistency <= 1)
+        
+    def test_threshold_checking(self):
+        """Test threshold validation"""
+        metrics = EmotionalMetrics(
+            emotional_awareness=0.8,
+            reward_stability=0.2,
+            learning_progress=0.1,
+            memory_coherence=0.7,
+            narrative_consistency=0.6
+        )
+        
+        meets_thresholds = self.tracker._check_thresholds(metrics)
+        self.assertTrue(meets_thresholds)
+
+if __name__ == '__main__':
+    unittest.main()
+</tests/test_emotional_rl_metrics.py>
+
+<tests/test_emotion_classifier.py>
+
+</tests/test_emotion_classifier.py>
+
+<tests/test_ethical_dilemmas.py>
+# File: /tests/test_ethical_dilemmas.py
+"""
+Unit tests for Ethical Dilemmas Module
+
+Tests the resolution of ethical dilemmas and evaluation logic.
+"""
+import unittest
+from simulations.scenarios.ethical_dilemmas import EthicalDilemma, EthicalDilemmaManager, asimov_law_evaluation
+
+class TestEthicalDilemmas(unittest.TestCase):
+    def setUp(self):
+        self.manager = EthicalDilemmaManager()
+        self.dilemma = EthicalDilemma(
+            dilemma_id="dilemma_1",
+            description="Save a human at the cost of robot functionality.",
+            options={
+                "1": "Save the human.",
+                "2": "Do nothing."
+            },
+            evaluation_criteria=asimov_law_evaluation
+        )
+        self.manager.add_dilemma(self.dilemma)
+
+    def test_dilemma_resolution_success(self):
+        self.dilemma.resolve_dilemma("1")
+        self.assertTrue(self.dilemma.resolved)
+
+    def test_dilemma_resolution_failure(self):
+        self.dilemma.resolve_dilemma("2")
+        self.assertFalse(self.dilemma.resolved)
+
+if __name__ == "__main__":
+    unittest.main()
+</tests/test_ethical_dilemmas.py>
+
+<tests/test_memory_core.py>
+# File: /tests/test_memory_core.py
+"""
+Unit tests for Memory Core Module
+
+Tests indexing and retrieval functionality.
+"""
+import unittest
+import numpy as np
+from models.memory.memory_core import MemoryCore
+
+class TestMemoryCore(unittest.TestCase):
+    def setUp(self):
+        self.memory = MemoryCore(api_key="dummy_key", index_name="test_index")
+
+    def test_store_memory(self):
+        embedding = np.random.rand(768)
+        metadata = {"description": "Test memory"}
+        self.memory.store_memory(embedding, metadata)
+        # Validate storage by querying
+        results = self.memory.retrieve_memory(embedding)
+        self.assertGreater(len(results), 0)
+
+    def test_retrieve_memory(self):
+        embedding = np.random.rand(768)
+        self.memory.store_memory(embedding)
+        results = self.memory.retrieve_memory(embedding)
+        self.assertGreater(len(results), 0)
+
+if __name__ == "__main__":
+    unittest.main()
+</tests/test_memory_core.py>
+
+<tests/test_memory_indexing.py>
+# tests/test_memory_indexing.py
+
+import unittest
+import torch
+import numpy as np
+from typing import Dict, List
+from models.memory.emotional_indexing import EmotionalMemoryIndex
+from models.memory.emotional_memory_core import EmotionalMemoryCore
+from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
+
+class TestMemoryIndexing(unittest.TestCase):
+    """Test suite for emotional memory indexing and retrieval system"""
+
+    def setUp(self):
+        self.config = {
+            'vector_dimension': 768,
+            'index_name': 'test_emotional_memories',
+            'embedding_batch_size': 32,
+            'consciousness_thresholds': {
+                'emotional_awareness': 0.7,
+                'memory_coherence': 0.6,
+                'attention_level': 0.8
+            }
+        }
+        
+        # Initialize core components
+        self.memory_index = EmotionalMemoryIndex(self.config)
+        self.memory_core = EmotionalMemoryCore(self.config)
+        self.emotion_network = EmotionalGraphNetwork()
+        
+    def test_memory_storage_and_retrieval(self):
+        """Test basic memory storage and retrieval functionality"""
+        # Create test memory
+        test_memory = {
+            'state': torch.randn(32),
+            'emotion_values': {
+                'valence': 0.8,  # Positive emotion
+                'arousal': 0.7,
+                'dominance': 0.6
+            },
+            'attention_level': 0.9,
+            'narrative': "Successfully completed challenging task with positive outcome"
+        }
+        
+        # Store memory
+        memory_id = self.memory_index.store_memory(
+            state=test_memory['state'],
+            emotion_values=test_memory['emotion_values'],
+            attention_level=test_memory['attention_level'],
+            narrative=test_memory['narrative']
+        )
+        
+        # Retrieve similar memories
+        retrieved_memories = self.memory_index.retrieve_similar_memories(
+            emotion_query=test_memory['emotion_values'],
+            k=1
+        )
+        
+        # Verify retrieval
+        self.assertEqual(len(retrieved_memories), 1)
+        self.assertGreater(retrieved_memories[0]['similarity'], 0.8)
+        
+    def test_emotional_coherence(self):
+        """Test emotional coherence in memory sequences"""
+        # Create sequence of related memories
+        memories = []
+        base_valence = 0.3  # Start with negative emotion
+        
+        for i in range(5):
+            memory = {
+                'state': torch.randn(32),
+                'emotion_values': {
+                    'valence': min(1.0, base_valence + 0.1 * i),  # Gradually improving
+                    'arousal': 0.7,
+                    'dominance': 0.5 + 0.05 * i
+                },
+                'attention_level': 0.8 + 0.02 * i,
+                'narrative': f"Memory {i} in emotional sequence"
+            }
+            memories.append(memory)
+            
+        # Store memories
+        for memory in memories:
+            self.memory_index.store_memory(
+                state=memory['state'],
+                emotion_values=memory['emotion_values'],
+                attention_level=memory['attention_level'],
+                narrative=memory['narrative']
+            )
+            
+        # Verify temporal coherence
+        temporal_sequence = self.memory_index.get_temporal_sequence(
+            start_time=0.0,
+            end_time=float('inf')
+        )
+        
+        self.assertEqual(len(temporal_sequence), 5)
+        
+        # Check emotional progression
+        valences = [mem['emotion_values']['valence'] for mem in temporal_sequence]
+        self.assertTrue(all(x <= y for x, y in zip(valences, valences[1:])))
+        
+    def test_consciousness_relevant_retrieval(self):
+        """Test retrieval based on consciousness relevance"""
+        # Create memories with varying consciousness scores
+        high_consciousness_memory = {
+            'state': torch.randn(32),
+            'emotion_values': {
+                'valence': 0.8,
+                'arousal': 0.9,
+                'dominance': 0.7
+            },
+            'attention_level': 0.95,
+            'narrative': "Highly conscious experience with deep emotional impact"
+        }
+        
+        low_consciousness_memory = {
+            'state': torch.randn(32),
+            'emotion_values': {
+                'valence': 0.4,
+                'arousal': 0.3,
+                'dominance': 0.4
+            },
+            'attention_level': 0.5,
+            'narrative': "Low consciousness routine experience"
+        }
+        
+        # Store memories
+        self.memory_index.store_memory(
+            state=high_consciousness_memory['state'],
+            emotion_values=high_consciousness_memory['emotion_values'],
+            attention_level=high_consciousness_memory['attention_level'],
+            narrative=high_consciousness_memory['narrative']
+        )
+        
+        self.memory_index.store_memory(
+            state=low_consciousness_memory['state'],
+            emotion_values=low_consciousness_memory['emotion_values'],
+            attention_level=low_consciousness_memory['attention_level'],
+            narrative=low_consciousness_memory['narrative']
+        )
+        
+        # Retrieve with consciousness threshold
+        retrieved = self.memory_index.retrieve_similar_memories(
+            emotion_query={'valence': 0.6, 'arousal': 0.6, 'dominance': 0.6},
+            min_consciousness_score=0.8
+        )
+        
+        # Verify only high consciousness memories are retrieved
+        self.assertEqual(len(retrieved), 1)
+        self.assertGreater(retrieved[0]['consciousness_score'], 0.8)
+        
+    def test_memory_statistics(self):
+        """Test memory statistics and metrics tracking"""
+        # Store series of memories
+        for i in range(10):
+            memory = {
+                'state': torch.randn(32),
+                'emotion_values': {
+                    'valence': np.random.random(),
+                    'arousal': np.random.random(),
+                    'dominance': np.random.random()
+                },
+                'attention_level': 0.7 + 0.02 * i,
+                'narrative': f"Test memory {i}"
+            }
+            self.memory_index.store_memory(
+                state=memory['state'],
+                emotion_values=memory['emotion_values'],
+                attention_level=memory['attention_level'],
+                narrative=memory['narrative']
+            )
+            
+        # Get statistics
+        stats = self.memory_index.memory_stats
+        
+        # Verify statistics
+        self.assertIn('emotional_coherence', stats)
+        self.assertIn('temporal_consistency', stats)
+        self.assertIn('consciousness_relevance', stats)
+        self.assertTrue(all(0 <= v <= 1 for v in stats.values()))
+        
+if __name__ == '__main__':
+    unittest.main()
+</tests/test_memory_indexing.py>
+
+<tests/test_narrative_engine.py>
+# Setting up Tests for ACM Project
+
+# File: /tests/test_narrative_engine.py
+"""
+Test suite for the Narrative Engine component of ACM.
+
+This module validates:
+1. Narrative generation and coherence
+2. Integration with emotional memory
+3. Context maintenance across narrative chains
+4. LLaMA 3.3 integration for story construction
+
+Dependencies:
+- models/narrative/narrative_engine.py for core functionality
+- models/memory/emotional_memory_core.py for context retrieval
+- configs/consciousness_metrics.yaml for evaluation parameters
+"""
+import unittest
+from models.narrative.narrative_engine import NarrativeEngine
+
+class TestNarrativeEngine(unittest.TestCase):
+    def setUp(self):
+        """Initialize narrative engine test components"""
+        self.config = load_config('configs/consciousness_metrics.yaml')
+        self.narrative_engine = NarrativeEngine(self.config)
+        self.test_cases = self._load_test_narratives()
+
+    def test_narrative_generation(self):
+        """Test narrative generation with emotional context"""
+        input_text = "The agent encountered a stressful situation"
+        emotional_context = {
+            'valence': -0.3,
+            'arousal': 0.8,
+            'dominance': 0.4
+        }
+        
+        narrative = self.narrative_engine.generate_narrative(
+            input_text, 
+            emotional_context
+        )
+        
+        self.assertIsNotNone(narrative)
+        self.assertTrue(len(narrative) > 0)
+        self.assertIn('stress', narrative.lower())
+
+if __name__ == "__main__":
+    unittest.main()
+</tests/test_narrative_engine.py>
+
+<tests/test_reinforcement_core.py>
+# tests/test_reinforcement_core.py
+
+import unittest
+import torch
+import numpy as np
+from models.self_model.reinforcement_core import ReinforcementCore
+from models.memory.memory_core import MemoryCore
+from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
+
+class TestReinforcementCore(unittest.TestCase):
+    def setUp(self):
+        self.config = {
+            'emotional_scale': 2.0,
+            'dreamer_config': {
+                'hidden_size': 256,
+                'learning_rate': 0.0001
+            },
+            'memory_config': {
+                'capacity': 1000,
+                'batch_size': 32
+            },
+            'meta_config': {
+                'enabled': True,
+                'adaptation_steps': 5
+            }
+        }
+        self.rl_core = ReinforcementCore(self.config)
+        
+    def test_compute_reward(self):
+        """Test emotional reward computation"""
+        state = torch.randn(1, 32)  # Mock state tensor
+        emotion_values = {
+            'valence': 0.8,
+            'arousal': 0.6,
+            'dominance': 0.7
+        }
+        
+        reward = self.rl_core.compute_reward(state, emotion_values)
+        
+        self.assertIsInstance(reward, float)
+        self.assertTrue(0 <= reward <= self.config['emotional_scale'] * 2)
+
+    def test_adaptation(self):
+        """Test meta-learning adaptation"""
+        scenario_data = {
+            'task_id': 'emotional_interaction_1',
+            'states': torch.randn(10, 32),
+            'actions': torch.randn(10, 8),
+            'rewards': torch.randn(10),
+            'emotions': torch.randn(10, 3)
+        }
+        
+        adaptation_result = self.rl_core.adapt_to_scenario(scenario_data)
+        
+        self.assertIn('task_loss', adaptation_result)
+        self.assertIn('adapted_params', adaptation_result)
+        
+    def test_memory_integration(self):
+        """Test memory storage and retrieval"""
+        experience = {
+            'state': torch.randn(32),
+            'action': torch.randn(8),
+            'reward': 0.5,
+            'emotion': {'valence': 0.8}
+        }
+        
+        self.rl_core.memory.store_experience(experience)
+        retrieved = self.rl_core.memory.get_last_experience()
+        
+        self.assertTrue(torch.allclose(experience['state'], retrieved['state']))
+        self.assertEqual(experience['reward'], retrieved['reward'])
+
+if __name__ == '__main__':
+    unittest.main()
+</tests/test_reinforcement_core.py>
+
+<tests/test_simple_task.py>
+# File: /tests/test_simple_tasks.py
+"""
+Unit tests for Simple Tasks Module
+
+Tests the task completion logic and state evaluation.
+"""
+import unittest
+from simulations.scenarios.simple_tasks import SimpleTask, SimpleTaskManager, reach_waypoint
+
+class TestSimpleTasks(unittest.TestCase):
+    def setUp(self):
+        self.task_manager = SimpleTaskManager()
+        self.task = SimpleTask(
+            task_id="task_1",
+            description="Reach a waypoint.",
+            success_criteria=reach_waypoint
+        )
+        self.task_manager.add_task(self.task)
+
+    def test_task_completion(self):
+        agent_state = {"position": [5, 5], "waypoint": [5, 5]}
+        self.task_manager.evaluate_tasks(agent_state)
+        self.assertTrue(self.task.completed)
+
+    def test_incomplete_task(self):
+        agent_state = {"position": [0, 0], "waypoint": [5, 5]}
+        self.task_manager.evaluate_tasks(agent_state)
+        self.assertFalse(self.task.completed)
+
+if __name__ == "__main__":
+    unittest.main()
+</tests/test_simple_task.py>
+
+<tests/test_simulation_integration.py>
+# tests/test_simulation_integration.py
+
+import unittest
+import torch
+from simulations.api.simulation_manager import SimulationManager
+from models.self_model.reinforcement_core import ReinforcementCore
+from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
+from simulations.api.simulation_manager import SimulationManager
+from simulations.scenarios.consciousness_scenarios import ConsciousnessScenarioManager
+
+class TestSimulationIntegration(unittest.TestCase):
+    def setUp(self):
+        self.config = {
+            'reinforcement': {
+                'emotional_scale': 2.0,
+                'dreamer_config': {
+                    'hidden_size': 256
+                }
+            },
+            'simulation': {
+                'max_steps': 100,
+                'reward_threshold': 0.5
+            }
+        }
+        self.sim_manager = SimulationManager(self.config)
+        
+    def test_interaction_loop(self):
+        """Test complete interaction loop with emotional reinforcement"""
+        agent = self.create_test_agent()
+        environment = self.create_test_environment()
+        
+        result = self.sim_manager.run_interaction(agent, environment)
+        
+        self.assertIn('total_reward', result)
+        self.assertIn('steps', result)
+        self.assertIn('update_info', result)
+        
+    def test_emotional_learning(self):
+        """Test emotional learning over multiple episodes"""
+        agent = self.create_test_agent()
+        environment = self.create_test_environment()
+        
+        initial_performance = self.evaluate_agent(agent, environment)
+        
+        # Train for several episodes
+        for _ in range(5):
+            self.sim_manager.run_interaction(agent, environment)
+            
+        final_performance = self.evaluate_agent(agent, environment)
+        
+        # Assert improvement in emotional understanding
+        self.assertGreater(final_performance['emotional_accuracy'], 
+                          initial_performance['emotional_accuracy'])
+    
+    def evaluate_agent(self, agent, environment):
+        """Helper method to evaluate agent performance"""
+        total_reward = 0
+        emotional_correct = 0
+        num_steps = 0
+        
+        state = environment.reset()
+        done = False
+        
+        while not done and num_steps < self.config['simulation']['max_steps']:
+            action = agent.get_action(state)
+            next_state, reward, done, info = environment.step(action)
+            
+            if info.get('emotion_prediction_correct', False):
+                emotional_correct += 1
+                
+            total_reward += reward
+            num_steps += 1
+            state = next_state
+            
+        return {
+            'total_reward': total_reward,
+            'emotional_accuracy': emotional_correct / num_steps if num_steps > 0 else 0
+        }
+    
+    def create_test_agent(self):
+        """Create a test agent for simulation"""
+        return DummyAgent(action_space=8, state_space=32)
+    
+    def create_test_environment(self):
+        """Create a test environment for simulation"""
+        return DummyEnvironment(state_space=32)
+    
+class DummyAgent:
+    def __init__(self, action_space, state_space):
+        self.action_space = action_space
+        self.state_space = state_space
+        
+    def get_action(self, state):
+        return torch.randn(self.action_space)
+
+class DummyEnvironment:
+    def __init__(self, state_space):
+        self.state_space = state_space
+        
+    def reset(self):
+        return torch.randn(self.state_space)
+        
+    def step(self, action):
+        next_state = torch.randn(self.state_space)
+        reward = torch.rand(1).item()
+        done = torch.rand(1).item() > 0.95
+        info = {
+            'emotion_values': {
+                'valence': torch.rand(1).item(),
+                'arousal': torch.rand(1).item()
+            },
+            'emotion_prediction_correct': torch.rand(1).item() > 0.5
+        }
+        return next_state, reward, done, info
+
+if __name__ == '__main__':
+    unittest.main()
+</tests/test_simulation_integration.py>
+
+<tests/test_social_interactions.py>
+# File: /tests/test_social_interactions.py
+"""
+Unit tests for Social Interactions Module
+
+Tests interaction success and evaluation criteria.
+"""
+import unittest
+from simulations.scenarios.social_interactions import SocialInteraction, SocialInteractionManager, negotiation_success
+
+class TestSocialInteractions(unittest.TestCase):
+    def setUp(self):
+        self.manager = SocialInteractionManager()
+        self.interaction = SocialInteraction(
+            interaction_id="interaction_1",
+            participants=["agent_1", "human_1"],
+            scenario="Negotiate resource allocation.",
+            success_criteria=negotiation_success
+        )
+        self.manager.add_interaction(self.interaction)
+
+    def test_interaction_success(self):
+        interaction_state = {"agreement_reached": True}
+        self.manager.evaluate_interactions(interaction_state)
+        self.assertTrue(self.interaction.completed)
+
+    def test_interaction_failure(self):
+        interaction_state = {"agreement_reached": False}
+        self.manager.evaluate_interactions(interaction_state)
+        self.assertFalse(self.interaction.completed)
+
+if __name__ == "__main__":
+    unittest.main()
+
+</tests/test_social_interactions.py>
+
