@@ -1,53 +1,58 @@
 # tests/test_emotional_reinforcement.py
 
+"""
+Test suite for emotional reinforcement learning integration in ACM.
+
+This module validates:
+1. Emotional reward shaping based on attention and arousal
+2. Integration between emotional memory and RL
+3. Learning progress based on emotional states
+4. Temporal sequence validation
+
+Dependencies:
+- models/emotion/reward_shaping.py for reward calculations 
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for storage
+- configs/reinforcement.yaml for parameters
+"""
+
 import unittest
 import torch
 import numpy as np
+from typing import Dict, Optional
 from models.self_model.reinforcement_core import ReinforcementCore
 from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
 from models.memory.memory_core import MemoryCore
 from simulations.api.simulation_manager import SimulationManager
 
-"""
-Tests for emotional reinforcement learning integration in ACM.
-
-This test suite validates:
-1. Emotional reward shaping
-2. Integration with emotional memory
-3. Reinforcement learning with emotional context
-4. Learning progress tracking
-
-Dependencies:
-- models/emotion/reward_shaping.py for reward functions
-- models/emotion/tgnn/emotional_graph.py for emotion processing
-- models/core/consciousness_core.py for main system
-"""
-
-class TestEmotionalReinforcementLearning(unittest.TestCase):
+class TestEmotionalReinforcement(unittest.TestCase):
     def setUp(self):
         """Initialize test components"""
-        self.config = {
-            'reinforcement': {
-                'emotional_scale': 2.0,
-                'dreamer_config': {
-                    'hidden_size': 256,
-                    'learning_rate': 0.0001
-                },
-                'meta_config': {
-                    'enabled': True,
-                    'adaptation_steps': 5
-                },
-                'memory_config': {
-                    'capacity': 1000,
-                    'batch_size': 32
-                }
-            }
+        self.config = self._load_test_config()
+        self.emotion_network = EmotionalGraphNN(self.config)
+        self.memory = EmotionalMemoryCore(self.config)
+        self.monitor = ConsciousnessMonitor(self.config)
+
+    def test_reward_shaping(self):
+        """Test emotional reward shaping"""
+        # Test state with high emotional engagement
+        test_state = {
+            'attention': 0.8,
+            'arousal': 0.7,
+            'valence': 0.6
         }
         
-        self.rl_core = ReinforcementCore(self.config)
-        self.emotion_network = EmotionalGraphNetwork()
-        self.memory = MemoryCore(capacity=1000)
-        self.sim_manager = SimulationManager(self.config)
+        shaped_reward = self.emotion_network.shape_reward(
+            base_reward=1.0,
+            emotional_state=test_state
+        )
+        
+        # Verify reward scaling based on emotional state
+        self.assertGreater(
+            shaped_reward,
+            1.0,
+            "Positive emotional state should increase reward"
+        )
 
     def test_emotional_reward_computation(self):
         """Test if emotional rewards are computed correctly"""
