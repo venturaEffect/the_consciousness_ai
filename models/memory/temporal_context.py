@@ -1,19 +1,31 @@
 """
-Temporal Context Network
+Temporal Context Management for Memory Formation in ACM
 
-Implements temporal processing for memory coherence through:
-1. Time-aware sequence processing
-2. Temporal attention mechanisms
-3. Coherence maintenance
-4. Memory consolidation
+This module implements:
+1. Temporal sequence tracking and organization
+2. Context-based memory retrieval
+3. Time-based memory organization
+4. Sequence coherence validation
 
-Based on the MANN architecture for maintaining temporal consistency in self-representation.
+Dependencies:
+- models/memory/emotional_memory_core.py for memory storage
+- models/memory/temporal_coherence.py for sequence tracking
+- models/evaluation/memory_metrics.py for validation
 """
 
-import torch
-import torch.nn as nn
 from typing import Dict, List, Optional, Tuple
+import torch
 from dataclasses import dataclass
+import numpy as np
+
+@dataclass
+class TimeContext:
+    """Tracks temporal context information"""
+    timestamp: float
+    sequence_id: str
+    previous_contexts: List[str]
+    next_contexts: List[str]
+    attention_level: float
 
 @dataclass
 class TemporalMetrics:
@@ -22,6 +34,37 @@ class TemporalMetrics:
     attention_stability: float = 0.0
     consolidation_quality: float = 0.0
     temporal_consistency: float = 0.0
+
+class TemporalContextManager:
+    def __init__(self, config: Dict):
+        """Initialize temporal context system"""
+        self.config = config
+        self.contexts = {}
+        self.sequences = {}
+        
+    def add_context(
+        self,
+        memory_id: str,
+        current_state: Dict[str, torch.Tensor],
+        attention: float
+    ) -> TimeContext:
+        """Add temporal context to memory"""
+        # Create context
+        context = TimeContext(
+            timestamp=self._get_timestamp(),
+            sequence_id=self._generate_sequence_id(),
+            previous_contexts=self._get_previous_contexts(),
+            next_contexts=[],
+            attention_level=attention
+        )
+        
+        # Update sequence tracking
+        self._update_sequence_links(context)
+        
+        # Store context
+        self.contexts[memory_id] = context
+        
+        return context
 
 class TemporalContextNetwork(nn.Module):
     """
