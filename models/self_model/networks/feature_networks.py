@@ -1,17 +1,70 @@
 """
-Feature Encoding Networks Module
+Feature Extraction Networks for Self Model in ACM
 
-Implements specialized neural networks for encoding different aspects of self-representation:
-1. Emotional state encoding
-2. Behavioral pattern encoding 
-3. Social context encoding
+This module implements:
+1. Core feature extraction for self representation
+2. Integration with emotional context
+3. Memory-based feature enhancement
+4. Attention-driven feature selection
 
-Based on the MANN architecture from the research paper.
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for memory context
+- models/core/consciousness_core.py for attention
 """
 
 import torch
 import torch.nn as nn
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Tuple
+
+class FeatureNetwork(nn.Module):
+    def __init__(self, config: Dict):
+        """Initialize feature extraction networks"""
+        super().__init__()
+        self.config = config
+        
+        # Core feature extractors
+        self.visual_encoder = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d((1, 1))
+        )
+        
+        self.emotional_encoder = nn.Sequential(
+            nn.Linear(config.emotion_dim, config.hidden_dim),
+            nn.ReLU(),
+            nn.Linear(config.hidden_dim, config.feature_dim)
+        )
+        
+    def extract_features(
+        self,
+        visual_input: torch.Tensor,
+        emotional_context: Optional[Dict] = None
+    ) -> Tuple[torch.Tensor, Dict[str, float]]:
+        """Extract multimodal features"""
+        # Extract visual features
+        visual_features = self.visual_encoder(visual_input)
+        
+        # Extract emotional features if context provided
+        emotional_features = None
+        if emotional_context is not None:
+            emotional_features = self.emotional_encoder(
+                emotional_context['features']
+            )
+            
+        # Combine features
+        combined = self._combine_features(
+            visual_features, 
+            emotional_features
+        )
+        
+        return combined, {
+            'visual_norm': torch.norm(visual_features).item(),
+            'emotional_norm': torch.norm(emotional_features).item() if emotional_features is not None else 0.0
+        }
 
 class EmotionalStateNetwork(nn.Module):
     """
