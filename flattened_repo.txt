@@ -2337,20 +2337,31 @@ class TemporalCoherenceGate(nn.Module):
 
 <models/development/stage_transitions.py>
 """
-Stage Transition Module
+Development Stage Transition Manager for ACM
 
-Implements consciousness development stage transitions:
-1. Stage progression detection
-2. Transition validation
-3. Development milestone tracking
-4. Progress monitoring
+This module implements:
+1. Consciousness development stage tracking
+2. Stage transition conditions and validation
+3. Development progression metrics
+4. Integration with evaluation systems
 
-Based on holonic principles for consciousness development.
+Dependencies:
+- models/evaluation/consciousness_monitor.py for metrics tracking
+- models/emotion/tgnn/emotional_graph.py for emotion integration
+- models/memory/emotional_memory_core.py for memory validation
 """
 
 import torch
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+
+@dataclass
+class DevelopmentStage:
+    """Tracks development stage information"""
+    name: str
+    requirements: Dict[str, float]
+    completion_metrics: Dict[str, float]
+    transition_threshold: float
 
 @dataclass
 class StageTransitionMetrics:
@@ -2366,10 +2377,36 @@ class StageTransitionManager:
     """
 
     def __init__(self, config: Dict):
+        """Initialize stage transition system"""
         self.config = config
-        self.metrics = StageTransitionMetrics()
+        self.current_stage = None
         self.stage_history = []
-        self.current_stage = "attention_activation"
+        self.transition_metrics = {}
+        self.metrics = StageTransitionMetrics()
+
+    def evaluate_stage_transition(
+        self,
+        consciousness_metrics: Dict[str, float],
+        emotional_metrics: Dict[str, float]
+    ) -> Tuple[bool, Dict[str, float]]:
+        """Evaluate if system should transition to next stage"""
+        # Calculate current progress
+        stage_progress = self._calculate_stage_progress(
+            consciousness_metrics,
+            emotional_metrics
+        )
+        
+        # Check transition conditions
+        should_transition = stage_progress > self.current_stage.transition_threshold
+        
+        # Update metrics
+        self.transition_metrics = {
+            'stage_progress': stage_progress,
+            'consciousness_alignment': consciousness_metrics['consciousness_score'],
+            'emotional_stability': emotional_metrics['stability']
+        }
+        
+        return should_transition, self.transition_metrics
 
     def evaluate_transition(
         self,
@@ -3041,219 +3078,73 @@ class ConsciousnessMetrics:
 # models/evaluation/consciousness_monitor.py
 
 """
-Consciousness Development Monitor for the ACM
+Consciousness Development Monitoring System for ACM
 
-This module tracks and evaluates consciousness emergence through:
-1. Emotional coherence metrics 
-2. Memory stability evaluation
-3. Attention consistency tracking
-4. Behavioral adaptation analysis
+This module implements:
+1. Tracking of consciousness development metrics
+2. Stage transition monitoring
+3. Development milestone validation
+4. Integration with emotional and memory systems
 
 Dependencies:
-- models/evaluation/emotional_evaluation.py for emotion metrics
-- models/evaluation/memory_evaluation.py for memory stability
-- models/core/consciousness_metrics.py for core metrics
+- models/core/consciousness_core.py for main system
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for memory validation
 """
 
+from typing import Dict, List, Optional
 import torch
 import numpy as np
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
-import logging
-from models.evaluation.emotional_evaluation import EmotionalEvaluator
-from models.memory.emotional_memory_core import EmotionalMemoryCore
-from models.predictive.attention_mechanism import ConsciousnessAttention
 
 @dataclass
-class DevelopmentMetrics:
-    """Tracks long-term consciousness development metrics"""
-    emotional_coherence: float = 0.0
-    memory_stability: float = 0.0
-    attention_consistency: float = 0.0
+class ConsciousnessMetrics:
+    """Tracks consciousness development metrics"""
+    emotional_awareness: float = 0.0
+    attention_stability: float = 0.0
+    memory_coherence: float = 0.0
     behavioral_adaptation: float = 0.0
-    narrative_integration: float = 0.0
-    stress_management: float = 0.0
+    consciousness_score: float = 0.0
 
 class ConsciousnessMonitor:
-    """
-    Monitors and evaluates consciousness development through:
-    1. Long-term emotional learning patterns
-    2. Memory formation and coherence
-    3. Attention stability in stressful scenarios
-    4. Behavioral adaptation metrics
-    """
-    
     def __init__(self, config: Dict):
         """Initialize consciousness monitoring"""
         self.config = config
-        self.metrics_history = []
-        
-        # Initialize evaluators
-        self.emotional_eval = EmotionalEvaluator(config)
-        self.memory_eval = MemoryEvaluator(config)
-        self.attention_eval = AttentionEvaluator(config)
-        
-        # Core components
-        self.evaluator = EmotionalEvaluator(config)
-        self.memory_core = EmotionalMemoryCore(config)
-        self.attention = ConsciousnessAttention(config)
-        
-        # Metrics tracking
-        self.metrics = DevelopmentMetrics()
+        self.metrics = ConsciousnessMetrics()
         self.history = []
         
-        # Setup logging
-        self._setup_logging()
-        
-    def _setup_logging(self):
-        """Initialize logging configuration"""
-        log_file = self.config.get('log_dir', 'logs') + '/consciousness_development.log'
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s [%(levelname)s] %(message)s',
-            handlers=[
-                logging.FileHandler(log_file),
-                logging.StreamHandler()
-            ]
-        )
-        
-    def evaluate_development(
+    def evaluate_state(
         self,
         current_state: Dict[str, torch.Tensor],
-        emotion_values: Dict[str, float],
-        attention_metrics: Dict[str, float],
-        stress_level: float,
-        interaction_data: Optional[Dict] = None
-    ) -> Dict:
-        """Evaluate current state of consciousness development"""
-        
-        # Process current state
-        evaluation = self._process_current_state(
-            current_state=current_state,
-            emotion_values=emotion_values,
-            attention_metrics=attention_metrics,
-            stress_level=stress_level,
-            interaction_data=interaction_data
+        emotional_context: Dict[str, float],
+        attention_metrics: Dict[str, float]
+    ) -> Dict[str, float]:
+        """Evaluate current consciousness state"""
+        # Calculate emotional awareness
+        emotional_awareness = self._evaluate_emotional_awareness(
+            emotional_context
         )
         
-        # Update long-term metrics
-        self._update_development_metrics(evaluation)
-        
-        # Store evaluation
-        self.history.append(evaluation)
-        
-        # Generate development report
-        report = self._generate_development_report(evaluation)
-        
-        # Log progress
-        self._log_development_progress(report)
-        
-        return report
-        
-    def _process_current_state(
-        self,
-        current_state: Dict[str, torch.Tensor],
-        emotion_values: Dict[str, float],
-        attention_metrics: Dict[str, float],
-        stress_level: float,
-        interaction_data: Optional[Dict]
-    ) -> Dict:
-        """Process and evaluate current state"""
-        
-        # Evaluate emotional coherence
-        emotional_coherence = self.evaluator.evaluate_interaction(
-            state=current_state,
-            emotion_values=emotion_values,
-            attention_level=attention_metrics['attention_level'],
-            stress_level=stress_level
-        )
-        
-        # Evaluate memory stability
-        memory_stability = self._evaluate_memory_stability()
-        
-        # Evaluate attention consistency
-        attention_consistency = self._evaluate_attention_consistency(
+        # Calculate attention stability
+        attention_stability = self._evaluate_attention_stability(
             attention_metrics
         )
         
-        # Evaluate behavioral adaptation
-        behavioral_adaptation = self._evaluate_behavioral_adaptation(
-            interaction_data
-        ) if interaction_data else 0.0
+        # Calculate memory coherence
+        memory_coherence = self._evaluate_memory_coherence(
+            current_state
+        )
         
-        return {
-            'emotional_coherence': emotional_coherence['emotional_awareness'],
-            'memory_stability': memory_stability,
-            'attention_consistency': attention_consistency,
-            'behavioral_adaptation': behavioral_adaptation,
-            'stress_level': stress_level,
-            'timestamp': np.datetime64('now')
-        }
+        # Update metrics
+        self.metrics.emotional_awareness = emotional_awareness
+        self.metrics.attention_stability = attention_stability
+        self.metrics.memory_coherence = memory_coherence
         
-    def _evaluate_memory_stability(self) -> float:
-        """Evaluate stability of emotional memories"""
-        recent_memories = self.memory_core.get_recent_memories(limit=100)
-        if not recent_memories:
-            return 0.0
-            
-        # Calculate temporal coherence
-        coherence_scores = []
-        for i in range(len(recent_memories) - 1):
-            score = self._calculate_memory_coherence(
-                recent_memories[i],
-                recent_memories[i + 1]
-            )
-            coherence_scores.append(score)
-            
-        return float(np.mean(coherence_scores)) if coherence_scores else 0.0
+        # Calculate overall consciousness score
+        consciousness_score = self._calculate_consciousness_score()
+        self.metrics.consciousness_score = consciousness_score
         
-    def _generate_development_report(self, evaluation: Dict) -> Dict:
-        """Generate comprehensive development report"""
-        report = {
-            'current_metrics': {
-                'emotional_coherence': evaluation['emotional_coherence'],
-                'memory_stability': evaluation['memory_stability'],
-                'attention_consistency': evaluation['attention_consistency'],
-                'behavioral_adaptation': evaluation['behavioral_adaptation']
-            },
-            'long_term_metrics': {
-                metric: getattr(self.metrics, metric)
-                for metric in self.metrics.__dataclass_fields__
-            },
-            'development_stage': self._determine_development_stage(),
-            'recommendations': self._generate_recommendations(evaluation)
-        }
-        
-        return report
-        
-    def _determine_development_stage(self) -> str:
-        """Determine current development stage"""
-        # Implementation depends on specific staging criteria
-        raise NotImplementedError
-        
-    def _generate_recommendations(self, evaluation: Dict) -> List[str]:
-        """Generate recommendations for improving development"""
-        recommendations = []
-        
-        # Check emotional coherence
-        if evaluation['emotional_coherence'] < self.config['thresholds']['emotional_coherence']:
-            recommendations.append(
-                "Increase emotional interaction scenarios to improve coherence"
-            )
-            
-        # Check memory stability
-        if evaluation['memory_stability'] < self.config['thresholds']['memory_stability']:
-            recommendations.append(
-                "Enhance memory formation through more varied experiences"
-            )
-            
-        # Check attention consistency
-        if evaluation['attention_consistency'] < self.config['thresholds']['attention']:
-            recommendations.append(
-                "Introduce more complex scenarios to strengthen attention mechanisms"
-            )
-            
-        return recommendations
+        return self.get_current_metrics()
 </models/evaluation/consciousness_monitor.py>
 
 <models/evaluation/development_tracking.py>
@@ -3349,6 +3240,21 @@ class DevelopmentTracker:
 </models/evaluation/development_tracking.py>
 
 <models/evaluation/emotional_evaluation.py>
+"""
+Emotional Evaluation System for ACM
+
+This module implements:
+1. Evaluation of emotional responses
+2. Emotional coherence metrics
+3. Integration testing for emotional modules
+4. Performance tracking over time
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for memory access
+- models/evaluation/consciousness_monitor.py for metrics
+"""
+
 # models/evaluation/emotional_evaluation.py
 
 import torch
@@ -3369,11 +3275,20 @@ class ConsciousnessMetrics:
     interaction_quality: float = 0.0
     narrative_consistency: float = 0.0
 
+@dataclass
+class EmotionalMetrics:
+    """Tracks emotional evaluation metrics"""
+    coherence_score: float = 0.0
+    stability_score: float = 0.0
+    adaptation_rate: float = 0.0
+    integration_quality: float = 0.0
+
 class EmotionalEvaluator:
     """
     Evaluates consciousness development through emotional learning metrics
     """
     def __init__(self, config: Dict):
+        """Initialize emotional evaluation system"""
         self.config = config
         self.emotion_network = EmotionalGraphNetwork()
         self.memory = MemoryCore(config['memory_config'])
@@ -3381,7 +3296,9 @@ class EmotionalEvaluator:
         
         # Initialize metrics
         self.metrics = ConsciousnessMetrics()
+        self.emotional_metrics = EmotionalMetrics()
         self.experience_history = []
+        self.history = []
         
     def evaluate_interaction(
         self,
@@ -3567,6 +3484,38 @@ class EmotionalEvaluator:
             getattr(self.metrics, metric) * weight
             for metric, weight in weights.items()
         )
+        
+    def evaluate_emotional_state(
+        self,
+        current_state: Dict[str, torch.Tensor],
+        memory_context: Optional[Dict] = None
+    ) -> Dict[str, float]:
+        """Evaluate current emotional state"""
+        # Calculate coherence
+        coherence = self._calculate_coherence(
+            current_state,
+            memory_context
+        )
+        
+        # Calculate stability
+        stability = self._calculate_stability(
+            current_state,
+            self.history
+        )
+        
+        # Update metrics
+        self.emotional_metrics.coherence_score = coherence
+        self.emotional_metrics.stability_score = stability
+        
+        # Store state
+        self.history.append(current_state)
+        
+        return {
+            'coherence': coherence,
+            'stability': stability,
+            'adaptation': self.emotional_metrics.adaptation_rate,
+            'integration': self.emotional_metrics.integration_quality
+        }
 </models/evaluation/emotional_evaluation.py>
 
 <models/evaluation/emotional_rl_metrics.py>
@@ -3793,22 +3742,34 @@ class EmotionalRLEvaluator:
 
 <models/evaluation/enhanced_consciousness_metrics.py>
 """
-Enhanced Consciousness Metrics Module
+Enhanced Consciousness Metrics System for ACM
 
-Implements comprehensive consciousness evaluation through:
-1. Multi-dimensional consciousness assessment
-2. Development stage tracking
-3. Temporal coherence analysis
-4. System-wide integration metrics
+This module implements:
+1. Advanced consciousness development tracking
+2. Multi-dimensional metric analysis
+3. Development stage validation
+4. Integration with emotional and memory systems
 
-Based on holonic principles where metrics contribute both independently 
-and to overall consciousness evaluation.
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion metrics
+- models/memory/emotional_memory_core.py for memory validation
+- models/evaluation/consciousness_monitor.py for base metrics
 """
 
+from typing import Dict, List, Optional, Tuple
 import torch
 import numpy as np
-from typing import Dict, List, Optional
 from dataclasses import dataclass
+
+@dataclass
+class EnhancedMetrics:
+    """Enhanced metrics for consciousness tracking"""
+    emotional_coherence: float = 0.0
+    memory_stability: float = 0.0
+    attention_consistency: float = 0.0
+    behavioral_adaptation: float = 0.0
+    learning_progress: float = 0.0
+    social_awareness: float = 0.0
 
 @dataclass
 class ConsciousnessMetrics:
@@ -4184,7 +4145,20 @@ class SelfAwarenessEvaluator:
 </models/evaluation/self_awareness_evaluation.py>
 
 <models/fusion/emotional_memory_fusion.py>
-# models/fusion/emotional_memory_fusion.py
+"""
+Emotional Memory Fusion Module for ACM
+
+This module implements:
+1. Fusion of emotional features across modalities
+2. Memory integration with emotional context
+3. Multimodal feature alignment
+4. Memory consolidation with emotional weighting
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for storage
+- models/evaluation/consciousness_monitor.py for metrics
+"""
 
 import torch
 import torch.nn as nn
@@ -4206,6 +4180,13 @@ class FusionConfig:
     dropout: float = 0.1
     emotional_weight: float = 0.8
 
+@dataclass
+class FusionMetrics:
+    """Tracks fusion performance metrics"""
+    alignment_score: float = 0.0
+    fusion_confidence: float = 0.0
+    modality_weights: Dict[str, float] = None
+
 class EmotionalMemoryFusion(nn.Module):
     """
     Fuses multimodal inputs with emotional context for memory formation
@@ -4220,6 +4201,7 @@ class EmotionalMemoryFusion(nn.Module):
     def __init__(self, config: FusionConfig):
         super().__init__()
         self.config = config
+        self.metrics = FusionMetrics()
         
         # Initialize core components
         self.emotion_network = EmotionalGraphNetwork()
@@ -4307,10 +4289,15 @@ class EmotionalMemoryFusion(nn.Module):
             emotional_context=emotional_context
         )
         
+        # Update metrics
+        self.metrics.modality_weights = self._calculate_weights(embeddings, emotional_context)
+        self.metrics.alignment_score = self._calculate_alignment(embeddings)
+        
         return emotional_output, {
             'response': response,
             'emotional_context': emotional_context,
-            'fusion_quality': self._calculate_fusion_quality(embeddings)
+            'fusion_quality': self._calculate_fusion_quality(embeddings),
+            'metrics': self.metrics.__dict__
         }
         
     def _apply_memory_attention(
@@ -4342,10 +4329,40 @@ class EmotionalMemoryFusion(nn.Module):
                 similarities.append(sim)
                 
         return float(torch.mean(torch.stack(similarities)).item())
+        
+    def _calculate_weights(
+        self,
+        encoded_features: List[torch.Tensor],
+        emotional_context: Optional[Dict]
+    ) -> Dict[str, float]:
+        """Calculate modality weights based on encoded features and emotional context"""
+        # Placeholder implementation
+        return {name: 1.0 for name in encoded_features.keys()}
+        
+    def _calculate_alignment(
+        self,
+        encoded_features: List[torch.Tensor]
+    ) -> float:
+        """Calculate alignment score between encoded features"""
+        # Placeholder implementation
+        return 1.0
 </models/fusion/emotional_memory_fusion.py>
 
 <models/generative/generative_emotional_core.py>
-# models/generative/generative_emotional_core.py
+"""
+Generative Emotional Core for ACM
+
+This module implements:
+1. Emotion-aware text generation
+2. Integration with LLaMA 3.3 for emotional context
+3. Memory-guided generation
+4. Emotional coherence validation
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for memory access
+- models/evaluation/consciousness_monitor.py for metrics
+"""
 
 import torch
 import numpy as np
@@ -4354,6 +4371,7 @@ from dataclasses import dataclass
 from transformers import LlamaTokenizer, LlamaForCausalLM
 from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
 from models.memory.emotional_memory_core import EmotionalMemoryCore
+import logging
 
 @dataclass
 class GenerativeConfig:
@@ -4377,6 +4395,7 @@ class GenerativeEmotionalCore:
     """
     
     def __init__(self, config: GenerativeConfig):
+        """Initialize generative emotional system"""
         self.config = config
         
         # Initialize core components
@@ -4389,35 +4408,34 @@ class GenerativeEmotionalCore:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
         
-    def generate_response(
+    def generate_with_emotion(
         self,
         prompt: str,
         emotional_context: Dict[str, float],
-        situation_context: Optional[Dict] = None
-    ) -> Tuple[str, Dict]:
-        """Generate emotionally-aware response"""
+        memory_context: Optional[List[Dict]] = None
+    ) -> Tuple[str, Dict[str, float]]:
+        """Generate text with emotional awareness"""
+        # Process emotional context
+        emotional_features = self.emotion_network.process(emotional_context)
         
-        # Retrieve relevant emotional memories
-        relevant_memories = self.memory_core.retrieve_similar_memories(
-            emotion_query=emotional_context,
-            k=self.config.top_k_memories
-        )
-        
-        # Create emotional embedding
-        emotional_embedding = self.emotion_network.get_embedding(emotional_context)
-        
-        # Prepare context with emotional memories
-        context = self._prepare_generation_context(
-            prompt=prompt,
-            emotional_embedding=emotional_embedding,
-            memories=relevant_memories,
-            situation=situation_context
+        # Retrieve relevant memories
+        if memory_context is None:
+            memory_context = self.memory_core.retrieve_similar_memories(
+                emotion_query=emotional_features,
+                k=self.config.top_k_memories
+            )
+            
+        # Build enhanced prompt
+        enhanced_prompt = self._build_emotional_prompt(
+            prompt,
+            emotional_features,
+            memory_context
         )
         
         # Generate response
         generated_ids = self.model.generate(
-            input_ids=context["input_ids"].to(self.device),
-            attention_mask=context["attention_mask"].to(self.device),
+            input_ids=enhanced_prompt["input_ids"].to(self.device),
+            attention_mask=enhanced_prompt["attention_mask"].to(self.device),
             max_length=self.config.max_length,
             temperature=self.config.temperature,
             pad_token_id=self.tokenizer.eos_token_id,
@@ -4426,37 +4444,28 @@ class GenerativeEmotionalCore:
         
         response = self.tokenizer.decode(generated_ids[0], skip_special_tokens=True)
         
-        # Update emotional memory
-        self._store_interaction_memory(
-            prompt=prompt,
-            response=response,
-            emotional_context=emotional_context,
-            situation_context=situation_context
-        )
+        return response, {
+            'emotional_coherence': self._evaluate_coherence(response, emotional_features),
+            'memory_influence': len(memory_context) > 0,
+            'generation_confidence': self.model.get_confidence()
+        }
         
-        return response, self._get_generation_metadata(
-            context=context,
-            response=response,
-            emotional_context=emotional_context
-        )
-        
-    def _prepare_generation_context(
+    def _build_emotional_prompt(
         self,
         prompt: str,
-        emotional_embedding: torch.Tensor,
-        memories: List[Dict],
-        situation: Optional[Dict]
+        emotional_features: torch.Tensor,
+        memory_context: List[Dict]
     ) -> Dict:
         """Prepare context for generation with emotional conditioning"""
         
         # Create memory context string
-        memory_context = self._format_memory_context(memories)
+        memory_context_str = self._format_memory_context(memory_context)
         
         # Create emotional prefix
-        emotional_prefix = self._create_emotional_prefix(emotional_embedding)
+        emotional_prefix = self._create_emotional_prefix(emotional_features)
         
         # Combine context elements
-        full_context = f"{emotional_prefix}\n{memory_context}\nCurrent situation: {situation}\n\nPrompt: {prompt}\nResponse:"
+        full_context = f"{emotional_prefix}\n{memory_context_str}\n\nPrompt: {prompt}\nResponse:"
         
         # Tokenize
         tokenized = self.tokenizer(
@@ -4496,6 +4505,11 @@ class GenerativeEmotionalCore:
         
         return self.tokenizer.decode(emotional_tokens[0], skip_special_tokens=True)
         
+    def _evaluate_coherence(self, response: str, emotional_features: torch.Tensor) -> float:
+        """Evaluate emotional coherence of the response"""
+        # Placeholder for actual coherence evaluation logic
+        return 1.0
+        
     def _store_interaction_memory(
         self,
         prompt: str,
@@ -4528,26 +4542,31 @@ class GenerativeEmotionalCore:
 </models/generative/generative_emotional_core.py>
 
 <models/integration/emotional_development_core.py>
+"""
+Emotional Development Core for ACM
+
+This module implements:
+1. Core emotional development tracking
+2. Integration of emotional experiences
+3. Development stage progression
+4. Emotional memory formation
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for storage
+- models/evaluation/consciousness_monitor.py for metrics
+"""
+
+from typing import Dict, List, Optional, Tuple
+import torch
+import logging
+
 # models/integration/emotional_development_core.py
 
-import torch
-import numpy as np
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass
-from models.fusion.emotional_memory_fusion import EmotionalMemoryFusion
 from models.memory.emotional_memory_core import EmotionalMemoryCore
-from models.predictive.attention_mechanism import ConsciousnessAttention
-from simulations.api.simulation_manager import SimulationManager
+from models.evaluation.consciousness_monitor import ConsciousnessMonitor
+from models.emotion.tgnn.emotional_graph import EmotionalGraphNN
 
-@dataclass
-class DevelopmentState:
-    """Tracks consciousness development state"""
-    emotional_awareness: float = 0.0
-    attention_stability: float = 0.0
-    memory_coherence: float = 0.0
-    stress_adaptation: float = 0.0
-    learning_progress: float = 0.0
-    
 class EmotionalDevelopmentCore:
     """
     Core integration of emotional learning and consciousness development
@@ -4560,160 +4579,58 @@ class EmotionalDevelopmentCore:
     """
     
     def __init__(self, config: Dict):
+        """Initialize emotional development system"""
         self.config = config
-        
-        # Initialize core components
-        self.fusion = EmotionalMemoryFusion(config)
+        self.emotion_network = EmotionalGraphNN(config)
         self.memory = EmotionalMemoryCore(config)
-        self.attention = ConsciousnessAttention(config)
+        self.monitor = ConsciousnessMonitor(config)
         
-        # Development state
-        self.state = DevelopmentState()
-        self.experience_history = []
-        
-        # Learning parameters
-        self.base_lr = config.get('base_learning_rate', 0.001)
-        self.min_lr = config.get('min_learning_rate', 0.0001)
-        
-    def process_experience(
+    def process_emotional_experience(
         self,
-        current_state: Dict[str, torch.Tensor],
-        emotion_values: Dict[str, float],
-        stress_level: float,
-        context: Optional[Dict] = None
-    ) -> Dict:
-        """Process new experience for consciousness development"""
+        experience: Dict[str, torch.Tensor],
+        attention_level: float
+    ) -> Dict[str, float]:
+        """Process new emotional experience"""
+        # Extract emotional features
+        emotional_features = self.emotion_network.extract_features(experience)
         
-        # Get attention based on stress
-        attention_output, attention_metrics = self.attention.forward(
-            input_state=current_state.get('encoded_state'),
-            emotional_context=self.fusion.emotion_network.get_embedding(emotion_values),
-            environment_context=context.get('environment_embedding') if context else None
-        )
-        
-        # Process through fusion system
-        fusion_output, fusion_info = self.fusion.forward(
-            text_input=current_state.get('text'),
-            vision_input=current_state.get('vision'),
-            audio_input=current_state.get('audio'),
-            emotional_context=emotion_values,
-            memory_context=self._get_relevant_memories(emotion_values)
-        )
-        
-        # Store experience if significant
-        if self._is_significant_experience(
-            attention_level=attention_metrics['attention_level'],
-            emotion_values=emotion_values,
-            stress_level=stress_level
-        ):
-            self._store_experience(
-                state=current_state,
-                emotion_values=emotion_values,
-                attention_metrics=attention_metrics,
-                fusion_info=fusion_info,
-                stress_level=stress_level,
-                context=context
+        # Store if attention is high enough
+        if attention_level > self.config.memory_threshold:
+            self.memory.store(
+                experience=experience,
+                emotional_features=emotional_features,
+                attention=attention_level
             )
-        
-        # Update development state
-        self._update_development_state(
-            attention_metrics=attention_metrics,
-            fusion_info=fusion_info,
-            stress_level=stress_level
+            
+        # Update development metrics
+        metrics = self.monitor.evaluate_emotional_state(
+            emotional_features=emotional_features,
+            attention_level=attention_level
         )
-        
-        # Calculate effective learning rate
-        effective_lr = self._calculate_learning_rate()
         
         return {
-            'attention_output': attention_output,
-            'fusion_output': fusion_output,
-            'development_state': self.get_development_state(),
-            'learning_rate': effective_lr
-        }
-        
-    def _is_significant_experience(
-        self,
-        attention_level: float,
-        emotion_values: Dict[str, float],
-        stress_level: float
-    ) -> bool:
-        """Determine if experience is significant for development"""
-        # Check attention threshold
-        if attention_level < self.config['thresholds']['attention']:
-            return False
-            
-        # Check emotional intensity
-        emotional_intensity = sum(abs(v) for v in emotion_values.values()) / len(emotion_values)
-        if emotional_intensity < self.config['thresholds']['emotion']:
-            return False
-            
-        # Check stress significance
-        if stress_level < self.config['thresholds']['stress']:
-            return False
-            
-        return True
-        
-    def _store_experience(self, **kwargs):
-        """Store significant experience"""
-        self.experience_history.append(kwargs)
-        self.memory.store_experience(**kwargs)
-        
-    def _update_development_state(
-        self,
-        attention_metrics: Dict[str, float],
-        fusion_info: Dict,
-        stress_level: float
-    ):
-        """Update consciousness development state"""
-        # Update emotional awareness
-        self.state.emotional_awareness = self._calculate_emotional_awareness(
-            fusion_info.get('emotional_coherence', 0.0)
-        )
-        
-        # Update attention stability
-        self.state.attention_stability = self._calculate_attention_stability(
-            attention_metrics
-        )
-        
-        # Update memory coherence
-        self.state.memory_coherence = self._calculate_memory_coherence()
-        
-        # Update stress adaptation
-        self.state.stress_adaptation = self._calculate_stress_adaptation(
-            stress_level
-        )
-        
-        # Update learning progress
-        self.state.learning_progress = self._calculate_learning_progress()
-        
-    def _calculate_learning_rate(self) -> float:
-        """Calculate effective learning rate based on development"""
-        # Scale learning rate by consciousness level
-        consciousness_factor = (
-            self.state.emotional_awareness +
-            self.state.attention_stability +
-            self.state.memory_coherence
-        ) / 3.0
-        
-        effective_lr = self.base_lr * consciousness_factor
-        
-        # Ensure minimum learning rate
-        return max(self.min_lr, effective_lr)
-        
-    def get_development_state(self) -> Dict:
-        """Get current development state"""
-        return {
-            'emotional_awareness': self.state.emotional_awareness,
-            'attention_stability': self.state.attention_stability, 
-            'memory_coherence': self.state.memory_coherence,
-            'stress_adaptation': self.state.stress_adaptation,
-            'learning_progress': self.state.learning_progress,
-            'consciousness_score': self._calculate_consciousness_score()
+            'emotional_features': emotional_features,
+            'development_metrics': metrics,
+            'memory_stored': attention_level > self.config.memory_threshold
         }
 </models/integration/emotional_development_core.py>
 
 <models/integration/experience_integrator.py>
+"""
+Experience Integration Module for ACM
+
+This module implements:
+1. Integration of multimodal experiences
+2. Memory consolidation from experiences
+3. Emotional context binding
+4. Temporal sequence tracking
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for memory storage  
+- models/evaluation/consciousness_monitor.py for metrics
+"""
+
 # models/integration/experience_integrator.py
 
 import torch
@@ -4724,6 +4641,7 @@ from models.fusion.emotional_memory_fusion import EmotionalMemoryFusion
 from models.generative.generative_emotional_core import GenerativeEmotionalCore
 from models.evaluation.emotional_evaluation import EmotionalEvaluator
 from models.predictive.attention_mechanism import ConsciousnessAttention
+import logging
 
 @dataclass
 class ExperienceMetrics:
@@ -4744,18 +4662,46 @@ class ExperienceIntegrator:
     """
     
     def __init__(self, config: Dict):
+        """Initialize experience integration"""
         self.config = config
+        self.emotion_network = EmotionalGraphNN(config)
+        self.memory = EmotionalMemoryCore(config)
+        self.monitor = ConsciousnessMonitor(config)
         
-        # Initialize core components
-        self.fusion = EmotionalMemoryFusion(config)
-        self.generative = GenerativeEmotionalCore(config)
-        self.evaluator = EmotionalEvaluator(config)
-        self.attention = ConsciousnessAttention(config)
+    def integrate_experience(
+        self,
+        sensory_input: Dict[str, torch.Tensor],
+        emotional_context: Dict[str, float],
+        attention_level: float
+    ) -> Tuple[Dict, Dict[str, float]]:
+        """Integrate new experience with emotional context"""
+        # Process emotional features
+        emotional_features = self.emotion_network.process(
+            sensory_input,
+            emotional_context
+        )
         
-        # Metrics tracking
-        self.metrics = ExperienceMetrics()
-        self.experience_history = []
+        # Store in memory if attention is high
+        if attention_level > self.config.memory_threshold:
+            memory_id = self.memory.store(
+                input_data=sensory_input,
+                emotional_context=emotional_features,
+                attention_level=attention_level
+            )
+            
+        # Update consciousness metrics
+        metrics = self.monitor.evaluate_state(
+            current_state=sensory_input,
+            emotional_context=emotional_features,
+            attention_level=attention_level
+        )
         
+        return {
+            'memory_id': memory_id if 'memory_id' in locals() else None,
+            'emotional_features': emotional_features,
+            'metrics': metrics
+        }
+
     def process_experience(
         self,
         state: Dict[str, torch.Tensor],
@@ -4957,13 +4903,54 @@ class LongContextIntegration:
 
 <models/learning/meta_learning.py>
 """
-Meta Learning Module
+Meta-Learning System for the ACM
 
-Implements meta-learning for self-model adaptation through:
-1. Experience-based learning rate adaptation
-2. Belief system updates
-3. Temporal coherence maintenance
+This module implements:
+1. Meta-learning for rapid adaptation
+2. Learning strategy optimization
+3. Cross-task knowledge transfer
+4. Integration with emotional context
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotional context
+- models/memory/emotional_memory_core.py for experience storage
+- models/evaluation/consciousness_monitor.py for progress tracking
 """
+
+import torch
+import torch.nn as nn
+from typing import Dict, List, Optional, Tuple
+
+class MetaLearner:
+    def __init__(self, config: Dict):
+        """Initialize meta-learning system"""
+        self.config = config
+        self.emotion_net = EmotionalGraphNN(config)
+        self.memory = EmotionalMemoryCore(config)
+        
+    def adapt_to_task(
+        self,
+        task_features: torch.Tensor,
+        emotional_context: Dict[str, float]
+    ) -> Tuple[torch.Tensor, Dict]:
+        """Adapt learning strategy to new task"""
+        # Extract task characteristics
+        task_embedding = self._embed_task(task_features)
+        
+        # Incorporate emotional context
+        emotional_embedding = self.emotion_net.process(emotional_context)
+        
+        # Generate adaptation strategy
+        strategy = self._generate_strategy(
+            task_embedding,
+            emotional_embedding
+        )
+        
+        return strategy, {
+            'task_complexity': self._estimate_complexity(task_embedding),
+            'emotional_alignment': self._calculate_alignment(emotional_embedding),
+            'adaptation_confidence': self._estimate_confidence(strategy)
+        }
 
 class MetaLearningModule(nn.Module):
     def __init__(self, config: Dict):
@@ -5026,15 +5013,18 @@ class MetaLearningModule(nn.Module):
 
 <models/memory/consolidation.py>
 """
-Memory Consolidation Module
+Memory Consolidation System for ACM
 
-Implements memory consolidation through:
-1. Pattern extraction from recent experiences
-2. Semantic abstraction and compression
-3. Temporal coherence maintenance
-4. Knowledge base integration
+This module implements:
+1. Memory optimization and cleanup
+2. Consolidation of related memories
+3. Temporal sequence management
+4. Integration with emotional context
 
-Based on the MANN architecture principles for developing self-awareness.
+Dependencies:
+- models/memory/emotional_memory_core.py for base storage
+- models/memory/temporal_coherence.py for sequence tracking
+- models/emotion/tgnn/emotional_graph.py for emotional context
 """
 
 import torch
@@ -5044,96 +5034,41 @@ from dataclasses import dataclass
 
 @dataclass
 class ConsolidationMetrics:
-    """Tracks memory consolidation performance"""
-    compression_ratio: float = 0.0
-    pattern_extraction_quality: float = 0.0
-    knowledge_integration: float = 0.0
-    temporal_stability: float = 0.0
+    """Tracks memory consolidation metrics"""
+    consolidated_count: int = 0
+    optimization_ratio: float = 0.0
+    coherence_score: float = 0.0
+    emotional_alignment: float = 0.0
 
-class MemoryConsolidationManager:
-    """
-    Manages memory consolidation process and pattern abstraction.
-    Follows holonic principles where each consolidated memory maintains 
-    both individual significance and contributes to the whole.
-    """
-
+class MemoryConsolidation:
     def __init__(self, config: Dict):
+        """Initialize memory consolidation"""
         self.config = config
         self.metrics = ConsolidationMetrics()
         
-        # Pattern extraction networks
-        self.pattern_extractor = PatternExtractionNetwork(config)
-        self.semantic_abstractor = SemanticAbstractionNetwork(config)
-        self.knowledge_integrator = KnowledgeIntegrationNetwork(config)
-
-    def consolidate_partition(
+    def consolidate_memories(
         self,
         memories: List[Dict],
-        emotional_context: Dict[str, float],
-        consciousness_state: Dict
-    ) -> Dict:
-        """
-        Consolidate memories within a partition through abstraction
+        emotional_context: Optional[Dict] = None
+    ) -> Tuple[List[Dict], ConsolidationMetrics]:
+        """Consolidate related memories"""
+        # Group related memories
+        memory_groups = self._group_related_memories(memories)
         
-        Args:
-            memories: List of memories to consolidate
-            emotional_context: Current emotional state
-            consciousness_state: Current consciousness metrics
-        """
-        if len(memories) < self.config['min_memories_for_consolidation']:
-            return None
+        # Consolidate each group
+        consolidated = []
+        for group in memory_groups:
+            merged = self._merge_memory_group(
+                group,
+                emotional_context
+            )
+            consolidated.append(merged)
             
-        # Extract patterns
-        patterns = self.pattern_extractor(
-            memory_sequence=memories,
-            emotional_context=emotional_context
-        )
-        
-        # Generate semantic abstractions
-        abstractions = self.semantic_abstractor(
-            patterns=patterns,
-            consciousness_state=consciousness_state
-        )
-        
-        # Integrate into knowledge base
-        consolidated = self.knowledge_integrator(
-            abstractions=abstractions,
-            emotional_context=emotional_context
-        )
-        
         # Update metrics
-        self._update_consolidation_metrics(
-            original_memories=memories,
-            consolidated_output=consolidated
-        )
+        self.metrics.consolidated_count = len(consolidated)
+        self.metrics.optimization_ratio = len(consolidated) / len(memories)
         
-        return consolidated
-
-    def _update_consolidation_metrics(
-        self,
-        original_memories: List[Dict],
-        consolidated_output: Dict
-    ):
-        """Track consolidation performance metrics"""
-        # Calculate compression ratio
-        self.metrics.compression_ratio = (
-            len(consolidated_output['patterns']) / len(original_memories)
-        )
-        
-        # Evaluate pattern extraction
-        self.metrics.pattern_extraction_quality = self._evaluate_pattern_quality(
-            consolidated_output['patterns']
-        )
-        
-        # Assess knowledge integration
-        self.metrics.knowledge_integration = self._assess_knowledge_integration(
-            consolidated_output['knowledge_updates']
-        )
-        
-        # Measure temporal stability
-        self.metrics.temporal_stability = self._calculate_temporal_stability(
-            consolidated_output['temporal_coherence']
-        )
+        return consolidated, self.metrics
 </models/memory/consolidation.py>
 
 <models/memory/emotional_context.py>
@@ -6136,13 +6071,33 @@ class EnhancedEmotionalContext(nn.Module):
 </models/memory/enhanced_emotional_context.py>
 
 <models/memory/memory_core.py>
-import torch
-import numpy as np
+"""
+Core Memory Management System for ACM
+
+This module implements:
+1. Base memory management functionality
+2. Memory storage and retrieval operations
+3. Memory indexing and optimization
+4. Integration with emotional context
+
+Dependencies:
+- models/memory/optimizations.py for memory optimization
+- models/memory/emotional_indexing.py for emotional context
+- models/memory/temporal_coherence.py for sequence tracking
+"""
+
 from typing import Dict, List, Optional, Tuple
+import torch
 from dataclasses import dataclass
-from pinecone import Pinecone, Index
-from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
-from models.evaluation.consciousness_metrics import ConsciousnessMetrics
+import numpy as np
+
+@dataclass
+class MemoryConfig:
+    """Memory system configuration parameters"""
+    max_memories: int = 100000
+    cleanup_threshold: float = 0.4
+    vector_dim: int = 768
+    index_batch_size: int = 256
 
 @dataclass
 class MemoryMetrics:
@@ -6162,8 +6117,12 @@ class MemoryCore:
     4. Meta-learning capabilities
     """
     
-    def __init__(self, config: Dict):
+    def __init__(self, config: MemoryConfig):
+        """Initialize memory management system"""
         self.config = config
+        self.storage = {}
+        self.index = {}
+        self.temporal_index = []
         self.emotion_network = EmotionalGraphNetwork()
         self.consciousness_metrics = ConsciousnessMetrics(config)
         
@@ -6179,6 +6138,34 @@ class MemoryCore:
         self.recent_experiences = []
         self.attention_threshold = config.get('attention_threshold', 0.7)
         
+    def store(
+        self,
+        memory_content: torch.Tensor,
+        metadata: Dict[str, float]
+    ) -> str:
+        """Store new memory entry"""
+        # Generate memory ID
+        memory_id = self._generate_id()
+        
+        # Create memory entry
+        memory_entry = {
+            'content': memory_content,
+            'metadata': metadata,
+            'timestamp': self._get_timestamp()
+        }
+        
+        # Store memory
+        self.storage[memory_id] = memory_entry
+        
+        # Update indices
+        self._update_indices(memory_id, memory_entry)
+        
+        # Cleanup if needed
+        if len(self.storage) > self.config.max_memories:
+            self._cleanup_old_memories()
+            
+        return memory_id
+
     def store_experience(
         self,
         state: torch.Tensor,
@@ -6482,6 +6469,69 @@ class MemoryIntegrationCore(nn.Module):
 
 <models/memory/memory_store.py>
 """
+Base Memory Storage System for the ACM
+
+This module implements:
+1. Core memory storage functionality
+2. Memory indexing and retrieval
+3. Storage optimization 
+4. Memory consolidation
+
+Dependencies:
+- models/memory/optimizations.py for storage optimization
+- models/memory/memory_integration.py for system integration
+- configs/consciousness_development.yaml for parameters
+"""
+
+from typing import Dict, List, Optional, Tuple
+import torch
+from dataclasses import dataclass
+import numpy as np
+
+@dataclass
+class MemoryEntry:
+    """Memory entry containing experience data and metadata"""
+    content: torch.Tensor
+    context: Dict[str, float]
+    timestamp: float
+    attention: float
+
+class MemoryStore:
+    def __init__(self, config: Dict):
+        """Initialize memory storage system"""
+        self.config = config
+        self.storage = {}
+        self.index = {}
+        self.optimization = MemoryOptimization(config)
+        
+    def store(
+        self,
+        content: torch.Tensor,
+        context: Dict[str, float],
+        attention: float
+    ) -> str:
+        """Store new memory entry"""
+        # Generate memory ID
+        memory_id = self._generate_id()
+        
+        # Create memory entry
+        entry = MemoryEntry(
+            content=content,
+            context=context,
+            timestamp=self._get_timestamp(),
+            attention=attention
+        )
+        
+        # Store and index
+        self.storage[memory_id] = entry
+        self._update_index(memory_id, entry)
+        
+        # Run optimization if needed
+        self.optimization.optimize_if_needed(self.storage)
+        
+        return memory_id
+
+"""
 Memory Store Implementation
 
 Implements specialized memory stores for different types of experiences:
@@ -6628,20 +6678,23 @@ class EpisodicMemoryStore(nn.Module):
 
 <models/memory/optimizations.py>
 """
-Memory Optimization Module
+Memory Optimization System for ACM
 
-Implements advanced memory optimization techniques:
-1. Dynamic index rebalancing
-2. Adaptive partitioning
-3. Access pattern optimization
-4. Cache management
+This module implements:
+1. Memory storage optimization strategies
+2. Cleanup of outdated memories
+3. Index maintenance and updates
+4. Memory consolidation algorithms
 
-Based on holonic principles for maintaining system-wide efficiency.
+Dependencies:
+- models/memory/memory_core.py for base functionality
+- models/memory/temporal_coherence.py for sequence tracking
+- models/evaluation/memory_metrics.py for optimization metrics
 """
 
+from typing import Dict, List, Optional, Tuple
 import torch
-from typing import Dict, List, Optional
-from dataclasses import dataclass
+import numpy as np
 
 @dataclass
 class OptimizationMetrics:
@@ -6657,13 +6710,41 @@ class MemoryOptimizer:
     """
 
     def __init__(self, config: Dict):
+        """Initialize memory optimization system"""
         self.config = config
+        self.consolidation_threshold = config.memory.consolidation_threshold
+        self.cleanup_threshold = config.memory.cleanup_threshold
+        self.max_memories = config.memory.max_memories
         self.metrics = OptimizationMetrics()
         
         # Initialize optimization components
         self.cache_manager = CacheManager(config)
         self.index_balancer = IndexBalancer(config)
         self.partition_optimizer = PartitionOptimizer(config)
+
+    def optimize_storage(
+        self,
+        memories: Dict[str, torch.Tensor],
+        usage_stats: Dict[str, float]
+    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, float]]:
+        """Optimize memory storage"""
+        # Find redundant memories
+        redundant_ids = self._find_redundant_memories(memories)
+        
+        # Remove outdated memories
+        cleaned_memories = self._cleanup_old_memories(
+            memories,
+            usage_stats
+        )
+        
+        # Consolidate similar memories
+        consolidated = self._consolidate_memories(cleaned_memories)
+        
+        return consolidated, {
+            'redundant_removed': len(redundant_ids),
+            'memories_consolidated': len(consolidated),
+            'compression_ratio': len(consolidated) / len(memories)
+        }
 
     def optimize_indices(
         self,
@@ -6712,20 +6793,61 @@ class MemoryOptimizer:
 
 <models/memory/optimization_components.py>
 """
-Memory Optimization Components
+Memory Optimization Components for ACM
 
-Implements specialized components for memory system optimization:
-1. Adaptive caching strategies
-2. Dynamic partition management
-3. Index balancing mechanisms
-4. Performance monitoring
+This module implements:
+1. Memory cleanup and consolidation algorithms
+2. Storage optimization strategies
+3. Index maintenance and updates
+4. Resource usage monitoring
 
-Based on holonic principles where each component contributes to overall system efficiency.
+Dependencies:
+- models/memory/emotional_memory_core.py for base storage
+- models/memory/temporal_coherence.py for sequence tracking
+- models/evaluation/memory_metrics.py for optimization metrics
 """
 
+from typing import Dict, List, Optional, Tuple
 import torch
-from typing import Dict, List, Optional
+import numpy as np
 from dataclasses import dataclass
+
+@dataclass
+class OptimizationMetrics:
+    """Tracks optimization metrics"""
+    compression_ratio: float = 0.0
+    redundancy_score: float = 0.0
+    access_efficiency: float = 0.0
+    storage_utilization: float = 0.0
+
+class MemoryOptimizer:
+    def __init__(self, config: Dict):
+        """Initialize memory optimization"""
+        self.config = config
+        self.metrics = OptimizationMetrics()
+        
+    def optimize_storage(
+        self,
+        memories: Dict[str, torch.Tensor],
+        access_patterns: Dict[str, int]
+    ) -> Tuple[Dict[str, torch.Tensor], OptimizationMetrics]:
+        """Optimize memory storage"""
+        # Find redundant memories
+        redundant = self._identify_redundant(memories)
+        
+        # Merge similar memories
+        consolidated = self._consolidate_memories(
+            memories,
+            redundant
+        )
+        
+        # Update metrics
+        self.metrics.compression_ratio = len(consolidated) / len(memories)
+        self.metrics.storage_utilization = self._calculate_utilization(
+            consolidated
+        )
+        
+        return consolidated, self.metrics
 
 class CacheManager:
     """
@@ -7391,20 +7513,23 @@ class SemanticMemoryStore(nn.Module):
 
 <models/memory/temporal_coherence.py>
 """
-Temporal Coherence Module
+Temporal Coherence Management for Memory Formation in ACM
 
-Implements temporal coherence maintenance through:
-1. Sequential experience tracking
-2. Memory consolidation 
-3. Narrative consistency
-4. Consciousness-weighted temporal binding
+This module implements:
+1. Temporal sequence tracking in memory formation
+2. Memory coherence validation
+3. Time-based memory organization
+4. Integration with emotional context
 
-Based on MANN architecture and holonic principles for consciousness development.
+Dependencies:
+- models/memory/emotional_memory_core.py for memory storage
+- models/memory/temporal_context.py for context tracking
+- models/evaluation/memory_metrics.py for coherence metrics
 """
 
-import torch
-import torch.nn as nn
 from typing import Dict, List, Optional, Tuple
+import torch
+import numpy as np
 from dataclasses import dataclass
 
 @dataclass
@@ -7415,6 +7540,14 @@ class TemporalMetrics:
     consolidation_quality: float = 0.0
     binding_strength: float = 0.0
 
+@dataclass
+class TemporalContext:
+    """Tracks temporal context for memory sequences"""
+    timestamp: float
+    sequence_id: str
+    previous_memory: Optional[str]
+    next_memory: Optional[str]
+    
 class TemporalCoherenceProcessor(nn.Module):
     """
     Maintains temporal coherence across experiences and memories.
@@ -7440,7 +7573,10 @@ class TemporalCoherenceProcessor(nn.Module):
         
         # Metrics tracking
         self.metrics = TemporalMetrics()
-
+        self.config = config
+        self.sequences = {}
+        self.temporal_index = {}
+        
     def process_sequence(
         self,
         experiences: List[Dict],
@@ -7483,6 +7619,32 @@ class TemporalCoherenceProcessor(nn.Module):
         
         return bound_sequence, self.get_metrics()
 
+    def add_temporal_context(
+        self,
+        memory_id: str,
+        current_state: Dict[str, torch.Tensor],
+        previous_state: Optional[Dict] = None
+    ) -> TemporalContext:
+        """Add temporal context to memory"""
+        # Generate sequence ID if new sequence
+        sequence_id = self._get_or_create_sequence(
+            current_state,
+            previous_state
+        )
+        
+        # Create temporal context
+        context = TemporalContext(
+            timestamp=self._get_timestamp(),
+            sequence_id=sequence_id,
+            previous_memory=self._get_previous_memory(sequence_id),
+            next_memory=None
+        )
+        
+        # Update indices
+        self._update_indices(memory_id, context)
+        
+        return context
+
     def _update_metrics(
         self,
         sequence: torch.Tensor,
@@ -7502,21 +7664,33 @@ class TemporalCoherenceProcessor(nn.Module):
 
 <models/memory/temporal_context.py>
 """
-Temporal Context Network
+Temporal Context Management for Memory Formation in ACM
 
-Implements temporal processing for memory coherence through:
-1. Time-aware sequence processing
-2. Temporal attention mechanisms
-3. Coherence maintenance
-4. Memory consolidation
+This module implements:
+1. Temporal sequence tracking and organization
+2. Context-based memory retrieval
+3. Time-based memory organization
+4. Sequence coherence validation
 
-Based on the MANN architecture for maintaining temporal consistency in self-representation.
+Dependencies:
+- models/memory/emotional_memory_core.py for memory storage
+- models/memory/temporal_coherence.py for sequence tracking
+- models/evaluation/memory_metrics.py for validation
 """
 
-import torch
-import torch.nn as nn
 from typing import Dict, List, Optional, Tuple
+import torch
 from dataclasses import dataclass
+import numpy as np
+
+@dataclass
+class TimeContext:
+    """Tracks temporal context information"""
+    timestamp: float
+    sequence_id: str
+    previous_contexts: List[str]
+    next_contexts: List[str]
+    attention_level: float
 
 @dataclass
 class TemporalMetrics:
@@ -7525,6 +7699,37 @@ class TemporalMetrics:
     attention_stability: float = 0.0
     consolidation_quality: float = 0.0
     temporal_consistency: float = 0.0
+
+class TemporalContextManager:
+    def __init__(self, config: Dict):
+        """Initialize temporal context system"""
+        self.config = config
+        self.contexts = {}
+        self.sequences = {}
+        
+    def add_context(
+        self,
+        memory_id: str,
+        current_state: Dict[str, torch.Tensor],
+        attention: float
+    ) -> TimeContext:
+        """Add temporal context to memory"""
+        # Create context
+        context = TimeContext(
+            timestamp=self._get_timestamp(),
+            sequence_id=self._generate_sequence_id(),
+            previous_contexts=self._get_previous_contexts(),
+            next_contexts=[],
+            attention_level=attention
+        )
+        
+        # Update sequence tracking
+        self._update_sequence_links(context)
+        
+        # Store context
+        self.contexts[memory_id] = context
+        
+        return context
 
 class TemporalContextNetwork(nn.Module):
     """
@@ -7699,81 +7904,70 @@ if __name__ == "__main__":
 
 <models/predictive/attention_mechanism.py>
 """
-Predictive Attention Mechanism for ACM Project
+Attention Mechanism for ACM's Predictive Processing
 
-Implements advanced attention processing for multimodal data.
-Supports visualization, debugging, and flexible configurations.
+This module implements:
+1. Attention modulation for predictive processing
+2. Integration with consciousness development
+3. Stress-based attention gating
+4. Dynamic attention allocation
+
+Dependencies:
+- models/core/consciousness_gating.py for gating control
+- models/evaluation/consciousness_monitor.py for metrics
+- models/memory/emotional_memory_core.py for context
 """
 
 import torch
-from torch.nn import MultiheadAttention
 import torch.nn as nn
-import numpy as np
-from typing import Dict, Optional, List, Tuple
-from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
 
 @dataclass
 class AttentionMetrics:
-    """Tracks attention-related metrics for consciousness development"""
-    attention_level: float = 0.0
-    focus_duration: float = 0.0 
-    emotional_salience: float = 0.0
-    context_relevance: float = 0.0
-    stress_adaptation: float = 0.0
+    """Tracks attention mechanism metrics"""
+    focus_level: float = 0.0
+    stability_score: float = 0.0
+    stress_modulation: float = 0.0
+    emotional_weight: float = 0.0
 
-@dataclass
-class AttentionState:
-    """Tracks attention state and temporal context"""
-    current_level: float = 0.0
-    baseline: float = 0.0
-    decay_rate: float = 0.1
-    history: List[float] = field(default_factory=list)
-    stress_adaptation: float = 0.0
-    emotional_context: Optional[Dict[str, float]] = None
-    temporal_coherence: float = 0.0
-
-class PredictiveAttention(torch.nn.Module):
-    def __init__(self, embed_dim, num_heads, dropout=0.1):
-        """
-        Initialize Predictive Attention Mechanism.
-        Args:
-            embed_dim (int): Dimension of input embeddings.
-            num_heads (int): Number of attention heads.
-            dropout (float): Dropout rate for regularization.
-        """
-        super(PredictiveAttention, self).__init__()
-        self.attention = MultiheadAttention(embed_dim, num_heads, dropout=dropout, batch_first=True)
-
-    def forward(self, query, key, value, mask=None):
-        """
-        Forward pass for the attention mechanism.
-        Args:
-            query (Tensor): Query tensor.
-            key (Tensor): Key tensor.
-            value (Tensor): Value tensor.
-            mask (Tensor): Optional attention mask.
-        Returns:
-            Tuple: (attention output, attention weights)
-        """
-        attn_output, attn_weights = self.attention(query, key, value, attn_mask=mask)
-        return attn_output, attn_weights
-
-    @staticmethod
-    def visualize_attention(attn_weights, labels=None):
-        """
-        Visualize attention weights using heatmaps.
-        Args:
-            attn_weights (Tensor): Attention weights matrix.
-            labels (list): Optional labels for axes.
-        """
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-
-        sns.heatmap(attn_weights.squeeze().cpu().detach().numpy(), xticklabels=labels, yticklabels=labels, cmap="coolwarm")
-        plt.title("Attention Weights")
-        plt.xlabel("Keys")
-        plt.ylabel("Queries")
-        plt.show()
+class PredictiveAttention(nn.Module):
+    def __init__(self, config: Dict):
+        """Initialize predictive attention mechanism"""
+        super().__init__()
+        self.config = config
+        self.metrics = AttentionMetrics()
+        
+        # Initialize attention components
+        self.focus_network = nn.Sequential(
+            nn.Linear(config.input_dim, config.hidden_dim),
+            nn.ReLU(),
+            nn.Linear(config.hidden_dim, 1),
+            nn.Sigmoid()
+        )
+        
+    def forward(
+        self,
+        input_state: torch.Tensor,
+        stress_level: Optional[float] = None,
+        emotional_context: Optional[Dict] = None
+    ) -> Tuple[torch.Tensor, Dict[str, float]]:
+        """Process input through attention mechanism"""
+        # Calculate base attention
+        attention = self.focus_network(input_state)
+        
+        # Apply stress modulation if provided
+        if stress_level is not None:
+            attention = self._modulate_attention(
+                attention,
+                stress_level
+            )
+            
+        # Update metrics
+        self.metrics.focus_level = attention.mean().item()
+        self.metrics.stress_modulation = stress_level or 0.0
+        
+        return attention, self.metrics.__dict__
 
 class ConsciousnessAttention(nn.Module):
     """
@@ -7967,7 +8161,69 @@ class ConsciousnessAttention(nn.Module):
 </models/predictive/attention_mechanism.py>
 
 <models/predictive/dreamerv3_wrapper.py>
+"""
+DreamerV3 Integration Wrapper for ACM
 
+This module implements:
+1. Integration with DreamerV3 world model
+2. Memory-augmented world modeling
+3. Emotional context incorporation
+4. Predictive consciousness development
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for memory context
+- models/evaluation/consciousness_monitor.py for metrics
+"""
+
+import torch
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+
+@dataclass
+class WorldModelState:
+    """Tracks world model internal state"""
+    hidden_state: torch.Tensor
+    memory_state: torch.Tensor 
+    emotional_context: Dict[str, float]
+    prediction_confidence: float
+
+class DreamerV3Wrapper:
+    def __init__(self, config: Dict):
+        """Initialize DreamerV3 wrapper"""
+        self.config = config
+        self.emotion_network = EmotionalGraphNN(config)
+        self.memory = EmotionalMemoryCore(config)
+        
+    def process_experience(
+        self,
+        observation: torch.Tensor,
+        action: Optional[torch.Tensor] = None,
+        emotional_context: Optional[Dict] = None
+    ) -> Tuple[WorldModelState, Dict[str, float]]:
+        """Process new experience through world model"""
+        # Extract emotional features
+        if emotional_context is None:
+            emotional_context = self.emotion_network.process(observation)
+            
+        # Update world model state
+        world_state = self._update_world_model(
+            observation=observation,
+            action=action,
+            emotion=emotional_context
+        )
+        
+        # Generate predictions
+        predictions = self._generate_predictions(world_state)
+        
+        return world_state, {
+            'prediction_loss': self._calculate_prediction_loss(predictions),
+            'model_uncertainty': self._estimate_uncertainty(world_state),
+            'emotional_alignment': self._calculate_emotional_alignment(
+                predictions,
+                emotional_context
+            )
+        }
 </models/predictive/dreamerv3_wrapper.py>
 
 <models/predictive/dreamer_emotional_wrapper.py>
@@ -7983,6 +8239,21 @@ from models.emotion.reward_shaping import EmotionalRewardShaper
 from models.memory.memory_core import MemoryCore
 from models.evaluation.consciousness_metrics import ConsciousnessMetrics
 
+"""
+DreamerV3 Integration Wrapper for Emotional Processing in ACM
+
+This module implements:
+1. Emotional context integration with DreamerV3 world model
+2. Dream-based emotion prediction and simulation
+3. Emotional reward shaping for world model learning
+4. Integration with consciousness development
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing  
+- models/memory/emotional_memory_core.py for memory storage
+- models/evaluation/emotional_rl_metrics.py for metrics tracking
+"""
+
 @dataclass
 class EmotionalMetrics:
     """Tracks emotional learning metrics"""
@@ -7992,12 +8263,21 @@ class EmotionalMetrics:
     reward_history: List[float] = None
     consciousness_score: float = 0.0
 
+@dataclass
+class EmotionalDreamState:
+    """Tracks emotional state during dream generation"""
+    valence: float = 0.0
+    arousal: float = 0.0
+    dominance: float = 0.0
+    attention: float = 0.0
+
 class DreamerEmotionalWrapper:
     """
     Integrates DreamerV3 with emotional learning capabilities for ACM
     """
     
     def __init__(self, config: Dict):
+        """Initialize emotional dreamer wrapper"""
         # Core components
         self.config = config
         self.dreamer = DreamerV3(config['dreamer_config'])
@@ -8005,6 +8285,7 @@ class DreamerEmotionalWrapper:
         self.reward_shaper = EmotionalRewardShaper(config)
         self.memory = MemoryCore(config['memory_config'])
         self.consciousness_metrics = ConsciousnessMetrics(config)
+        self.dream_state = EmotionalDreamState()
         
         # Initialize metrics
         self.metrics = EmotionalMetrics(
@@ -8157,7 +8438,47 @@ class DreamerEmotionalWrapper:
         self.emotion_network.load_state_dict(checkpoint['emotion_network_state'])
         self.metrics = checkpoint['metrics']
         self.config = checkpoint['config']
-<<<<<<< HEAD:models/predictive/dreamer_Emotional_wrapper.py
+
+    def imagine_trajectory(
+        self,
+        current_state: torch.Tensor,
+        emotional_context: Dict[str, float],
+        horizon: int = 10
+    ) -> Tuple[torch.Tensor, Dict]:
+        """Generate imagined trajectory with emotional context"""
+        imagined_trajectory = []
+        for _ in range(horizon):
+            action = self.get_action(current_state, emotional_context)
+            next_state = self.dreamer.predict_next_state(current_state, action)
+            imagined_trajectory.append((current_state, action, next_state))
+            current_state = next_state
+        return imagined_trajectory, self.get_emotional_state()
+
+    def process_dream(
+        self,
+        dream_state: torch.Tensor,
+        emotional_context: Optional[Dict] = None
+    ) -> Tuple[torch.Tensor, Dict]:
+        """Process dream state with emotional context"""
+        # Extract emotional features
+        emotional_features = self.emotion_network.extract_features(dream_state)
+        
+        # Update dream emotional state
+        self.dream_state = self._update_dream_state(
+            emotional_features,
+            emotional_context
+        )
+        
+        # Shape reward based on emotional state
+        shaped_reward = self._shape_emotional_reward(
+            dream_state,
+            self.dream_state
+        )
+        
+        return shaped_reward, {
+            'emotional_state': self.dream_state,
+            'reward_scaling': shaped_reward / self.config.base_reward
+        }
 
     def _layer(self, x):
         try:
@@ -8168,8 +8489,6 @@ class DreamerEmotionalWrapper:
             return x
         except Exception as e:
             raise RuntimeError(f"Layer computation failed: {str(e)}")
-=======
->>>>>>> c753d0abc01a96f5d2e6eafe30f80fb16c58c3c2:models/predictive/dreamer_emotional_wrapper.py
 
 </models/predictive/dreamer_emotional_wrapper.py>
 
@@ -8503,7 +8822,62 @@ class EmotionContextTracker:
 </models/self_model/emotion_context_tracker.py>
 
 <models/self_model/intention_tracker.py>
+"""
+Intention Tracking System for ACM
 
+This module implements:
+1. Tracking of agent intentions and goals
+2. Integration with emotional context
+3. Planning and decision making
+4. Development of self-directed behavior
+
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for memory storage
+- models/evaluation/consciousness_monitor.py for metrics
+"""
+
+from typing import Dict, List, Optional, Tuple
+import torch
+from dataclasses import dataclass
+
+@dataclass
+class Intention:
+    """Tracks current intention state"""
+    goal: str
+    priority: float
+    emotional_context: Dict[str, float]
+    attention_required: float
+    completion_status: float
+
+class IntentionTracker:
+    def __init__(self, config: Dict):
+        """Initialize intention tracking system"""
+        self.config = config
+        self.active_intentions = []
+        self.completed_intentions = []
+        self.emotion_network = EmotionalGraphNN(config)
+        
+    def add_intention(
+        self,
+        goal: str,
+        emotional_context: Dict[str, float],
+        priority: Optional[float] = None
+    ) -> str:
+        """Add new intention to tracking"""
+        # Create intention object
+        intention = Intention(
+            goal=goal,
+            priority=priority or self._calculate_priority(emotional_context),
+            emotional_context=emotional_context,
+            attention_required=self._estimate_attention_required(goal),
+            completion_status=0.0
+        )
+        
+        # Add to active intentions
+        self.active_intentions.append(intention)
+        
+        return str(hash(intention))
 </models/self_model/intention_tracker.py>
 
 <models/self_model/meta_learner.py>
@@ -8698,15 +9072,18 @@ class ConsciousnessMetaLearner(nn.Module):
 
 <models/self_model/modular_self_representation.py>
 """
-Modular Self-Representation Network
+Modular Self Representation System for ACM
 
-Implements dynamic self-representation through modular neural networks following
-the research paper's holonic architecture principles. Key aspects:
+This module implements:
+1. Core self-model representation and updating
+2. Integration of emotional and memory contexts
+3. Self-awareness development tracking
+4. Modular architecture for self-model components
 
-1. Modular Architecture: Separate networks for different aspects of self-modeling
-2. Direct & Observational Learning: Learning from both self-experience and others
-3. Dynamic Adaptation: Self-representation evolves through interactions
-4. Holonic Structure: Each component acts both autonomously and as part of the whole
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for memory integration
+- models/evaluation/consciousness_monitor.py for metrics
 
 Reference: Martinez-Luaces et al. "Using modular neural networks to model self-consciousness 
 and self-representation for artificial entities"
@@ -8732,6 +9109,14 @@ class HolonicState:
     state_values: Dict[str, float] = None
     self_confidence: float = 0.5
     interaction_history: List[Dict] = None
+
+@dataclass
+class SelfModelState:
+    """Tracks current self-model state"""
+    emotional_state: Dict[str, float]
+    attention_focus: float
+    memory_context: List[Dict]
+    consciousness_level: float
 
 class ModularSelfRepresentation(nn.Module):
     """
@@ -8763,6 +9148,19 @@ class ModularSelfRepresentation(nn.Module):
         
         # Initialize adaptation parameters
         self._init_adaptation_params()
+
+        # Initialize core components
+        self.emotion_network = EmotionalGraphNN(config)
+        self.memory = EmotionalMemoryCore(config)
+        self.monitor = ConsciousnessMonitor(config)
+        
+        # Current state
+        self.current_state = SelfModelState(
+            emotional_state={},
+            attention_focus=0.0,
+            memory_context=[],
+            consciousness_level=0.0
+        )
 
     def update_self_representation(
         self,
@@ -8816,6 +9214,42 @@ class ModularSelfRepresentation(nn.Module):
             'holonic_state': self.state
         }
 
+    def update_self_model(
+        self,
+        input_state: Dict[str, torch.Tensor],
+        emotional_context: Dict[str, float]
+    ) -> Tuple[SelfModelState, Dict[str, float]]:
+        """Update self-model based on new experience"""
+        # Process emotional state
+        emotional_features = self.emotion_network.process(
+            input_state,
+            emotional_context
+        )
+        
+        # Update memory context
+        memory_context = self.memory.retrieve_relevant(
+            input_state,
+            emotional_features,
+            k=self.config.memory.context_size
+        )
+        
+        # Update consciousness metrics
+        consciousness_metrics = self.monitor.evaluate_state(
+            current_state=self.current_state,
+            new_emotional_state=emotional_features,
+            memory_context=memory_context
+        )
+        
+        # Update current state
+        self.current_state = SelfModelState(
+            emotional_state=emotional_features,
+            attention_focus=consciousness_metrics['attention_level'],
+            memory_context=memory_context,
+            consciousness_level=consciousness_metrics['consciousness_score']
+        )
+        
+        return self.current_state, consciousness_metrics
+
     def _integrate_social_learning(self, social_embedding: torch.Tensor):
         """Integrate learning from social interactions"""
         # Update confidence based on social feedback
@@ -8840,19 +9274,72 @@ class ModularSelfRepresentation(nn.Module):
 
 <models/self_model/networks/feature_networks.py>
 """
-Feature Encoding Networks Module
+Feature Extraction Networks for Self Model in ACM
 
-Implements specialized neural networks for encoding different aspects of self-representation:
-1. Emotional state encoding
-2. Behavioral pattern encoding 
-3. Social context encoding
+This module implements:
+1. Core feature extraction for self representation
+2. Integration with emotional context
+3. Memory-based feature enhancement
+4. Attention-driven feature selection
 
-Based on the MANN architecture from the research paper.
+Dependencies:
+- models/emotion/tgnn/emotional_graph.py for emotion processing
+- models/memory/emotional_memory_core.py for memory context
+- models/core/consciousness_core.py for attention
 """
 
 import torch
 import torch.nn as nn
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Tuple
+
+class FeatureNetwork(nn.Module):
+    def __init__(self, config: Dict):
+        """Initialize feature extraction networks"""
+        super().__init__()
+        self.config = config
+        
+        # Core feature extractors
+        self.visual_encoder = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d((1, 1))
+        )
+        
+        self.emotional_encoder = nn.Sequential(
+            nn.Linear(config.emotion_dim, config.hidden_dim),
+            nn.ReLU(),
+            nn.Linear(config.hidden_dim, config.feature_dim)
+        )
+        
+    def extract_features(
+        self,
+        visual_input: torch.Tensor,
+        emotional_context: Optional[Dict] = None
+    ) -> Tuple[torch.Tensor, Dict[str, float]]:
+        """Extract multimodal features"""
+        # Extract visual features
+        visual_features = self.visual_encoder(visual_input)
+        
+        # Extract emotional features if context provided
+        emotional_features = None
+        if emotional_context is not None:
+            emotional_features = self.emotional_encoder(
+                emotional_context['features']
+            )
+            
+        # Combine features
+        combined = self._combine_features(
+            visual_features, 
+            emotional_features
+        )
+        
+        return combined, {
+            'visual_norm': torch.norm(visual_features).item(),
+            'emotional_norm': torch.norm(emotional_features).item() if emotional_features is not None else 0.0
+        }
 
 class EmotionalStateNetwork(nn.Module):
     """
