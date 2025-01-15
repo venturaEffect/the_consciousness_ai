@@ -31,17 +31,17 @@ class EmotionalGraphNetwork(nn.Module):
             config.hidden_dims
         )
         
-        # Pattern recognition with meta-memory
+        # Integration with LLaMA narrator
+        self.narrative_projection = nn.Linear(
+            config.llama_hidden_size,
+            config.hidden_dims
+        )
+        
+        # Pattern detection
         self.pattern_detector = nn.Sequential(
             nn.Linear(config.hidden_dims * 2, config.hidden_dims),
             nn.GELU(),
             nn.Linear(config.hidden_dims, config.pattern_dims)
-        )
-        
-        # Narrative integration
-        self.narrative_projection = nn.Linear(
-            config.llama_hidden_size,
-            config.hidden_dims
         )
         
         # Memory gating mechanism
