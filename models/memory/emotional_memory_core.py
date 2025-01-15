@@ -1,10 +1,11 @@
 # models/memory/emotional_memory_core.py
 
 """
-Enhanced emotional memory core implementing the latest ACM architecture features:
-- Meta-memory with controlled adaptation
-- Emotional reinforcement learning
-- Integration with LLaMA 3.3 narrator
+Emotional memory system implementing:
+- Integration with LLaMA 3.3 narrative states
+- Meta-memory for experience weighting
+- Controlled adaptation mechanisms
+- Pattern reinforcement
 """
 
 import torch
@@ -26,29 +27,87 @@ class EmotionalMemoryState:
     meta_memory_weight: float = 0.0
     narrative_confidence: float = 0.0
 
+@dataclass 
+class MemoryMetrics:
+    """Track memory system performance"""
+    stability: float = 0.0
+    coherence: float = 0.0
+    pattern_strength: float = 0.0
+    adaptation_rate: float = 0.0
+    narrative_alignment: float = 0.0
+
 class EmotionalMemoryCore(nn.Module):
     def __init__(self, config):
-        """Initialize enhanced emotional memory system"""
+        """Initialize emotional memory system"""
         super().__init__()
         
-        # Initialize core components
-        self.memory_store = MemoryStore(config)
-        self.emotional_graph = EmotionalGraphNetwork()
-        self.consciousness_gate = ConsciousnessGate(config)
-        self.emotional_predictor = EmotionalPredictor(config)
+        # Core components
+        self.pattern_encoder = nn.Linear(
+            config.hidden_size,
+            config.memory_dims
+        )
+        
+        self.experience_encoder = nn.Linear(
+            config.hidden_size,
+            config.memory_dims
+        )
         
         # Meta-memory tracking
-        self.meta_memories = {
-            'stable_patterns': [],
-            'novel_experiences': [],
-            'emotional_weights': {}
-        }
+        self.stable_patterns = []
+        self.novel_experiences = []
+        self.pattern_weights = {}
         
         # Control parameters
-        self.stability_threshold = config.memory.stability_threshold
         self.novelty_threshold = config.memory.novelty_threshold
-        self.integration_rate = config.memory.integration_rate
+        self.stability_threshold = config.memory.stability_threshold
+        self.max_patterns = config.memory.max_patterns
+        self.initial_weight = 0.1  # Low initial weight for new experiences
         
+        # Metrics tracking
+        self.metrics = MemoryMetrics()
+        
+    def store_experience(
+        self,
+        experience: torch.Tensor,
+        emotional_context: Optional[Dict] = None,
+        narrative_state: Optional[Dict] = None
+    ) -> str:
+        """Store new experience with controlled adaptation"""
+        
+        # Generate experience embedding
+        experience_embedding = self.experience_encoder(experience)
+        
+        # Calculate stability score
+        stability_score = self._calculate_stability(
+            experience_embedding,
+            emotional_context
+        )
+        
+        # Handle novel experiences with low initial weight
+        if stability_score < self.novelty_threshold:
+            memory_key = self._store_novel_experience(
+                experience_embedding,
+                emotional_context,
+                narrative_state
+            )
+            
+        # Reinforce existing patterns
+        else:
+            memory_key = self._reinforce_pattern(
+                experience_embedding,
+                emotional_context,
+                narrative_state
+            )
+            
+        # Update metrics
+        self._update_metrics(
+            stability_score,
+            emotional_context,
+            narrative_state
+        )
+        
+        return memory_key
+
     def process_experience(
         self,
         input_state: Dict[str, torch.Tensor],
