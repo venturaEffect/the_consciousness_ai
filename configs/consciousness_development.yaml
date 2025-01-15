@@ -212,6 +212,11 @@ meta_memory:
     emotional_resonance: 0.6
     max_patterns: 1000
 
+  patterns:
+    stability_threshold: 0.75
+    temporal_decay: 0.995
+    max_patterns: 1000
+
 emotional_development:
   # Emotion encoding
   encoder:
