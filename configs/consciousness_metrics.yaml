@@ -27,3 +27,72 @@ metrics:
     base_threshold: 0.5
     stress_multiplier: 1.5
     decay_rate: 0.05
+
+memory_metrics:
+  # Meta-memory tracking
+  meta_memory:
+    stability_threshold: 0.75
+    novelty_threshold: 0.25
+    min_weight: 0.1
+    max_weight: 0.95
+
+  # Pattern recognition
+  pattern_recognition:
+    min_confidence: 0.7
+    temporal_coherence: 0.8
+    emotional_alignment: 0.6
+
+emotional_metrics:
+  # Emotional processing evaluation
+  processing:
+    base_stability: 0.5
+    coherence_threshold: 0.7
+    adaptation_rate: 0.01
+
+  # Integration metrics
+  integration:
+    narrative_alignment: 0.8
+    emotional_resonance: 0.7
+    memory_coherence: 0.75
+
+narrative_metrics:
+  # LLaMA 3.3 integration
+  llama:
+    min_confidence: 0.8
+    coherence_threshold: 0.7
+    adaptation_rate: 0.01
+    max_context_length: 4096
+
+  # LoRA adaptation
+  lora:
+    rank: 8
+    alpha: 32
+    update_threshold: 0.1
+    min_update_interval: 100
+
+consciousness_metrics:
+  # Overall system health
+  system:
+    attention_threshold: 0.6
+    stability_threshold: 0.8
+    coherence_minimum: 0.7
+
+  # Development tracking
+  development:
+    learning_rate: 0.001
+    meta_learning_rate: 0.0001
+    emotional_growth: 0.5
+    narrative_stability: 0.7
+
+imagination_metrics:
+  # Imagination constraints
+  constraints:
+    reality_alignment: 0.8
+    emotional_bounds: 0.7
+    memory_influence: 0.6
+
+  # Creative processing
+  creative:
+    novelty_threshold: 0.3
+    coherence_minimum: 0.6
+    stability_required: 0.7
