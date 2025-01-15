@@ -26,6 +26,15 @@ class AttentionMetrics:
     stress_modulation: float = 0.0
     emotional_weight: float = 0.0
 
+@dataclass
+class AttentionState:
+    """Track attention mechanism state"""
+    focus_level: float = 0.0
+    emotional_coherence: float = 0.0
+    memory_influence: float = 0.0
+    narrative_alignment: float = 0.0
+    adaptation_rate: float = 0.0
+
 class PredictiveAttention(nn.Module):
     def __init__(self, config: Dict):
         """Initialize predictive attention mechanism"""
@@ -252,3 +261,103 @@ class ConsciousnessAttention(nn.Module):
             
         recent_attention = self.state.history[-50:]
         return float(1.0 / (1.0 + np.std(recent_attention)))
+
+class ConsciousnessAttention(nn.Module):
+    def __init__(self, config):
+        """Initialize attention mechanism"""
+        super().__init__()
+        
+        # Core attention components
+        self.query_net = nn.Linear(config.hidden_size, config.attention_dims)
+        self.key_net = nn.Linear(config.hidden_size, config.attention_dims)
+        self.value_net = nn.Linear(config.hidden_size, config.hidden_size)
+        
+        # Meta-memory integration
+        self.memory_gate = nn.Sequential(
+            nn.Linear(config.hidden_size * 2, config.hidden_size),
+            nn.GELU(),
+            nn.Linear(config.hidden_size, 1),
+            nn.Sigmoid()
+        )
+        
+        # Narrative integration
+        self.narrative_projection = nn.Linear(
+            config.llama_hidden_size,
+            config.hidden_size
+        )
+        
+        # State tracking
+        self.state = AttentionState()
+        
+    def forward(
+        self,
+        query: torch.Tensor,
+        memory_context: Optional[Dict] = None,
+        narrative_state: Optional[Dict] = None,
+        emotional_context: Optional[Dict] = None
+    ) -> Tuple[torch.Tensor, AttentionState]:
+        """Process attention with consciousness context"""
+        
+        # Generate base attention 
+        keys = self.key_net(query)
+        values = self.value_net(query)
+        
+        # Integrate narrative context if available
+        if narrative_state:
+            narrative_embedding = self.narrative_projection(
+                narrative_state['hidden_states']
+            )
+            query = self._integrate_narrative(query, narrative_embedding)
+            
+        # Apply memory-guided attention
+        if memory_context:
+            attention_weights = self._calculate_memory_attention(
+                query,
+                keys,
+                memory_context
+            )
+        else:
+            attention_weights = torch.matmul(
+                self.query_net(query), 
+                keys.transpose(-2, -1)
+            )
+        
+        # Apply emotional modulation
+        if emotional_context:
+            attention_weights = self._modulate_attention(
+                attention_weights,
+                emotional_context
+            )
+            
+        # Generate output
+        attention_output = torch.matmul(attention_weights, values)
+        
+        # Update state
+        self._update_state(
+            attention_weights,
+            narrative_state,
+            emotional_context
+        )
+        
+        return attention_output, self.state
+        
+    def _calculate_memory_attention(
+        self,
+        query: torch.Tensor,
+        keys: torch.Tensor,
+        memory_context: Dict
+    ) -> torch.Tensor:
+        """Calculate attention weights with memory guidance"""
+        # Get memory influence
+        memory_gate = self.memory_gate(
+            torch.cat([query, memory_context['stable_patterns']], dim=-1)
+        )
+        
+        # Calculate base attention
+        base_attention = torch.matmul(
+            self.query_net(query),
+            keys.transpose(-2, -1)
+        )
+        
+        # Apply memory gating
+        return base_attention * memory_gate
