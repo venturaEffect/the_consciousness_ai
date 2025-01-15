@@ -1,99 +1,92 @@
 # models/emotion/reward_shaping.py
 
 import torch
+import torch.nn as nn
 import numpy as np
 from typing import Dict, Optional
+from dataclasses import dataclass
 from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
 
 """
-Shapes rewards based on emotional responses and learning progress.
+Emotional reward shaping for ACM consciousness development.
+Integrates with LLaMA 3.3 narrative states and meta-memory system.
 
-Key functionalities:
-1. Emotional reward scaling
-2. Positive emotion bonuses
-3. Learning progress rewards
-4. Survival-based reward shaping
+Key features:
+- Emotion-based reward modulation
+- Meta-memory reinforcement
+- Controlled adaptation rates
+- Narrative coherence rewards
 
 Dependencies:
 - models/emotion/tgnn/emotional_graph.py for emotion processing
 - models/evaluation/emotional_rl_metrics.py for progress tracking
 """
 
-class EmotionalRewardShaper:
+@dataclass
+class RewardMetrics:
+    """Track reward shaping metrics"""
+    emotional_coherence: float = 0.0
+    memory_influence: float = 0.0
+    narrative_alignment: float = 0.0
+    adaptation_rate: float = 0.0
+
+class EmotionalRewardShaper(nn.Module):
     """Shapes rewards based on emotional responses and learning progress"""
     
-    def __init__(self, config: Dict):
-        self.config = config
-        self.emotion_network = EmotionalGraphNetwork()
+    def __init__(self, config):
+        """Initialize reward shaping system"""
+        super().__init__()
         
-        # Reward scaling parameters
-        self.base_scale = config.get('emotional_scale', 2.0)
-        self.positive_bonus = config.get('positive_emotion_bonus', 0.5)
-        self.learning_scale = config.get('learning_progress_scale', 0.3)
+        # Core components
+        self.emotion_encoder = nn.Linear(
+            config.emotional_dims,
+            config.hidden_size
+        )
+        
+        self.memory_gate = nn.Sequential(
+            nn.Linear(config.hidden_size * 2, config.hidden_size),
+            nn.GELU(),
+            nn.Linear(config.hidden_size, 1),
+            nn.Sigmoid()
+        )
+        
+        # Configuration
+        self.base_reward_scale = config.reward.base_scale
+        self.memory_influence = config.reward.memory_influence
+        self.coherence_weight = config.reward.coherence_weight
+        
+        # Metrics tracking
+        self.metrics = RewardMetrics()
         
     def compute_reward(
         self,
         emotion_values: Dict[str, float],
-        learning_progress: Optional[float] = None,
-        context: Optional[Dict] = None
+        attention_level: float,
+        context: Optional[Dict] = None,
+        meta_memory: Optional[Dict] = None
     ) -> float:
-        """
-        Compute shaped reward based on emotional response
+        """Compute shaped reward based on emotional context"""
         
-        Args:
-            emotion_values: Dict of emotion measurements
-            learning_progress: Optional measure of learning improvement
-            context: Optional additional context for reward shaping
-        """
         # Get base emotional reward
-        base_reward = self._compute_base_reward(emotion_values)
+        emotional_embedding = self._encode_emotions(emotion_values)
+        base_reward = self._calculate_base_reward(emotional_embedding)
         
-        # Scale based on learning progress if available
-        if learning_progress is not None:
-            base_reward *= (1.0 + self.learning_scale * learning_progress)
+        # Apply memory influence if available
+        if meta_memory:
+            memory_gate = self._calculate_memory_influence(
+                emotional_embedding,
+                meta_memory
+            )
+            base_reward = base_reward * (1.0 + memory_gate)
             
-        # Apply positive emotion bonus
-        if self._is_positive_emotion(emotion_values):
-            base_reward += self.positive_bonus
-            
-        # Apply context-specific scaling
-        if context is not None:
-            base_reward = self._apply_context_scaling(base_reward, context)
-            
-        return base_reward
+        # Apply attention modulation
+        attention_modulated = base_reward * (1.0 + attention_level)
         
-    def _compute_base_reward(self, emotion_values: Dict[str, float]) -> float:
-        """Compute base reward from emotion values"""
-        # Weight different emotion components
-        valence = emotion_values.get('valence', 0.0) 
-        arousal = emotion_values.get('arousal', 0.0)
-        dominance = emotion_values.get('dominance', 0.0)
-        
-        # Combine emotional components with learned weights
-        base_reward = (
-            0.5 * valence +  # Higher weight on valence
-            0.3 * arousal +  # Medium weight on arousal
-            0.2 * dominance  # Lower weight on dominance
+        # Update metrics
+        self._update_metrics(
+            emotional_embedding,
+            base_reward,
+            attention_level
         )
         
-        return base_reward * self.base_scale
-        
-    def _is_positive_emotion(self, emotion_values: Dict[str, float]) -> bool:
-        """Check if emotion state is positive"""
-        valence = emotion_values.get('valence', 0.0)
-        return valence > 0.6  # Threshold for positive emotion
-        
-    def _apply_context_scaling(self, reward: float, context: Dict) -> float:
-        """Apply context-specific reward scaling"""
-        # Scale based on interaction type
-        if 'interaction_type' in context:
-            if context['interaction_type'] == 'teaching':
-                reward *= 1.2  # Boost learning interactions
-            elif context['interaction_type'] == 'social':
-                reward *= 1.1  # Slightly boost social interactions
-                
-        # Scale based on task difficulty
-        if 'difficulty' in context:
-            reward *= (1.0 + 0.1 * context['difficulty'])
-            
-        return reward
+        return attention_modulated
