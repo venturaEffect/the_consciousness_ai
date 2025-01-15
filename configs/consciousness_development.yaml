@@ -180,3 +180,75 @@ logging:
   tensorboard: true
   wandb_logging: true
   log_level: "INFO"
+
+# Configuration for ACM consciousness development incorporating LLaMA 3.3 foundation
+
+llama_foundation:
+  model_path: "models/llama3_3/base"
+  lora:
+    enabled: true
+    rank: 16
+    alpha: 32
+    modules: ["q_proj", "v_proj"] # Target modules for fine-tuning
+    dropout: 0.05
+
+meta_memory:
+  # Memory formation controls
+  new_experience:
+    initial_weight: 0.1 # Low initial weight for novel experiences
+    min_confidence: 0.3
+    max_confidence: 0.95
+
+  pattern_reinforcement:
+    base_rate: 0.2
+    stability_threshold: 0.75
+    coherence_threshold: 0.8
+    max_reinforcement: 0.95
+
+  adaptation:
+    learning_rate: 0.001
+    decay_rate: 0.995
+    min_update_threshold: 0.1
+    max_adaptation_rate: 0.3
+
+emotional_development:
+  # Emotional learning parameters
+  encoding:
+    hidden_dims: 256
+    num_layers: 4
+    dropout: 0.1
+
+  attention:
+    num_heads: 8
+    head_dims: 64
+    dropout: 0.1
+
+  prediction:
+    horizon: 100
+    confidence_threshold: 0.7
+    error_tolerance: 0.15
+
+imagination:
+  # Imagination constraints
+  temperature: 0.8
+  top_p: 0.95
+  max_tokens: 1024
+  reality_check_interval: 100
+
+  constraints:
+    min_coherence: 0.6
+    max_deviation: 0.3
+    emotional_bound: 0.8
+
+training:
+  batch_size: 32
+  gradient_accumulation: 4
+  learning_rate: 2e-5
+  warmup_steps: 100
+  weight_decay: 0.01
+  max_epochs: 10
+
+  evaluation:
+    eval_steps: 500
+    save_steps: 1000
+    metrics: ["emotional_coherence", "narrative_stability", "memory_retention"]
