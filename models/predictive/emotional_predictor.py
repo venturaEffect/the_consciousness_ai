@@ -1,9 +1,21 @@
 # models/predictive/emotional_predictor.py
 
+"""
+Predictive module for ACM that handles:
+- Emotional outcome prediction
+- Simulation evaluation
+- Meta-memory integration
+- Stability monitoring
+"""
+
 import torch
 import torch.nn as nn
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+
+from models.core.consciousness_core import ConsciousnessState
+from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
+from models.memory.emotional_memory_core import EmotionalMemoryCore
 
 @dataclass
 class EmotionalState:
@@ -14,6 +26,15 @@ class EmotionalState:
     stress_level: float = 0.0
     attention_focus: float = 0.0
     emotional_stability: float = 0.0
+
+@dataclass
+class PredictionMetrics:
+    """Track prediction system performance"""
+    accuracy: float = 0.0
+    confidence: float = 0.0
+    stability: float = 0.0
+    adaptation_rate: float = 0.0
+    meta_memory_influence: float = 0.0
 
 class EmotionalPredictor(nn.Module):
     """
@@ -66,11 +87,34 @@ class EmotionalPredictor(nn.Module):
         self.state = EmotionalState()
         self.history: List[EmotionalState] = []
         
+        # Core components
+        self.emotional_graph = EmotionalGraphNetwork()
+        self.memory_core = EmotionalMemoryCore(config)
+        
+        # Prediction networks
+        self.outcome_predictor = nn.Sequential(
+            nn.Linear(config.hidden_size, config.hidden_size),
+            nn.GELU(),
+            nn.Linear(config.hidden_size, config.num_emotions)
+        )
+        
+        self.confidence_predictor = nn.Sequential(
+            nn.Linear(config.hidden_size, config.hidden_size // 2),
+            nn.GELU(),
+            nn.Linear(config.hidden_size // 2, 1),
+            nn.Sigmoid()
+        )
+        
+        # Metrics tracking
+        self.metrics = PredictionMetrics()
+        
     def forward(
         self,
         input_state: torch.Tensor,
         attention_context: Optional[torch.Tensor] = None,
-        memory_context: Optional[torch.Tensor] = None
+        memory_context: Optional[torch.Tensor] = None,
+        meta_memory_context: Optional[Dict] = None,
+        consciousness_state: Optional[ConsciousnessState] = None
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, float]]:
         """Process input state for emotional predictions"""
         
@@ -111,6 +155,26 @@ class EmotionalPredictor(nn.Module):
             'dominance': dominance,
             'stress_level': stress_level
         }
+        
+        # Get emotional embedding
+        emotional_embedding = self.emotional_graph(
+            input_state,
+            meta_memory_context['stable_patterns'] if meta_memory_context else None
+        )
+        
+        # Generate outcome prediction
+        predicted_outcome = self.outcome_predictor(emotional_embedding)
+        
+        # Calculate confidence score
+        confidence = self.confidence_predictor(emotional_embedding)
+        
+        # Update metrics
+        self._update_metrics(
+            predicted_outcome,
+            confidence,
+            meta_memory_context,
+            consciousness_state
+        )
         
         metrics = self.get_metrics()
         
@@ -180,5 +244,32 @@ class EmotionalPredictor(nn.Module):
             'dominance': self.state.dominance,
             'stress_level': self.state.stress_level,
             'attention_focus': self.state.attention_focus,
-            'emotional_stability': self.state.emotional_stability
+            'emotional_stability': self.state.emotional_stability,
+            'confidence': self.metrics.confidence,
+            'stability': self.metrics.stability,
+            'adaptation_rate': self.metrics.adaptation_rate,
+            'meta_memory_influence': self.metrics.meta_memory_influence
         }
+        
+    def _update_metrics(
+        self,
+        prediction: torch.Tensor,
+        confidence: torch.Tensor,
+        meta_memory_context: Optional[Dict],
+        consciousness_state: Optional[ConsciousnessState]
+    ):
+        """Update prediction metrics"""
+        self.metrics.confidence = confidence.mean().item()
+        
+        if meta_memory_context:
+            self.metrics.meta_memory_influence = self._calculate_memory_influence(
+                prediction,
+                meta_memory_context
+            )
+            
+        if consciousness_state:
+            self.metrics.stability = consciousness_state.memory_stability
+            self.metrics.adaptation_rate = self._calculate_adaptation_rate(
+                confidence,
+                consciousness_state
+            )
