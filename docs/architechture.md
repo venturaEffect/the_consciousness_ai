@@ -120,3 +120,38 @@ This architecture enables the emergence of consciousness through:
 
 The main simulation manager implementation is located at:
 `simulations/api/simulation_manager.py`
+
+## Narrative Foundation
+
+LLaMA 3.3 Integration:
+
+- Acts as central narrative coordinator
+- Dynamic adaptation through LoRA fine-tuning
+- Controls emotional development and decision-making
+
+## Meta-Memory System
+
+Memory Formation:
+
+- New experiences start with 0.1 weight
+- Pattern reinforcement through controlled adaptation
+- Stability monitoring and coherence maintenance
+
+## Key Components:
+
+1. Emotion Encoding:
+
+   - Integration with narrative states
+   - Pattern recognition with meta-memory
+   - Controlled adaptation mechanisms
+
+2. Predictive Feedback:
+
+   - Outcome evaluation
+   - Meta-memory influence
+   - Stability metrics
+
+3. Imagination Processing:
+   - Bounded by emotional constraints
+   - Meta-memory guided generation
+   - Narrative coherence checks
