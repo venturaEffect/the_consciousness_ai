@@ -96,3 +96,58 @@ imagination_metrics:
     novelty_threshold: 0.3
     coherence_minimum: 0.6
     stability_required: 0.7
+
+# Configuration for ACM consciousness metrics tracking
+
+foundation_model:
+  # LLaMA 3.3 narrative metrics
+  narrator:
+    coherence_threshold: 0.75 # Minimum narrative coherence required
+    adaptation_rate: 0.01 # Base adaptation rate for LoRA
+    context_length: 4096 # Maximum context window
+    stability_check_interval: 100
+
+  # Integration metrics
+  integration:
+    emotional_alignment: 0.7 # Required alignment between emotion and narrative
+    memory_coherence: 0.75 # Coherence with existing memories
+    imagination_bounds: 0.8 # Maximum deviation in imagined scenarios
+
+meta_memory:
+  # Experience weighting
+  novel_experiences:
+    min_weight: 0.1 # Minimum weight for new experiences
+    max_weight: 0.95 # Maximum achievable weight
+    reinforcement_rate: 0.2 # Rate of weight increase with reinforcement
+
+  # Pattern recognition
+  pattern_stability:
+    min_confidence: 0.7 # Minimum confidence for pattern recognition
+    temporal_coherence: 0.8 # Required temporal stability
+    emotional_resonance: 0.6 # Minimum emotional match
+
+emotional_processing:
+  # Core emotional metrics
+  baseline:
+    stability_threshold: 0.75 # Minimum emotional stability
+    coherence_threshold: 0.7 # Required emotional coherence
+    adaptation_rate: 0.01 # Rate of emotional learning
+
+  # Integration metrics
+  fusion:
+    modality_alignment: 0.8 # Required alignment across modalities
+    narrative_resonance: 0.7 # Alignment with narrative context
+    memory_influence: 0.6 # Impact of emotional memories
+
+development_tracking:
+  # System-wide metrics
+  consciousness:
+    attention_threshold: 0.6 # Minimum attention level required
+    stability_threshold: 0.8 # Overall system stability requirement
+    coherence_minimum: 0.7 # Minimum overall coherence
+
+  # Learning progress
+  adaptation:
+    learning_rate: 0.001 # Base learning rate
+    meta_learning_rate: 0.0001 # Rate for meta-learning updates
+    emotional_growth: 0.5 # Required emotional development rate
