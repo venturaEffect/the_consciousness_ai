@@ -1,11 +1,12 @@
 # Deep Learning & AI
-torch==2.0.1+cu118  # GPU-optimized PyTorch
-transformers>=4.30.0
+torch>=2.0.0  # GPU-optimized PyTorch
+transformers>=4.30.0  # For LLaMA 3.3
 huggingface_hub>=0.16.4
 bitsandbytes>=0.37.0
 accelerate>=0.21.0
 einops>=0.6.0  # Used in attention mechanisms
 fairscale>=0.4.0
+peft>=0.4.0  # For LoRA
 
 # Memory & Vector Storage
 pinecone-client>=2.2.1
