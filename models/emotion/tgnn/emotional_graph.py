@@ -1,17 +1,16 @@
 """
-Emotional Graph Neural Network (EGNN) implementing the latest ACM architecture.
-Handles emotional encoding, pattern recognition, and integration with the
-LLaMA 3.3 narrative foundation.
+Emotional Graph Neural Network (EGNN) implementing ACM's emotional encoding
+and pattern recognition. Integrates with LLaMA 3.3 narrative foundation.
 
-Key components:
-- Dynamic emotional state tracking
+Features:
+- Dynamic emotional pattern recognition
 - Meta-memory integration
-- Pattern reinforcement mechanisms
-- Controlled adaptation rates
+- Controlled adaptation mechanisms
+- Stability monitoring
 """
 
 import torch
-import torch.nn as nn 
+import torch.nn as nn
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 
@@ -20,12 +19,12 @@ class EmotionalGraphState:
     """Track emotional processing state"""
     pattern_stability: float = 0.0
     meta_memory_influence: float = 0.0
-    narrative_coherence: float = 0.0
     adaptation_rate: float = 0.0
+    narrative_coherence: float = 0.0
 
 class EmotionalGraphNetwork(nn.Module):
     def __init__(self, config):
-        """Initialize emotional graph network"""
+        """Initialize emotional processing network"""
         super().__init__()
         
         # Core emotional processing
@@ -34,15 +33,21 @@ class EmotionalGraphNetwork(nn.Module):
             config.emotional_dims
         )
         
-        # Pattern recognition
+        # Pattern recognition with meta-memory
         self.pattern_detector = nn.Sequential(
-            nn.Linear(config.emotional_dims, config.hidden_size),
+            nn.Linear(config.emotional_dims * 2, config.hidden_size),
             nn.GELU(),
             nn.Linear(config.hidden_size, config.pattern_dims)
         )
         
-        # Meta-memory integration
-        self.memory_gate = nn.Sequential(
+        # Narrative integration
+        self.narrative_projection = nn.Linear(
+            config.llama_hidden_size,
+            config.emotional_dims
+        )
+        
+        # Adaptation controls
+        self.adaptation_gate = nn.Sequential(
             nn.Linear(config.emotional_dims * 2, config.hidden_size),
             nn.GELU(),
             nn.Linear(config.hidden_size, 1),
@@ -58,69 +63,66 @@ class EmotionalGraphNetwork(nn.Module):
         meta_memory_context: Optional[Dict] = None,
         narrative_state: Optional[Dict] = None
     ) -> Tuple[torch.Tensor, EmotionalGraphState]:
-        """Process emotional input through the graph network"""
+        """Process emotional input through graph network"""
         
-        # Generate emotional embedding
+        # Generate base emotional embedding
         emotional_embedding = self.emotional_embedding(emotional_input)
         
-        # Detect emotional patterns
-        patterns = self.pattern_detector(emotional_embedding)
-        
-        # Integrate with meta-memory if available
+        # Integrate narrative context if available
+        if narrative_state:
+            narrative_embedding = self.narrative_projection(
+                narrative_state['hidden_states']
+            )
+            emotional_embedding = self._fuse_narrative(
+                emotional_embedding,
+                narrative_embedding
+            )
+            
+        # Detect patterns with meta-memory context
         if meta_memory_context:
-            memory_gate = self._calculate_memory_gate(
+            patterns = self._detect_patterns(
                 emotional_embedding,
                 meta_memory_context
             )
-            emotional_embedding = self._apply_memory_gating(
-                emotional_embedding,
-                memory_gate
+            
+            # Calculate adaptation rate
+            adaptation_rate = self._calculate_adaptation(
+                patterns,
+                meta_memory_context
             )
             
-        # Update state tracking
-        self._update_state(
-            patterns,
-            meta_memory_context,
-            narrative_state
-        )
-        
+            # Update state
+            self._update_state(
+                patterns,
+                adaptation_rate,
+                narrative_state
+            )
+            
         return emotional_embedding, self.state
         
-    def _calculate_memory_gate(
+    def _detect_patterns(
         self,
         embedding: torch.Tensor,
         memory_context: Dict
     ) -> torch.Tensor:
-        """Calculate memory gating based on stability"""
+        """Detect emotional patterns using meta-memory"""
         memory_embedding = torch.cat([
             embedding,
             memory_context['stable_patterns']
         ], dim=-1)
         
-        return self.memory_gate(memory_embedding)
+        return self.pattern_detector(memory_embedding)
         
-    def _update_state(
+    def _calculate_adaptation(
         self,
         patterns: torch.Tensor,
-        memory_context: Optional[Dict],
-        narrative_state: Optional[Dict]
-    ):
-        """Update emotional processing state"""
-        # Calculate pattern stability
-        self.state.pattern_stability = self._calculate_stability(patterns)
+        memory_context: Dict
+    ) -> float:
+        """Calculate controlled adaptation rate"""
+        stability = self._calculate_stability(patterns)
+        memory_influence = len(memory_context['stable_patterns'])
         
-        # Track meta-memory influence
-        if memory_context:
-            self.state.meta_memory_influence = len(
-                memory_context['stable_patterns']
-            ) / self.max_patterns
-            
-        # Track narrative coherence
-        if narrative_state:
-            self.state.narrative_coherence = narrative_state['coherence_score']
-            
-        # Update adaptation rate based on stability
-        self.state.adaptation_rate = self._calculate_adaptation_rate(
-            self.state.pattern_stability,
-            self.state.meta_memory_influence
+        return min(
+            self.config.max_adaptation_rate,
+            stability * (1.0 / (1.0 + memory_influence))
         )
