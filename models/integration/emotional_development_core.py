@@ -1,71 +1,135 @@
 """
-Emotional Development Core for ACM
-
-This module implements:
-1. Core emotional development tracking
-2. Integration of emotional experiences
-3. Development stage progression
-4. Emotional memory formation
-
-Dependencies:
-- models/emotion/tgnn/emotional_graph.py for emotion processing
-- models/memory/emotional_memory_core.py for storage
-- models/evaluation/consciousness_monitor.py for metrics
+Emotional Development Core implementing ACM architecture with:
+- Integration of LLaMA 3.3 as foundational narrative model
+- Controlled emotional reinforcement through meta-memory
+- Emotion-narrative fusion mechanisms
+- Stable pattern recognition and adaptation
 """
 
-from typing import Dict, List, Optional, Tuple
 import torch
-import logging
+import torch.nn as nn
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
 
-# models/integration/emotional_development_core.py
-
+from models.core.consciousness_core import ConsciousnessCore 
+from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
 from models.memory.emotional_memory_core import EmotionalMemoryCore
-from models.evaluation.consciousness_monitor import ConsciousnessMonitor
-from models.emotion.tgnn.emotional_graph import EmotionalGraphNN
+from models.narrative.narrative_generator import NarrativeGenerator
 
-class EmotionalDevelopmentCore:
-    """
-    Core integration of emotional learning and consciousness development
-    
-    Key Features:
-    1. Stress-induced attention activation
-    2. Emotional memory formation
-    3. Consciousness metrics tracking
-    4. Adaptive learning rates
-    """
-    
-    def __init__(self, config: Dict):
+@dataclass
+class EmotionalDevelopmentState:
+    """Track emotional development progress"""
+    emotional_stability: float = 0.0
+    narrative_coherence: float = 0.0
+    memory_integration: float = 0.0
+    pattern_recognition: float = 0.0
+    adaptation_rate: float = 0.0
+
+class EmotionalDevelopmentCore(nn.Module):
+    def __init__(self, config):
         """Initialize emotional development system"""
-        self.config = config
-        self.emotion_network = EmotionalGraphNN(config)
+        super().__init__()
+        
+        # Initialize core components
+        self.consciousness = ConsciousnessCore(config)
+        self.emotion_graph = EmotionalGraphNetwork()
         self.memory = EmotionalMemoryCore(config)
-        self.monitor = ConsciousnessMonitor(config)
+        self.narrator = NarrativeGenerator(config)
         
-    def process_emotional_experience(
+        # Emotional development parameters
+        self.stability_threshold = config.development.stability_threshold
+        self.coherence_threshold = config.development.coherence_threshold
+        self.adaptation_rate = config.development.adaptation_rate
+        
+        # Meta-memory tracking
+        self.meta_memories = {
+            'stable_patterns': [],
+            'novel_experiences': [],
+            'emotional_weights': {}
+        }
+        
+    def process_experience(
         self,
-        experience: Dict[str, torch.Tensor],
-        attention_level: float
-    ) -> Dict[str, float]:
-        """Process new emotional experience"""
-        # Extract emotional features
-        emotional_features = self.emotion_network.extract_features(experience)
+        input_state: Dict[str, torch.Tensor],
+        emotional_context: Optional[Dict] = None,
+        narrative_context: Optional[Dict] = None
+    ) -> Tuple[Dict, EmotionalDevelopmentState]:
+        """Process new experiences through emotional development pipeline"""
         
-        # Store if attention is high enough
-        if attention_level > self.config.memory_threshold:
-            self.memory.store(
-                experience=experience,
-                emotional_features=emotional_features,
-                attention=attention_level
-            )
-            
-        # Update development metrics
-        metrics = self.monitor.evaluate_emotional_state(
-            emotional_features=emotional_features,
-            attention_level=attention_level
+        # Generate emotional embedding
+        emotional_embedding = self.emotion_graph(
+            input_state,
+            self.meta_memories['stable_patterns']
+        )
+        
+        # Generate narrative understanding
+        narrative = self.narrator.generate(
+            input_state,
+            emotional_embedding,
+            narrative_context
+        )
+        
+        # Update consciousness state
+        consciousness_state = self.consciousness.process(
+            input_state,
+            emotional_embedding,
+            narrative
+        )
+        
+        # Update emotional memory with controlled adaptation
+        memory_update = self._update_emotional_memory(
+            emotional_embedding,
+            narrative,
+            consciousness_state
+        )
+        
+        # Track development state
+        current_state = EmotionalDevelopmentState(
+            emotional_stability=self._calculate_stability(emotional_embedding),
+            narrative_coherence=narrative['coherence_score'],
+            memory_integration=memory_update['integration_score'],
+            pattern_recognition=self._evaluate_pattern_recognition(),
+            adaptation_rate=self.adaptation_rate
         )
         
         return {
-            'emotional_features': emotional_features,
-            'development_metrics': metrics,
-            'memory_stored': attention_level > self.config.memory_threshold
+            'emotional_embedding': emotional_embedding,
+            'narrative': narrative,
+            'consciousness_state': consciousness_state,
+            'memory_update': memory_update,
+            'meta_memory_state': self.meta_memories
+        }, current_state
+        
+    def _update_emotional_memory(
+        self,
+        emotional_embedding: torch.Tensor,
+        narrative: Dict,
+        consciousness_state: Dict
+    ) -> Dict:
+        """Update emotional memory with controlled adaptation"""
+        
+        # Calculate stability metrics
+        stability_score = self._calculate_stability(emotional_embedding)
+        coherence_score = narrative['coherence_score']
+        
+        # Handle novel experiences with low initial weight
+        if stability_score < self.stability_threshold:
+            self.meta_memories['novel_experiences'].append({
+                'embedding': emotional_embedding.detach(),
+                'narrative': narrative,
+                'weight': 0.1  # Start with low weight
+            })
+            
+        # Reinforce stable patterns
+        elif stability_score > self.stability_threshold and coherence_score > self.coherence_threshold:
+            self._reinforce_pattern(
+                emotional_embedding,
+                narrative,
+                consciousness_state
+            )
+            
+        return {
+            'stability_score': stability_score,
+            'coherence_score': coherence_score,
+            'integration_score': self._calculate_integration_score()
         }
