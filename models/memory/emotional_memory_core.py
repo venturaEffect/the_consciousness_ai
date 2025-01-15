@@ -41,27 +41,22 @@ class EmotionalMemoryCore(nn.Module):
         """Initialize emotional memory system"""
         super().__init__()
         
-        # Core components
-        self.pattern_encoder = nn.Linear(
-            config.hidden_size,
-            config.memory_dims
-        )
-        
-        self.experience_encoder = nn.Linear(
-            config.hidden_size,
-            config.memory_dims
-        )
+        # Memory components
+        self.memory_store = MemoryStore(config)
+        self.emotional_graph = EmotionalGraphNetwork()
+        self.consciousness_gate = ConsciousnessGate(config)
         
         # Meta-memory tracking
-        self.stable_patterns = []
-        self.novel_experiences = []
-        self.pattern_weights = {}
+        self.meta_memories = {
+            'stable_patterns': [],
+            'novel_experiences': [],
+            'reinforcement_weights': {}
+        }
         
         # Control parameters
         self.novelty_threshold = config.memory.novelty_threshold
         self.stability_threshold = config.memory.stability_threshold
-        self.max_patterns = config.memory.max_patterns
-        self.initial_weight = 0.1  # Low initial weight for new experiences
+        self.initial_weight = 0.1  # Low initial weight
         
         # Metrics tracking
         self.metrics = MemoryMetrics()
