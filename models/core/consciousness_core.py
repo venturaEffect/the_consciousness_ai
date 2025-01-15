@@ -1,23 +1,23 @@
 # models/core/consciousness_core.py
-"""
-Core consciousness implementation that serves as the central coordinator
-for imagination, emotional processing, and decision-making.
 
-Key updates:
-1. Integration with LLaMA 3.3 as the foundational narrator model 
-2. Implementation of meta-memory reinforcement
-3. Addition of controlled adaptation mechanisms
-4. Modular system coordination
+"""
+Core consciousness implementation that integrates the foundational narrative model
+with emotional development and meta-memory systems.
+
+Key components:
+- LLaMA 3.3 foundation model for narrative generation
+- Meta-memory system for experience reinforcement  
+- Controlled adaptation mechanisms
+- Emotional integration through EGNN
 """
 
 import torch
-import torch.nn as nn
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple, List
 from dataclasses import dataclass
 from models.memory.emotional_memory_core import EmotionalMemoryCore
 from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
+from models.language.llama_3_3 import LlamaForCausalLM
 from models.predictive.attention_mechanism import ConsciousnessAttention
-from models.evaluation.consciousness_monitor import ConsciousnessMonitor
 import logging
 from simulations.api.simulation_manager import SimulationManager
 
@@ -25,61 +25,129 @@ from simulations.api.simulation_manager import SimulationManager
 class ConsciousnessState:
     """Enhanced state tracking for consciousness development"""
     emotional_awareness: float = 0.0
-    attention_stability: float = 0.0
-    memory_coherence: float = 0.0
-    imagination_activity: float = 0.0  # New: Track imaginative processes
-    meta_memory_stability: float = 0.0 # New: Track meta-memory stability
-    narrator_confidence: float = 0.0   # New: Track narrator model confidence
+    narrative_coherence: float = 0.0
+    memory_stability: float = 0.0 
+    attention_focus: float = 0.0
+    meta_memory_weight: float = 0.0
+    imagination_activity: float = 0.0
 
 class ConsciousnessCore:
     def __init__(self, config):
-        """Initialize consciousness system with enhanced configuration"""
-        self.attention_threshold = config.consciousness.attention.base_threshold
-        self.meta_memory_weight = config.consciousness.memory.meta_memory_weight
-        self.imagination_threshold = config.consciousness.imagination.threshold
+        """Initialize the consciousness system with enhanced components"""
+        self.config = config
         
-        # Initialize key subsystems with new components
+        # Initialize foundational narrative model (LLaMA 3.3)
+        self.narrator = LlamaForCausalLM.from_pretrained(
+            config.model_paths.llama,
+            low_cpu_mem_usage=True,
+            device_map="auto"
+        )
+        
+        # Initialize key subsystems
         self.memory = EmotionalMemoryCore(config)
         self.emotion = EmotionalGraphNetwork()
         self.attention = ConsciousnessAttention(config)
-        self.narrator = LlamaForCausalLM.from_pretrained(config.model_path)
         
-        # New: Meta-memory stability tracking
-        self.meta_memory_stats = {
+        # Meta-memory tracking
+        self.meta_memory = {
             'stable_patterns': [],
             'novel_experiences': [],
             'reinforcement_weights': {}
         }
         
+        # Experience thresholds
+        self.novelty_threshold = config.consciousness.memory.novelty_threshold
+        self.stability_threshold = config.consciousness.memory.stability_threshold
+        
     def process_experience(
-        self, 
-        input_data: Dict[str, torch.Tensor],
-        stress_level: float,
+        self,
+        input_state: Dict[str, torch.Tensor],
+        emotional_context: Optional[Dict] = None,
         imagination_context: Optional[Dict] = None
-    ) -> Tuple[Dict, float]:
-        """Process new experiences through enhanced consciousness pipeline"""
-        # Gate information based on attention/stress
-        if stress_level > self.attention_threshold:
-            self.attention.set_high_focus()
-            
-        # Process emotional context with meta-memory influence
-        emotional_context = self.emotion.analyze(
-            input_data,
-            self.meta_memory_stats['stable_patterns']
+    ) -> Tuple[Dict, ConsciousnessState]:
+        """Process new experiences through the enhanced consciousness pipeline"""
+        
+        # Get emotional embedding from EGNN
+        emotional_embedding = self.emotion.analyze(
+            input_state,
+            self.meta_memory['stable_patterns']
         )
         
-        # Generate narrative understanding through foundational model
-        narrative = self._generate_narrative(input_data, emotional_context)
+        # Generate narrative understanding 
+        narrative = self._generate_narrative(
+            input_state,
+            emotional_embedding,
+            imagination_context
+        )
         
-        # Integrate imagination if provided
-        if imagination_context:
-            narrative = self._integrate_imagination(narrative, imagination_context)
-            
         # Update meta-memory with controlled adaptation
-        self._update_meta_memory(emotional_context, narrative)
+        stability_score = self._update_meta_memory(
+            emotional_embedding,
+            narrative
+        )
+        
+        # Track consciousness state
+        current_state = ConsciousnessState(
+            emotional_awareness=emotional_embedding.mean().item(),
+            narrative_coherence=narrative['coherence_score'],
+            memory_stability=stability_score,
+            attention_focus=self.attention.get_focus_score(),
+            meta_memory_weight=len(self.meta_memory['stable_patterns']),
+            imagination_activity=imagination_context['activity_score'] if imagination_context else 0.0
+        )
         
         return {
-            'emotional_context': emotional_context,
             'narrative': narrative,
-            'meta_memory_stats': self.meta_memory_stats
-        }
+            'emotional_context': emotional_embedding,
+            'meta_memory_state': self.meta_memory
+        }, current_state
+        
+    def _generate_narrative(
+        self,
+        input_state: Dict[str, torch.Tensor],
+        emotional_context: torch.Tensor,
+        imagination_context: Optional[Dict] = None
+    ) -> Dict:
+        """Generate narrative understanding using LLaMA 3.3"""
+        # Prepare prompt with context
+        prompt = self._prepare_narrative_prompt(
+            input_state,
+            emotional_context,
+            imagination_context
+        )
+        
+        # Generate response from LLaMA
+        with torch.no_grad():
+            output = self.narrator.generate(
+                prompt,
+                max_length=self.config.generation.max_length,
+                temperature=self.config.generation.temperature
+            )
+            
+        return self._parse_narrative_response(output)
+        
+    def _update_meta_memory(
+        self,
+        emotional_embedding: torch.Tensor,
+        narrative: Dict
+    ) -> float:
+        """Update meta-memory with controlled adaptation"""
+        # Calculate stability score
+        stability_score = self._calculate_stability(
+            emotional_embedding,
+            narrative
+        )
+        
+        # Handle novel experiences
+        if stability_score < self.novelty_threshold:
+            self.meta_memory['novel_experiences'].append({
+                'embedding': emotional_embedding,
+                'narrative': narrative,
+                'weight': 0.1  # Start with low weight
+            })
+            
+        # Reinforce stable patterns
+        elif stability_score > self.stability_threshold:
+            self._reinforce_pattern(emotional_embedding, narrative)
+            
+        return stability_score
