@@ -187,7 +187,6 @@ foundation_model:
   name: "llama-3.3"
   path: "models/llama3_3/base"
   hidden_size: 4096
-  num_layers: 32
   num_heads: 32
 
   # LoRA adaptation parameters
@@ -202,26 +201,19 @@ foundation_model:
 meta_memory:
   # Experience weighting
   novel_experiences:
-    initial_weight: 0.1
-    min_weight: 0.05
+    initial_weight: 0.1 # Low initial weight for new experiences
     max_weight: 0.95
+    reinforcement_rate: 0.2
 
-  # Pattern reinforcement
+  # Pattern recognition
   stable_patterns:
     min_confidence: 0.75
-    reinforcement_rate: 0.2
-    max_weight: 0.95
-    temporal_decay: 0.995
-
-  # Adaptation controls
-  adaptation:
-    base_rate: 0.01
-    max_rate: 0.2
-    stability_threshold: 0.8
-    coherence_threshold: 0.7
+    temporal_coherence: 0.8
+    emotional_resonance: 0.6
+    max_patterns: 1000
 
 emotional_development:
-  # Emotional processing
+  # Emotion encoding
   encoder:
     hidden_dims: 256
     num_layers: 4
@@ -232,13 +224,6 @@ emotional_development:
     attention_heads: 8
     context_dim: 512
     emotion_dim: 64
-
-  # Learning parameters
-  training:
-    batch_size: 32
-    learning_rate: 2e-5
-    warmup_steps: 1000
-    max_epochs: 100
 
 imagination:
   # Imagination constraints
@@ -252,7 +237,6 @@ imagination:
     min_coherence: 0.6
     max_deviation: 0.3
     emotional_bound: 0.8
-    reality_check_interval: 100
 
 consciousness_metrics:
   # Development tracking

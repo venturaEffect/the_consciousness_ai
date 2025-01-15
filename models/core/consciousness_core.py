@@ -39,7 +39,6 @@ class ConsciousnessCore:
         # Initialize foundational narrative model (LLaMA 3.3)
         self.narrator = LlamaForCausalLM.from_pretrained(
             config.model_paths.llama,
-            low_cpu_mem_usage=True,
             device_map="auto"
         )
         

@@ -172,19 +172,19 @@ class EmotionalMemoryCore(nn.Module):
     ) -> float:
         """Update meta-memory with controlled adaptation"""
         
-        # Calculate stability score
+        # Calculate stability
         stability_score = self._calculate_stability(
             emotional_embedding,
             predictions,
             narrative_context
         )
         
-        # Handle novel experiences with low initial weight
+        # Handle novel experiences with low weight
         if stability_score < self.novelty_threshold:
             self.meta_memories['novel_experiences'].append({
                 'embedding': emotional_embedding.detach(),
                 'predictions': predictions,
-                'weight': 0.1  # Start with low weight
+                'weight': 0.1  # Low initial weight
             })
             
         # Reinforce stable patterns
