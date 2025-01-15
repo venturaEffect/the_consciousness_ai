@@ -183,62 +183,85 @@ logging:
 
 # Configuration for ACM consciousness development incorporating LLaMA 3.3 foundation
 
-llama_foundation:
-  model_path: "models/llama3_3/base"
+foundation_model:
+  name: "llama-3.3"
+  path: "models/llama3_3/base"
+  hidden_size: 4096
+  num_layers: 32
+  num_heads: 32
+
+  # LoRA adaptation parameters
   lora:
     enabled: true
     rank: 16
     alpha: 32
-    modules: ["q_proj", "v_proj"] # Target modules for fine-tuning
+    target_modules: ["q_proj", "v_proj"]
     dropout: 0.05
+    learning_rate: 1e-4
 
 meta_memory:
-  # Memory formation controls
-  new_experience:
-    initial_weight: 0.1 # Low initial weight for novel experiences
-    min_confidence: 0.3
-    max_confidence: 0.95
+  # Experience weighting
+  novel_experiences:
+    initial_weight: 0.1
+    min_weight: 0.05
+    max_weight: 0.95
 
-  pattern_reinforcement:
-    base_rate: 0.2
-    stability_threshold: 0.75
-    coherence_threshold: 0.8
-    max_reinforcement: 0.95
+  # Pattern reinforcement
+  stable_patterns:
+    min_confidence: 0.75
+    reinforcement_rate: 0.2
+    max_weight: 0.95
+    temporal_decay: 0.995
 
+  # Adaptation controls
   adaptation:
-    learning_rate: 0.001
-    decay_rate: 0.995
-    min_update_threshold: 0.1
-    max_adaptation_rate: 0.3
+    base_rate: 0.01
+    max_rate: 0.2
+    stability_threshold: 0.8
+    coherence_threshold: 0.7
 
 emotional_development:
-  # Emotional learning parameters
-  encoding:
+  # Emotional processing
+  encoder:
     hidden_dims: 256
     num_layers: 4
     dropout: 0.1
 
-  attention:
-    num_heads: 8
-    head_dims: 64
-    dropout: 0.1
+  # Integration parameters
+  fusion:
+    attention_heads: 8
+    context_dim: 512
+    emotion_dim: 64
 
-  prediction:
-    horizon: 100
-    confidence_threshold: 0.7
-    error_tolerance: 0.15
+  # Learning parameters
+  training:
+    batch_size: 32
+    learning_rate: 2e-5
+    warmup_steps: 1000
+    max_epochs: 100
 
 imagination:
   # Imagination constraints
-  temperature: 0.8
-  top_p: 0.95
-  max_tokens: 1024
-  reality_check_interval: 100
+  sampling:
+    temperature: 0.8
+    top_p: 0.95
+    max_tokens: 2048
 
+  # Safety bounds
   constraints:
     min_coherence: 0.6
     max_deviation: 0.3
     emotional_bound: 0.8
+    reality_check_interval: 100
+
+consciousness_metrics:
+  # Development tracking
+  tracking:
+    emotional_coherence: 0.0
+    narrative_stability: 0.0
+    memory_retention: 0.0
+    imagination_quality: 0.0
+    adaptation_rate: 0.0
 
 training:
   batch_size: 32

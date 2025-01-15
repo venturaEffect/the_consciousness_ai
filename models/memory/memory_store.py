@@ -204,3 +204,116 @@ class EpisodicMemoryStore(nn.Module):
         self.stats.consciousness_relevance = self._calculate_consciousness_relevance(
             memory_vector
         )
+
+# models/memory/memory_store.py
+
+"""
+Memory store implementation for ACM that handles:
+- Meta-memory storage and retrieval
+- Pattern reinforcement through controlled adaptation
+- Integration with LLaMA 3.3 narrative states
+"""
+
+import torch
+import torch.nn as nn
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+
+@dataclass
+class MemoryMetrics:
+    """Track memory system performance"""
+    stability: float = 0.0
+    coherence: float = 0.0
+    retrieval_quality: float = 0.0
+    pattern_strength: float = 0.0
+    narrative_alignment: float = 0.0
+
+class MemoryStore(nn.Module):
+    def __init__(self, config):
+        """Initialize memory storage system"""
+        super().__init__()
+        
+        # Core memory components
+        self.pattern_encoder = nn.Linear(
+            config.hidden_size,
+            config.memory_dims
+        )
+        
+        self.experience_encoder = nn.Linear(
+            config.hidden_size,
+            config.memory_dims
+        )
+        
+        # Meta-memory tracking
+        self.stable_patterns = []
+        self.novel_experiences = []
+        self.pattern_weights = {}
+        
+        # Stability thresholds
+        self.novelty_threshold = config.memory.novelty_threshold
+        self.stability_threshold = config.memory.stability_threshold
+        self.max_patterns = config.memory.max_patterns
+        
+        # Metrics tracking
+        self.metrics = MemoryMetrics()
+        
+    def store_experience(
+        self,
+        experience: torch.Tensor,
+        emotional_context: Optional[Dict] = None,
+        narrative_state: Optional[Dict] = None
+    ) -> str:
+        """Store new experience with controlled adaptation"""
+        
+        # Generate experience embedding
+        experience_embedding = self.experience_encoder(experience)
+        
+        # Calculate stability score
+        stability_score = self._calculate_stability(
+            experience_embedding,
+            emotional_context
+        )
+        
+        # Handle novel experiences with low initial weight
+        if stability_score < self.novelty_threshold:
+            memory_key = self._store_novel_experience(
+                experience_embedding,
+                emotional_context,
+                narrative_state
+            )
+            
+        # Reinforce existing patterns
+        else:
+            memory_key = self._reinforce_pattern(
+                experience_embedding,
+                emotional_context,
+                narrative_state
+            )
+            
+        # Update metrics
+        self._update_metrics(
+            stability_score,
+            emotional_context,
+            narrative_state
+        )
+        
+        return memory_key
+        
+    def _store_novel_experience(
+        self,
+        embedding: torch.Tensor,
+        emotional_context: Optional[Dict],
+        narrative_state: Optional[Dict]
+    ) -> str:
+        """Store new experience with low initial weight"""
+        memory_key = self._generate_key()
+        
+        self.novel_experiences.append({
+            'key': memory_key,
+            'embedding': embedding.detach(),
+            'emotional_context': emotional_context,
+            'narrative_state': narrative_state,
+            'weight': 0.1  # Start with low weight
+        })
+        
+        return memory_key
