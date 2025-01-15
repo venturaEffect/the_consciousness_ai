@@ -3,10 +3,10 @@ torch>=2.0.0  # GPU-optimized PyTorch
 transformers>=4.30.0  # For LLaMA 3.3
 huggingface_hub>=0.16.4
 bitsandbytes>=0.37.0
-accelerate>=0.21.0
+accelerate>=0.20.0  # Correct version for distributed training
 einops>=0.6.0  # Used in attention mechanisms
 fairscale>=0.4.0
-peft>=0.4.0  # For LoRA
+peft>=0.4.0  # For LoRA fine-tuning
 
 # Memory & Vector Storage
 pinecone-client>=2.2.1
@@ -18,8 +18,8 @@ opencv-python>=4.8.0
 Pillow>=10.0.0
 librosa>=0.10.0  # Audio processing
 soundfile>=0.12.0  # Audio file handling
-palm-e>=2.0.0  # Vision-language model
-whisper-v3>=1.0.0  # Speech recognition
+palm-emu>=0.2.0  # Vision-language model (corrected name)
+openai-whisper>=20230918  # Speech recognition (correct package name)
 
 # Unreal Engine Integration
 unrealcv>=1.0.0
@@ -97,3 +97,7 @@ paramiko
 tkinter
 kivy
 git+https://github.com/andresni/pyconscious.git
+
+# New Requirements for ACM
+tokenizers>=0.13.3  # Enhanced tokenization support
+safetensors>=0.3.1  # Efficient tensor serialization
