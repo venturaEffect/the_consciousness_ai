@@ -1,18 +1,11 @@
-# models/evaluation/emotional_rl_metrics.py
-
 """
 Reinforcement Learning Metrics for Emotional Development in ACM
 
-This module implements:
-1. Emotional learning curve tracking
+Tracks:
+1. Emotional learning curves
 2. Reward shaping evaluation
 3. Policy adaptation metrics
-4. Integration with consciousness development
-
-Dependencies:
-- models/emotion/reward_shaping.py for reward calculations
-- models/evaluation/consciousness_metrics.py for core metrics
-- models/predictive/dreamer_emotional_wrapper.py for RL integration
+4. Consciousness integration
 """
 
 import torch
@@ -21,51 +14,59 @@ from typing import Dict, List, Optional
 from collections import deque
 from dataclasses import dataclass
 
+
 @dataclass
 class EmotionalMetrics:
-    """Stores emotional learning metrics"""
+    """Stores emotional learning metrics."""
     emotional_awareness: float = 0.0
     reward_stability: float = 0.0
     learning_progress: float = 0.0
     memory_coherence: float = 0.0
     narrative_consistency: float = 0.0
 
-@dataclass 
+
+@dataclass
 class EmotionalRLMetrics:
-    """Tracks emotional reinforcement learning metrics"""
+    """Tracks emotional reinforcement learning outputs."""
     emotional_reward: float = 0.0
     policy_adaptation: float = 0.0
     learning_stability: float = 0.0
     exploration_ratio: float = 0.0
     consciousness_alignment: float = 0.0
 
+
 class EmotionalRLTracker:
     """
-    Tracks and analyzes emotional reinforcement learning metrics
+    Tracks and analyzes emotional RL metrics.
     """
+
     def __init__(self, config: Dict):
         self.config = config
-        
-        # Initialize metric histories
         self.reward_history = deque(maxlen=1000)
         self.emotion_history = deque(maxlen=1000)
         self.narrative_history = deque(maxlen=100)
-        
-        # Thresholds from config
+
+        # Thresholds from config.
         self.reward_stability_threshold = config.get('reward_stability_threshold', 0.1)
         self.emotional_awareness_threshold = config.get('emotional_awareness_threshold', 0.7)
-        
+
     def update(self, metrics: Dict) -> EmotionalMetrics:
-        """Update metrics with new data"""
-        # Store new metrics
+        """
+        Update tracker with new data.
+        
+        Args:
+            metrics: Dict containing fields like 'reward', 'emotion_values', 'narrative'.
+        
+        Returns:
+            EmotionalMetrics with updated calculations.
+        """
         if 'reward' in metrics:
             self.reward_history.append(metrics['reward'])
         if 'emotion_values' in metrics:
             self.emotion_history.append(metrics['emotion_values'])
         if 'narrative' in metrics:
             self.narrative_history.append(metrics['narrative'])
-            
-        # Calculate current metrics
+
         current_metrics = EmotionalMetrics(
             emotional_awareness=self._calculate_emotional_awareness(),
             reward_stability=self._calculate_reward_stability(),
@@ -73,147 +74,193 @@ class EmotionalRLTracker:
             memory_coherence=self._calculate_memory_coherence(),
             narrative_consistency=self._calculate_narrative_consistency()
         )
-        
         return current_metrics
-        
+
     def _calculate_emotional_awareness(self) -> float:
-        """Calculate emotional awareness score"""
+        """Evaluate continuity across consecutive emotional states."""
         if len(self.emotion_history) < 2:
             return 0.0
-            
-        # Compare consecutive emotional predictions
-        awareness_scores = []
+
+        scores = []
         for i in range(len(self.emotion_history) - 1):
-            curr_emotion = self.emotion_history[i]
-            next_emotion = self.emotion_history[i + 1]
-            
-            # Calculate emotional continuity
-            continuity = 1.0 - np.mean([
-                abs(curr_emotion[k] - next_emotion[k])
-                for k in curr_emotion.keys()
-            ])
-            awareness_scores.append(continuity)
-            
-        return np.mean(awareness_scores)
-        
+            curr = self.emotion_history[i]
+            nxt = self.emotion_history[i + 1]
+            continuity = 1.0 - np.mean([abs(curr[k] - nxt[k]) for k in curr.keys()])
+            scores.append(continuity)
+
+        return float(np.mean(scores))
+
     def _calculate_reward_stability(self) -> float:
-        """Calculate reward stability"""
+        """Compute stability of recent rewards."""
         if len(self.reward_history) < 10:
             return 0.0
-            
-        # Calculate reward variance over recent history
-        recent_rewards = list(self.reward_history)[-10:]
-        return 1.0 / (1.0 + np.std(recent_rewards))
-        
+        recent = list(self.reward_history)[-10:]
+        return float(1.0 / (1.0 + np.std(recent)))
+
     def _calculate_learning_progress(self) -> float:
-        """Calculate learning progress trend"""
+        """Estimate slope of reward trends."""
         if len(self.reward_history) < 100:
             return 0.0
-            
-        # Calculate slope of reward trend
         x = np.arange(len(self.reward_history))
         y = np.array(self.reward_history)
         slope = np.polyfit(x, y, 1)[0]
-        
-        # Normalize slope to [0, 1]
-        return 1.0 / (1.0 + np.exp(-10 * slope))
-        
+        return float(1.0 / (1.0 + np.exp(-10 * slope)))
+
     def _calculate_memory_coherence(self) -> float:
-        """Calculate memory coherence score"""
+        """Use emotional continuity as a stand-in for memory coherence."""
         if len(self.emotion_history) < 10:
             return 0.0
-            
-        # Calculate temporal coherence of emotional memories
-        coherence_scores = []
+
+        scores = []
         for i in range(len(self.emotion_history) - 1):
-            curr_emotion = self.emotion_history[i]
-            next_emotion = self.emotion_history[i + 1]
-            
-            # Check emotional continuity
-            coherence = 1.0 - np.mean([
-                abs(curr_emotion[k] - next_emotion[k])
-                for k in curr_emotion.keys()
-            ])
-            coherence_scores.append(coherence)
-            
-        return np.mean(coherence_scores)
-        
+            curr = self.emotion_history[i]
+            nxt = self.emotion_history[i + 1]
+            continuity = 1.0 - np.mean([abs(curr[k] - nxt[k]) for k in curr.keys()])
+            scores.append(continuity)
+
+        return float(np.mean(scores))
+
     def _calculate_narrative_consistency(self) -> float:
-        """Calculate narrative consistency score"""
+        """Compute textual overlap as a stand-in for narrative consistency."""
         if len(self.narrative_history) < 2:
             return 0.0
-            
-        # Compare consecutive narratives for consistency
+
         consistency_scores = []
         for i in range(len(self.narrative_history) - 1):
-            curr_narrative = self.narrative_history[i]
-            next_narrative = self.narrative_history[i + 1]
-            
-            # Simple string similarity for now
-            # Could be enhanced with semantic similarity
-            similarity = len(set(curr_narrative.split()) & 
-                          set(next_narrative.split())) / \
-                      len(set(curr_narrative.split()) | 
-                          set(next_narrative.split()))
-            consistency_scores.append(similarity)
-            
-        return np.mean(consistency_scores)
-        
+            curr = self.narrative_history[i].split()
+            nxt = self.narrative_history[i + 1].split()
+            overlap = len(set(curr) & set(nxt))
+            union = len(set(curr) | set(nxt))
+            if union > 0:
+                consistency_scores.append(overlap / union)
+
+        return float(np.mean(consistency_scores))
+
     def get_summary(self) -> Dict:
-        """Get summary of current learning state"""
-        current_metrics = self.update({})
-        
+        """Return current metrics and thresholds checks."""
+        current = self.update({})
         return {
-            'emotional_awareness': current_metrics.emotional_awareness,
-            'reward_stability': current_metrics.reward_stability,
-            'learning_progress': current_metrics.learning_progress,
-            'memory_coherence': current_metrics.memory_coherence,
-            'narrative_consistency': current_metrics.narrative_consistency,
-            'meets_thresholds': self._check_thresholds(current_metrics)
+            'emotional_awareness': current.emotional_awareness,
+            'reward_stability': current.reward_stability,
+            'learning_progress': current.learning_progress,
+            'memory_coherence': current.memory_coherence,
+            'narrative_consistency': current.narrative_consistency,
+            'meets_thresholds': self._check_thresholds(current)
         }
-        
+
     def _check_thresholds(self, metrics: EmotionalMetrics) -> bool:
-        """Check if current metrics meet minimum thresholds"""
+        """
+        Check if current metrics meet minimum thresholds.
+        """
         return (
-            metrics.emotional_awareness >= self.emotional_awareness_threshold and
-            metrics.reward_stability >= self.reward_stability_threshold and
-            metrics.learning_progress > 0
+            metrics.emotional_awareness >= self.emotional_awareness_threshold
+            and metrics.reward_stability >= self.reward_stability_threshold
+            and metrics.learning_progress > 0
         )
 
+
 class EmotionalRLEvaluator:
+    """
+    Evaluates higher-level emotional RL metrics.
+    """
+
     def __init__(self, config: Dict):
-        """Initialize RL evaluation"""
         self.config = config
         self.metrics = EmotionalRLMetrics()
         self.history = []
-        
+
     def evaluate_learning(
         self,
         episode_data: Dict,
         emotion_values: Dict[str, float],
         policy_info: Dict
     ) -> Dict:
-        """Evaluate emotional reinforcement learning progress"""
-        # Calculate emotional reward
+        """
+        Evaluate RL performance with emotional focus.
+        
+        Args:
+            episode_data: Contains 'rewards', 'losses', etc.
+            emotion_values: Emotional signals.
+            policy_info: Info about current policy or network.
+        
+        Returns:
+            Updated metrics dictionary.
+        """
         emotional_reward = self._calculate_emotional_reward(
-            episode_data['rewards'],
+            episode_data.get('rewards', []),
             emotion_values
         )
-        
-        # Evaluate policy adaptation
         policy_adaptation = self._evaluate_policy_adaptation(
             policy_info,
             emotion_values
         )
-        
-        # Calculate learning stability
         learning_stability = self._calculate_learning_stability(
-            episode_data['losses']
+            episode_data.get('losses', [])
         )
-        
-        # Update metrics
+        exploration_ratio = self._calculate_exploration_ratio(
+            policy_info
+        )
+        consciousness_alignment = self._calculate_consciousness_alignment(
+            emotion_values
+        )
+
         self.metrics.emotional_reward = emotional_reward
         self.metrics.policy_adaptation = policy_adaptation
         self.metrics.learning_stability = learning_stability
-        
-        return self.get_metrics()
+        self.metrics.exploration_ratio = exploration_ratio
+        self.metrics.consciousness_alignment = consciousness_alignment
+
+        updated = self.get_metrics()
+        self.history.append(updated)
+        return updated
+
+    def _calculate_emotional_reward(
+        self,
+        rewards: List[float],
+        emotion_values: Dict[str, float]
+    ) -> float:
+        """Compute emotional reward, adjusting raw rewards by an emotional factor."""
+        raw_mean = np.mean(rewards) if rewards else 0.0
+        valence = emotion_values.get('valence', 0.5)
+        # Example: multiply by valence as a placeholder.
+        return float(raw_mean * valence)
+
+    def _evaluate_policy_adaptation(
+        self,
+        policy_info: Dict,
+        emotion_values: Dict[str, float]
+    ) -> float:
+        """Assess how the policy adapts under emotional influence."""
+        # Placeholder uses 'policy_entropy' and 'arousal' as example.
+        policy_entropy = policy_info.get('policy_entropy', 0.0)
+        arousal = emotion_values.get('arousal', 0.5)
+        return float(policy_entropy * arousal)
+
+    def _calculate_learning_stability(self, losses: List[float]) -> float:
+        """Compute stability from variance of recent losses."""
+        if len(losses) < 5:
+            return 0.0
+        return float(1.0 / (1.0 + np.std(losses[-5:])))
+
+    def _calculate_exploration_ratio(self, policy_info: Dict) -> float:
+        """
+        Placeholder for exploration ratio, e.g., fraction of random actions.
+        """
+        return float(policy_info.get('exploration_ratio', 0.0))
+
+    def _calculate_consciousness_alignment(self, emotion_values: Dict[str, float]) -> float:
+        """
+        Dummy alignment measure with a single emotional dimension.
+        """
+        dominance = emotion_values.get('dominance', 0.5)
+        return dominance
+
+    def get_metrics(self) -> Dict[str, float]:
+        """Return the current RL metrics."""
+        return {
+            'emotional_reward': self.metrics.emotional_reward,
+            'policy_adaptation': self.metrics.policy_adaptation,
+            'learning_stability': self.metrics.learning_stability,
+            'exploration_ratio': self.metrics.exploration_ratio,
+            'consciousness_alignment': self.metrics.consciousness_alignment
+        }
