@@ -36,71 +36,76 @@ The ACM architecture integrates multiple components to achieve synthetic awarene
    simulations/
    ├── api/
    │   └── simulation_manager.py  # Manages VR environments
-   └── environments/
+   └── enviroments/
        ├── pavilion_vr_environment.py  # Humanoid agent integration
-       └── vr_environment.py  # Base VR implementation
+       └── vr_environment.py           # Base VR implementation
    ```
 
 2. **Reinforcement Learning Layer:**
 
-models/
-├── predictive/
-│ ├── dreamer_emotional_wrapper.py # DreamerV3 with emotional context
-│ └── attention_mechanism.py # Attention tracking
-├── emotion/
-│ ├── reward_shaping.py # Emotional reward computation
-│ └── tgnn/emotional_graph.py # Emotional relationships
-└── self_model/
-└── reinforcement_core.py # Core RL implementation
+```python
+   models/
+   ├── predictive/
+   │   ├── dreamer_emotional_wrapper.py  # DreamerV3 with emotional context
+   │   └── attention_mechanism.py        # Attention tracking
+   ├── emotion/
+   │   ├── reward_shaping.py             # Emotional reward computation
+   │   └── tgnn/emotional_graph.py       # Emotional relationships
+   └── self_model/
+      └── reinforcement_core.py         # Core RL implementation
+```
 
 3. **Memory System:**
 
-models/memory/
-├── memory_core.py # Experience storage
-└── emotional_indexing.py # Emotional context indexing
+```python
+      models/memory/
+   ├── memory_core.py             # Experience storage
+   └── emotional_indexing.py      # Emotional context indexing
+```
 
 ## Consciousness Development Pipeline
 
 1. **Attention Activation:**
 
-- Stressful scenarios trigger survival instincts
-- High-attention states enable deeper learning- Real-time monitoring of attention levels
+   - Stressful scenarios trigger survival instincts
+   - High-attention states enable deeper learning
+   - Real-time monitoring of attention levels
 
 2. **Experience Formation:**
 
-- Emotional reinforcement through interactions
-- Memory imprinting during high-attention states
-- Social bond development tracking
+   - Emotional reinforcement through interactions
+   - Memory imprinting during high-attention states
+   - Social bond development tracking
 
 3. **Consciousness Metrics:**
 
-- Emotional awareness evaluation
-- Memory coherence analysis
-- Behavioral adaptation measurement
-- Narrative consistency tracking
+   - Emotional awareness evaluation
+   - Memory coherence analysis
+   - Behavioral adaptation measurement
+   - Narrative consistency tracking
 
 ## Integration Points
 
 1. **Pavilion Integration:**
 
-- Humanoid agent control
-- Face and emotion recognition
-- Physical interaction simulation
-- Real-time feedback processing
+   - Humanoid agent control
+   - Face and emotion recognition
+   - Physical interaction simulation
+   - Real-time feedback processing
 
 2. **DreamerV3 Integration:**
 
-- World model development
-- Emotional context incorporation
-- Meta-learning capabilities
-- Experience replay with emotional weighting
+   - World model development
+   - Emotional context incorporation
+   - Meta-learning capabilities
+   - Experience replay with emotional weighting
 
 3. **Memory Systems:**
 
-- Vector-based storage for experiences
-- Emotional context indexing
-- Temporal coherence tracking
-- Narrative generation support
+   - Vector-based storage for experiences
+   - Emotional context indexing
+   - Temporal coherence tracking
+   - Narrative generation support
 
 ## Ethical Framework
 
@@ -119,11 +124,11 @@ This architecture enables the emergence of consciousness through:
 - Memory formation and consolidation
 
 The main simulation manager implementation is located at:
-`simulations/api/simulation_manager.py`
+simulations/api/simulation_manager.py
 
 ## Narrative Foundation
 
-LLaMA 3.3 Integration:
+**LLaMA 3.3 Integration:**
 
 - Acts as central narrative coordinator
 - Dynamic adaptation through LoRA fine-tuning
@@ -131,27 +136,28 @@ LLaMA 3.3 Integration:
 
 ## Meta-Memory System
 
-Memory Formation:
+**Memory Formation:**
 
 - New experiences start with 0.1 weight
 - Pattern reinforcement through controlled adaptation
 - Stability monitoring and coherence maintenance
 
-## Key Components:
+## Key Components
 
-1. Emotion Encoding:
+1. **Emotion Encoding:**
 
    - Integration with narrative states
    - Pattern recognition with meta-memory
    - Controlled adaptation mechanisms
 
-2. Predictive Feedback:
+2. **Predictive Feedback:**
 
    - Outcome evaluation
    - Meta-memory influence
    - Stability metrics
 
-3. Imagination Processing:
+3. **Imagination Processing:**
+
    - Bounded by emotional constraints
    - Meta-memory guided generation
    - Narrative coherence checks
