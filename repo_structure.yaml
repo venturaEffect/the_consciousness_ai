@@ -167,8 +167,6 @@
         type: file
       - path: /models/memory/memory_integration.py
         type: file
-      - path: /models/memory/memory_store.py
-        type: file
       - path: /models/memory/optimizations.py
         type: file
       - path: /models/memory/optimization_components.py
