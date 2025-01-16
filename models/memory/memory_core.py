@@ -1,7 +1,7 @@
 """
 Core Memory Management System for ACM
 
-This module implements:
+Implements:
 1. Base memory management functionality
 2. Memory storage and retrieval operations
 3. Memory indexing and optimization
@@ -13,27 +13,89 @@ Dependencies:
 - models/memory/temporal_coherence.py for sequence tracking
 """
 
-from typing import Dict, List, Optional, Tuple
+import time
+from typing import Dict, List, Optional
 import torch
-from dataclasses import dataclass
 import numpy as np
+from dataclasses import dataclass
+
+# Placeholder imports for references in the code.
+# Replace these with the real classes if they exist.
+class EmotionalGraphNetwork:
+    def get_embedding(self, emotion_values: Dict[str, float]) -> torch.Tensor:
+        """
+        Placeholder method to create an embedding from emotion_values.
+        """
+        # Sum up emotion dict values into a scalar or short vector, as an example.
+        val = sum(emotion_values.values())
+        return torch.tensor([val], dtype=torch.float)
+
+
+class ConsciousnessMetrics:
+    def __init__(self, config):
+        pass
+
+
+class PineconeIndexStub:
+    """
+    Placeholder Pinecone-like index stub. 
+    Replace with actual pinecone.Index usage in production.
+    """
+    def upsert(self, vectors: List):
+        pass
+
+    def query(self, vector: List[float], top_k: int, include_metadata: bool):
+        # Return a placeholder result with empty matches.
+        class Match:
+            def __init__(self, _id):
+                self.id = _id
+                self.score = 0.0
+                self.metadata = {}
+
+        class QueryResult:
+            def __init__(self):
+                self.matches = [Match("dummy_id")]
+
+        return QueryResult()
+
+
+class PineconeStub:
+    """
+    Placeholder for Pinecone environment initialization.
+    Replace with actual Pinecone calls when deploying.
+    """
+    def __init__(self, api_key: str, environment: str):
+        self.api_key = api_key
+        self.environment = environment
+
+    def Index(self, index_name: str) -> PineconeIndexStub:
+        return PineconeIndexStub()
+
 
 @dataclass
 class MemoryConfig:
-    """Memory system configuration parameters"""
+    """Memory system configuration parameters."""
     max_memories: int = 100000
     cleanup_threshold: float = 0.4
     vector_dim: int = 768
     index_batch_size: int = 256
 
+    # Extend to hold Pinecone and other fields if needed.
+    pinecone_api_key: str = ""
+    pinecone_environment: str = ""
+    index_name: str = "acm_memory_index"
+    attention_threshold: float = 0.7
+
+
 @dataclass
 class MemoryMetrics:
-    """Tracks memory system performance metrics"""
+    """Tracks memory system performance metrics."""
     coherence_score: float = 0.0
     retrieval_accuracy: float = 0.0
     emotional_context_strength: float = 0.0
     temporal_consistency: float = 0.0
     narrative_alignment: float = 0.0
+
 
 class MemoryCore:
     """
@@ -43,54 +105,58 @@ class MemoryCore:
     3. Consciousness-relevant memory formation
     4. Meta-learning capabilities
     """
-    
+
     def __init__(self, config: MemoryConfig):
-        """Initialize memory management system"""
+        """
+        Initialize memory management system.
+
+        Args:
+            config: A MemoryConfig dataclass instance with fields like:
+                max_memories, cleanup_threshold, etc.
+        """
         self.config = config
-        self.storage = {}
-        self.index = {}
-        self.temporal_index = []
+
+        # Internal storage for non-vector-based memory.
+        self.storage: Dict[str, Dict] = {}
+        self.temporal_index: List[str] = []
         self.emotion_network = EmotionalGraphNetwork()
         self.consciousness_metrics = ConsciousnessMetrics(config)
-        
-        # Initialize Pinecone vector store
-        self.pinecone = Pinecone(
-            api_key=config['pinecone_api_key'],
-            environment=config['pinecone_environment']
-        )
-        self.index = self.pinecone.Index(config['index_name'])
-        
-        # Memory tracking
         self.metrics = MemoryMetrics()
-        self.recent_experiences = []
-        self.attention_threshold = config.get('attention_threshold', 0.7)
+        self.recent_experiences: List[Dict] = []
+
+        # Pinecone or other vector store setup.
+        self.pinecone = PineconeStub(
+            api_key=self.config.pinecone_api_key,
+            environment=self.config.pinecone_environment
+        )
+        self.index = self.pinecone.Index(self.config.index_name)
+
+        # Attention threshold for deciding whether to store a vector in Pinecone.
+        self.attention_threshold = self.config.attention_threshold
+
+    def store(self, memory_content: torch.Tensor, metadata: Dict[str, float]) -> str:
+        """
+        Store a new memory entry in local storage (non-vector).
         
-    def store(
-        self,
-        memory_content: torch.Tensor,
-        metadata: Dict[str, float]
-    ) -> str:
-        """Store new memory entry"""
-        # Generate memory ID
+        Args:
+            memory_content: A tensor representing the memory content.
+            metadata: A dictionary of extra info (e.g., emotion, reward).
+        
+        Returns:
+            A unique memory ID.
+        """
         memory_id = self._generate_id()
-        
-        # Create memory entry
         memory_entry = {
-            'content': memory_content,
-            'metadata': metadata,
-            'timestamp': self._get_timestamp()
+            "content": memory_content,
+            "metadata": metadata,
+            "timestamp": self._get_timestamp()
         }
-        
-        # Store memory
         self.storage[memory_id] = memory_entry
-        
-        # Update indices
-        self._update_indices(memory_id, memory_entry)
-        
-        # Cleanup if needed
+        self.temporal_index.append(memory_id)
+
         if len(self.storage) > self.config.max_memories:
             self._cleanup_old_memories()
-            
+
         return memory_id
 
     def store_experience(
@@ -102,19 +168,25 @@ class MemoryCore:
         attention_level: float,
         narrative: Optional[str] = None
     ) -> str:
-        """Store experience with emotional context"""
-        
-        # Get emotional embedding
+        """
+        Store an experience with emotional context in the vector store
+        if attention_level is high enough.
+
+        Args:
+            state: Environment state tensor.
+            action: Action tensor.
+            reward: Scalar reward value.
+            emotion_values: Dictionary of emotional signals.
+            attention_level: Current attention or consciousness level.
+            narrative: Optional string describing the experience.
+
+        Returns:
+            A memory ID or empty string if nothing was stored in Pinecone.
+        """
+        memory_id = ""
         emotional_embedding = self.emotion_network.get_embedding(emotion_values)
-        
-        # Create memory vector
-        memory_vector = self._create_memory_vector(
-            state=state,
-            action=action,
-            emotional_embedding=emotional_embedding
-        )
-        
-        # Store in Pinecone if attention level is high enough
+        memory_vector = self._create_memory_vector(state, action, emotional_embedding)
+
         if attention_level >= self.attention_threshold:
             memory_id = self._generate_memory_id()
             self.index.upsert(
@@ -122,129 +194,191 @@ class MemoryCore:
                     memory_id,
                     memory_vector.tolist(),
                     {
-                        'emotion': emotion_values,
-                        'attention': attention_level,
-                        'reward': reward,
-                        'narrative': narrative
+                        "emotion": emotion_values,
+                        "attention": attention_level,
+                        "reward": reward,
+                        "narrative": narrative
                     }
                 )]
             )
-            
-        # Update recent experiences
+
         self.recent_experiences.append({
-            'state': state,
-            'action': action,
-            'emotion': emotion_values,
-            'attention': attention_level,
-            'reward': reward,
-            'narrative': narrative,
-            'vector': memory_vector
+            "state": state,
+            "action": action,
+            "emotion": emotion_values,
+            "attention": attention_level,
+            "reward": reward,
+            "narrative": narrative,
+            "vector": memory_vector
         })
-        
-        # Update memory metrics
+
         self.update_metrics()
-        
         return memory_id
-        
+
     def get_similar_experiences(
         self,
         query_vector: torch.Tensor,
         emotion_context: Optional[Dict[str, float]] = None,
         k: int = 5
     ) -> List[Dict]:
-        """Retrieve similar experiences with optional emotional context"""
-        
-        # Add emotional context if provided
+        """
+        Retrieve similar experiences from the vector store,
+        optionally including emotional context.
+
+        Args:
+            query_vector: Base vector for similarity search.
+            emotion_context: Additional emotional context dict, if any.
+            k: Number of results to fetch.
+
+        Returns:
+            A list of dicts containing match info with keys: 'id', 'score', 'metadata'.
+        """
         if emotion_context is not None:
             emotional_embedding = self.emotion_network.get_embedding(emotion_context)
             query_vector = torch.cat([query_vector, emotional_embedding])
-            
-        # Query Pinecone
+
         results = self.index.query(
             vector=query_vector.tolist(),
             top_k=k,
             include_metadata=True
         )
-        
+        # Return minimal placeholders from the stub.
         return [
             {
-                'id': match.id,
-                'score': match.score,
-                'metadata': match.metadata
+                "id": match.id,
+                "score": match.score,
+                "metadata": match.metadata
             }
             for match in results.matches
         ]
-        
-    def update_metrics(self):
-        """Update memory system metrics"""
+
+    def update_metrics(self) -> None:
+        """
+        Update internal memory metrics based on recent experiences.
+        """
         if len(self.recent_experiences) < 2:
             return
-            
-        # Calculate coherence
+
         self.metrics.coherence_score = self._calculate_coherence()
-        
-        # Calculate retrieval accuracy
         self.metrics.retrieval_accuracy = self._calculate_retrieval_accuracy()
-        
-        # Calculate emotional context strength
         self.metrics.emotional_context_strength = self._calculate_emotional_strength()
-        
-        # Calculate temporal consistency
         self.metrics.temporal_consistency = self._calculate_temporal_consistency()
-        
-        # Calculate narrative alignment
         self.metrics.narrative_alignment = self._calculate_narrative_alignment()
-        
+
     def _create_memory_vector(
         self,
         state: torch.Tensor,
         action: torch.Tensor,
         emotional_embedding: torch.Tensor
     ) -> torch.Tensor:
-        """Create combined memory vector"""
-        return torch.cat([
-            state,
-            action,
-            emotional_embedding
-        ])
-        
-    def _calculate_coherence(self) -> float:
-        """Calculate memory coherence score"""
-        recent = self.recent_experiences[-100:]
-        coherence_scores = []
-        
-        for i in range(len(recent) - 1):
-            curr = recent[i]
-            next_exp = recent[i + 1]
-            
-            # Calculate vector similarity
-            similarity = torch.cosine_similarity(
-                curr['vector'].unsqueeze(0),
-                next_exp['vector'].unsqueeze(0)
-            )
-            
-            coherence_scores.append(similarity.item())
-            
-        return np.mean(coherence_scores)
-        
-    def _calculate_emotional_strength(self) -> float:
-        """Calculate emotional context strength"""
-        recent = self.recent_experiences[-100:]
-        return np.mean([
-            exp['attention'] * abs(exp['emotion']['valence'])
-            for exp in recent
-        ])
-        
+        """
+        Create a combined memory vector by concatenating state, action,
+        and emotional embedding.
+        """
+        return torch.cat([state, action, emotional_embedding], dim=0)
+
     def _generate_memory_id(self) -> str:
-        """Generate unique memory ID"""
+        """Generate a unique ID for vector-based memory entries."""
         return f"mem_{len(self.recent_experiences)}_{int(time.time())}"
 
-    def get_metrics(self) -> Dict:
-        """Get current memory metrics"""
+    def _generate_id(self) -> str:
+        """Generate a unique ID for local storage entries."""
+        return f"local_{int(time.time()*1000)}_{np.random.randint(999999)}"
+
+    def _get_timestamp(self) -> float:
+        """Get current timestamp as a float."""
+        return time.time()
+
+    def _update_indices(self, memory_id: str, memory_entry: Dict) -> None:
+        """
+        Update in-memory or external indices for quick lookups.
+        Placeholder if you need advanced indexing logic.
+        """
+        pass
+
+    def _cleanup_old_memories(self) -> None:
+        """
+        Remove older memories if the total exceeds max_memories.
+        Placeholder logic. Could remove the earliest or the least used.
+        """
+        keys = list(self.storage.keys())
+        # Example: remove oldest half if over capacity.
+        excess = len(self.storage) - self.config.max_memories
+        if excess > 0:
+            for key in keys[:excess]:
+                del self.storage[key]
+                self.temporal_index.remove(key)
+
+    def _calculate_coherence(self) -> float:
+        """
+        Calculate memory coherence across the last 100 experiences
+        by measuring pairwise vector similarity.
+        """
+        recent = self.recent_experiences[-100:]
+        if len(recent) < 2:
+            return 0.0
+
+        coherence_scores = []
+        for i in range(len(recent) - 1):
+            curr_vec = recent[i]["vector"].unsqueeze(0)
+            next_vec = recent[i + 1]["vector"].unsqueeze(0)
+            sim = torch.cosine_similarity(curr_vec, next_vec).item()
+            coherence_scores.append(sim)
+
+        return float(np.mean(coherence_scores))
+
+    def _calculate_emotional_strength(self) -> float:
+        """
+        Calculate emotional context strength from the last 100 experiences.
+        Example uses valence * attention as a rough measure.
+        """
+        recent = self.recent_experiences[-100:]
+        if not recent:
+            return 0.0
+
+        strengths = []
+        for exp in recent:
+            valence = abs(exp["emotion"].get("valence", 0.0))
+            strengths.append(exp["attention"] * valence)
+
+        return float(np.mean(strengths))
+
+    def _calculate_retrieval_accuracy(self) -> float:
+        """
+        Placeholder for a retrieval accuracy measure.
+        Could compare stored items with queries in a test set.
+        """
+        return 0.0
+
+    def _calculate_temporal_consistency(self) -> float:
+        """
+        Placeholder for temporal consistency.
+        Could measure how consecutive experiences align in time.
+        """
+        return 0.0
+
+    def _calculate_narrative_alignment(self) -> float:
+        """
+        Placeholder for a measure of how well experiences align in narrative context.
+        """
+        return 0.0
+
+    def get_metrics(self) -> Dict[str, float]:
+        """
+        Return current memory metrics as a dictionary.
+        """
         return {
-            'coherence_score': self.metrics.coherence_score,
-            'retrieval_accuracy': self.metrics.retrieval_accuracy,
-            'emotional_context_strength': self.metrics.emotional_context_strength,
-            'temporal_consistency': self.metrics.temporal_consistency,
-            'narrative_alignment': self.metrics.narrative_alignment
+            "coherence_score": self.metrics.coherence_score,
+            "retrieval_accuracy": self.metrics.retrieval_accuracy,
+            "emotional_context_strength": self.metrics.emotional_context_strength,
+            "temporal_consistency": self.metrics.temporal_consistency,
+            "narrative_alignment": self.metrics.narrative_alignment
         }
+
+    def store_adaptation(self, adaptation_data: Dict) -> None:
+        """
+        Placeholder for storing meta-learning adaptation records.
+        If your meta-learner calls this, define the logic to store it.
+        """
+        # e.g., self.storage["adapt_" + adaptation_data["task_id"]] = adaptation_data
+        pass
