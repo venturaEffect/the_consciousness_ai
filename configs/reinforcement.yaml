@@ -2,20 +2,20 @@
 
 reinforcement:
   # Emotional reward scaling
-  emotional_scale: 2.0 # Weight for emotional rewards
+  emotional_scale: 2.0
 
   # DreamerV3 World Model Configuration
-  dreamer_config:
+  dreamerV3:
     hidden_size: 256
     learning_rate: 0.0001
-    gamma: 0.99 # Discount factor
-    lambda_gae: 0.95 # GAE parameter
-    horizon: 333 # Planning horizon
-    imag_steps: 15 # Imagination steps for planning
+    gamma: 0.99
+    lambda_gae: 0.95
+    horizon: 333
+    imag_steps: 15
 
   # Memory Configuration
   memory_config:
-    capacity: 100000 # Size of experience buffer
+    capacity: 100000
     batch_size: 64
     emotion_embedding_size: 128
     context_length: 32
@@ -42,74 +42,62 @@ reinforcement:
     environment:
       render_quality: "epic"
       physics_substeps: 2
-      emotion_feedback_rate: 10 # Hz
+      emotion_feedback_rate: 10
     interaction:
       max_distance: 2.0
       emotion_memory_length: 100
 
 # Configuration for ACM reinforcement learning and adaptation
-
 narrator_model:
   name: "llama-3.3"
-  weights_path: "/models/llama3_3/base"
+  weights_path: "/models/language/llama-3.3"
   lora:
     enabled: true
     rank: 8
     alpha: 32
-    # Dynamic adaptation of LoRA weights
     adaptation_rate: 0.01
     min_update_weight: 0.1
 
 meta_memory:
-  # Controls for memory reinforcement
   stability:
-    threshold: 0.75 # Minimum stability score for pattern reinforcement
-    decay_rate: 0.995 # Memory stability decay over time
+    threshold: 0.75
+    decay_rate: 0.995
 
-  # Novel experience handling
   novelty:
-    initial_weight: 0.1 # Starting weight for new experiences
-    min_reinforcement: 0.05 # Minimum reinforcement value
-    max_reinforcement: 0.95 # Maximum reinforcement ceiling
+    initial_weight: 0.1
+    min_reinforcement: 0.05
+    max_reinforcement: 0.95
 
-  # Pattern reinforcement
   reinforcement:
     base_rate: 0.1
-    scale_factor: 2.0 # Multiplier for repeated patterns
-    emotional_bonus: 0.5 # Additional weight for emotional coherence
+    scale_factor: 2.0
+    emotional_bonus: 0.5
 
 imagination:
-  # Constraints for imagination module
   sampling:
     temperature: 0.8
     top_p: 0.95
     max_tokens: 1024
 
-  # Safety bounds for imagined scenarios
   constraints:
     min_coherence: 0.6
     max_deviation: 0.3
     reality_check_interval: 100
 
 emotional_development:
-  # Parameters for emotional learning
   learning_rate: 0.001
   batch_size: 32
   update_interval: 50
-
-  # Stability controls
   min_confidence: 0.7
   max_adaptation_rate: 0.2
   emotional_decay: 0.99
 
 feedback_mechanisms:
-  # Predictive feedback controls
   prediction:
     horizon: 100
     confidence_threshold: 0.8
     error_tolerance: 0.15
 
-  # Integration feedback
   integration:
     coherence_weight: 0.6
     stability_weight: 0.4
