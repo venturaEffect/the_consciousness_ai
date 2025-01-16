@@ -1,11 +1,11 @@
-# Core configuration for consciousness development parameters in ACM.
-#
+# Core configuration for ACM consciousness development.
+
 # Defines:
 # 1. Consciousness emergence thresholds
 # 2. Attention gating parameters
 # 3. Memory formation settings
 # 4. Emotional processing configuration
-#
+
 # Dependencies:
 # - models/core/consciousness_core.py
 # - models/evaluation/consciousness_monitor.py
@@ -34,7 +34,7 @@ consciousness:
 
   # New emotional metadata system
   emotional_metadata:
-    tagging_model: "clip-like-emotional" # Open source CLIP-style model
+    tagging_model: "clip-like-emotional"
     emotional_dimensions:
       - valence
       - arousal
@@ -75,7 +75,6 @@ consciousness:
     temporal_window: 20
     context_length: 32
     minimum_attention_level: 0.8
-    # New settings
     emotional_metadata_retention: 0.9
     generative_reference_threshold: 0.7
     imagination_creativity_factor: 0.4
@@ -89,12 +88,11 @@ components:
     gamma: 0.99
     lambda_gae: 0.95
     imagination_horizon: 15
-    # New emotional integration
     emotional_condition_size: 128
     metadata_embedding_size: 256
 
   emotion_network:
-    embedding_size: 256 # Increased for richer emotional context
+    embedding_size: 256
     num_heads: 12
     dropout: 0.1
     update_frequency: 10
@@ -102,7 +100,7 @@ components:
 
   narrative:
     model: "llama-3.3"
-    max_length: 1024 # Increased for better context
+    max_length: 1024
     temperature: 0.7
     context_window: 2048
     emotion_prefix_tokens: true
@@ -181,15 +179,13 @@ logging:
   wandb_logging: true
   log_level: "INFO"
 
-# Configuration for ACM consciousness development incorporating LLaMA 3.3 foundation
-
+# Configuration for ACM consciousness development with LLaMA 3.3
 foundation_model:
   name: "llama-3.3"
-  path: "models/llama3_3/base"
+  path: "models/language/llama-3.3"
   hidden_size: 4096
   num_heads: 32
 
-  # LoRA adaptation parameters
   lora:
     enabled: true
     rank: 16
@@ -199,13 +195,11 @@ foundation_model:
     learning_rate: 1e-4
 
 meta_memory:
-  # Experience weighting
   novel_experiences:
-    initial_weight: 0.1 # Low initial weight for new experiences
+    initial_weight: 0.1
     max_weight: 0.95
     reinforcement_rate: 0.2
 
-  # Pattern recognition
   stable_patterns:
     min_confidence: 0.75
     temporal_coherence: 0.8
@@ -218,33 +212,28 @@ meta_memory:
     max_patterns: 1000
 
 emotional_development:
-  # Emotion encoding
   encoder:
     hidden_dims: 256
     num_layers: 4
     dropout: 0.1
 
-  # Integration parameters
   fusion:
     attention_heads: 8
     context_dim: 512
-    emotion_dim: 64
+    emotion_dim: 256
 
 imagination:
-  # Imagination constraints
   sampling:
     temperature: 0.8
     top_p: 0.95
     max_tokens: 2048
 
-  # Safety bounds
   constraints:
     min_coherence: 0.6
     max_deviation: 0.3
     emotional_bound: 0.8
 
 consciousness_metrics:
-  # Development tracking
   tracking:
     emotional_coherence: 0.0
     narrative_stability: 0.0
