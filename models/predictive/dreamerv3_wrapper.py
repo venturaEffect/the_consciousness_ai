@@ -1,7 +1,7 @@
 """
 DreamerV3 Integration Wrapper for ACM
 
-This module implements:
+Implements:
 1. Integration with DreamerV3 world model
 2. Memory-augmented world modeling
 3. Emotional context incorporation
@@ -14,45 +14,67 @@ Dependencies:
 """
 
 import torch
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 from dataclasses import dataclass
+
+# Replace with actual imports once they exist in your codebase.
+from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
+from models.memory.emotional_memory_core import EmotionalMemoryCore
+
 
 @dataclass
 class WorldModelState:
-    """Tracks world model internal state"""
+    """Tracks world model internal state."""
     hidden_state: torch.Tensor
-    memory_state: torch.Tensor 
+    memory_state: torch.Tensor
     emotional_context: Dict[str, float]
     prediction_confidence: float
 
+
 class DreamerV3Wrapper:
     def __init__(self, config: Dict):
-        """Initialize DreamerV3 wrapper"""
-        self.config = config
-        self.emotion_network = EmotionalGraphNN(config)
-        self.memory = EmotionalMemoryCore(config)
+        """
+        Initialize DreamerV3 wrapper.
         
+        Args:
+            config: Dictionary containing DreamerV3 and emotional settings.
+        """
+        self.config = config
+        self.emotion_network = EmotionalGraphNetwork()
+        self.memory = EmotionalMemoryCore(config)
+        # Additional world model parameters can be stored here (e.g., learning rate).
+
     def process_experience(
         self,
         observation: torch.Tensor,
         action: Optional[torch.Tensor] = None,
-        emotional_context: Optional[Dict] = None
+        emotional_context: Optional[Dict[str, float]] = None
     ) -> Tuple[WorldModelState, Dict[str, float]]:
-        """Process new experience through world model"""
-        # Extract emotional features
+        """
+        Process new experience through the world model.
+        
+        Args:
+            observation: Current observation tensor.
+            action: Optional action tensor if available.
+            emotional_context: Optional emotional context dict.
+        
+        Returns:
+            A tuple of (updated world model state, diagnostic info dict).
+        """
+        # Extract emotional features if not provided.
         if emotional_context is None:
             emotional_context = self.emotion_network.process(observation)
-            
-        # Update world model state
+
+        # Update the internal world model state.
         world_state = self._update_world_model(
             observation=observation,
             action=action,
             emotion=emotional_context
         )
-        
-        # Generate predictions
+
+        # Generate predictions from the updated world state.
         predictions = self._generate_predictions(world_state)
-        
+
         return world_state, {
             'prediction_loss': self._calculate_prediction_loss(predictions),
             'model_uncertainty': self._estimate_uncertainty(world_state),
@@ -61,3 +83,69 @@ class DreamerV3Wrapper:
                 emotional_context
             )
         }
+
+    def _update_world_model(
+        self,
+        observation: torch.Tensor,
+        action: Optional[torch.Tensor],
+        emotion: Dict[str, float]
+    ) -> WorldModelState:
+        """
+        Update the internal representation of the world model.
+        Placeholder logic; replace with DreamerV3 steps.
+        """
+        # Example placeholders for hidden_state, memory_state, prediction_confidence.
+        hidden_state = observation.clone()  # Replace with real update logic.
+        memory_state = torch.zeros_like(observation)
+        prediction_confidence = 1.0  # Dummy value.
+
+        return WorldModelState(
+            hidden_state=hidden_state,
+            memory_state=memory_state,
+            emotional_context=emotion,
+            prediction_confidence=prediction_confidence
+        )
+
+    def _generate_predictions(
+        self,
+        world_state: WorldModelState
+    ) -> torch.Tensor:
+        """
+        Generate predictions from the updated world model.
+        Placeholder logic; replace with real forward pass of DreamerV3.
+        """
+        # Example: direct clone of hidden_state as "prediction."
+        return world_state.hidden_state.clone()
+
+    def _calculate_prediction_loss(
+        self,
+        predictions: torch.Tensor
+    ) -> float:
+        """
+        Compute prediction loss from generated predictions.
+        Placeholder logic; replace with actual loss function.
+        """
+        return float(torch.mean(predictions).item())
+
+    def _estimate_uncertainty(
+        self,
+        world_state: WorldModelState
+    ) -> float:
+        """
+        Estimate uncertainty in the world model's predictions.
+        Placeholder logic; replace with real uncertainty estimation.
+        """
+        return 1.0 - world_state.prediction_confidence
+
+    def _calculate_emotional_alignment(
+        self,
+        predictions: torch.Tensor,
+        emotional_context: Dict[str, float]
+    ) -> float:
+        """
+        Calculate how well the predictions align with emotional context.
+        Placeholder logic.
+        """
+        # Example: dummy alignment based on some factor of mean predictions + valence.
+        valence = emotional_context.get('valence', 0.5)
+        return float(predictions.mean().item()) * valence
