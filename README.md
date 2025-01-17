@@ -16,10 +16,10 @@ consciousness/
 ├── memory/
 │   ├── emotional_memory_core.py     # Emotional indexing
 │   ├── temporal_coherence.py        # Experience sequencing
-│   └── consolidation.py            # Memory optimization
+│   └── consolidation.py             # Memory optimization
 ├── emotion/
 │   ├── emotional_processing.py      # Affect handling
-│   └── meta_emotional.py           # Learning
+│   └── meta_emotional.py            # Learning
 └── core/
     ├── consciousness_gating.py      # Attention control
     └── self_model.py               # Self-representation
@@ -84,23 +84,13 @@ consciousness/
 
 ## Technologies
 
-- **Core AI:** LLaMA 3.3, PaLM-E, Whisper v3
+- **Core AI:** LLaMA 3.3, palme (open-source PaLM-E), Whisper v3
 - **Memory Systems:** Pinecone v2, Temporal Graph Neural Networks
 - **Emotion Processing:** GoEmotions, MELD, HEU Emotion
 - **Simulation:** Unreal Engine 5 with real-time physics
 - **Learning:** DreamerV3, PEFT, RLHF
 
 ## Installation
-
-## Getting Started
-
-### Prerequisites
-
-- **Python 3.9 or higher**
-- **CUDA Toolkit** (for GPU support)
-- **Unreal Engine 5**
-- **Node.js** (for gRPC bindings)
-- **Git**
 
 ### 1. Clone the Repository
 
@@ -111,30 +101,25 @@ cd the_consciousness_ai
 
 ### 2. Set Up a Virtual Environment
 
-It’s recommended to use a Python virtual environment to manage dependencies.
-
-**Linux/MacOS:**
-
 ```bash
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
 .\venv\Scripts\activate   # Windows
 ```
 
-### Install Dependencies
+### 3. Install Dependencies
 
 Run the provided installation script:
-
-```bash
-bash scripts/setup/install_dependencies.sh
-```
-
-Or install manually:
 
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+### 4. Unreal Engine Setup
+
+Install or build Unreal Engine 5 manually from the Epic Games launcher or source code (not from PyPI).
+Refer to Unreal Engine Docs [Unreal Engine Docs](https://docs.unrealengine.com/) for additional details.
 
 ## Folder Structure
 
@@ -145,6 +130,18 @@ pip install -r requirements.txt
 - `scripts/`: Utility scripts for setup, training, and testing.
 - `simulations/`: VR environments and APIs for agent interactions.
 - `tests/`: Unit and integration tests.
+
+### Usage
+
+Refer to the subdirectories (`/docs/` and `/models/`) for more detailed instructions.
+
+### Contributing
+
+We welcome contributions. Please see `docs/contributing.md`.
+
+### License
+
+This project is licensed under the terms of the `LICENSE` file.
 
 ### Download and Preprocess Datasets
 

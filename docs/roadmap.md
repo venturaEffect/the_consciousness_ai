@@ -7,7 +7,7 @@
   - **Unreal Engine 5** for immersive VR simulations.
   - **Key AI Models:**
     - LLaMA 3.3 for narrative construction.
-    - PaLM-E for vision-language understanding.
+    - **palme** (open-source PaLM-E) for vision-language understanding.
     - Whisper v3 for speech recognition and transcription.
   - **Vector Storage System:** Pinecone v2 for high-speed memory retrieval.
   - **Emotion Datasets:**
@@ -22,7 +22,7 @@
 - Build modular and scalable architecture:
   - Integrate foundational models:
     - LLaMA 3.3 for reasoning and contextual generation.
-    - PaLM-E for vision-language tasks with scene comprehension.
+    - **palme** for vision-language tasks with scene comprehension.
     - Whisper v3 for accurate audio transcription.
   - Establish memory infrastructure:
     - Deploy Pinecone v2 for vector storage and contextual memory retrieval.
@@ -34,7 +34,7 @@
 ## Phase 3: Multimodal Processing
 
 - Enhance input-output integration:
-  - Implement vision-language fusion using PaLM-E.
+  - Implement vision-language fusion using **palme**.
   - Extend Whisper v3 functionality to handle real-time and batch processing of audio inputs.
   - Develop the Multimodal Fusion module:
     - Add support for haptic inputs and their integration.
@@ -124,7 +124,7 @@
 ## Short-Term Goals
 
 - Implement and test LLaMA 3.3 integration.
-- Establish a functional multimodal fusion layer with PaLM-E and Whisper.
+- Establish a functional multimodal fusion layer with **palme** and Whisper.
 - Validate initial memory core integration with Pinecone v2.
 
 ## Long-Term Goals
