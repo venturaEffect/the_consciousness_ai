@@ -158,7 +158,10 @@ class EmotionalMemoryFusion(nn.Module):
         fused: torch.Tensor,
         memory: torch.Tensor
     ) -> torch.Tensor:
-        """Apply attention between fused representation and memory"""
+        # Ensure the last dimension matches
+        if fused.size(-1) != memory.size(-1):
+            raise ValueError(f"Dimension mismatch: fused={fused.size()} vs memory={memory.size()}")
+        
         attention = torch.matmul(fused, memory.transpose(-2, -1))
         attention = torch.softmax(attention, dim=-1)
         return torch.matmul(attention, memory)
