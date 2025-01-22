@@ -193,7 +193,7 @@ class EmotionalMemoryFusion(nn.Module):
     ) -> Dict[str, float]:
         """Calculate modality weights based on encoded features and emotional context"""
         # Placeholder implementation
-        return {name: 1.0 for name in encoded_features.keys()}
+        return {f"modality_{i}": 1.0 for i, _ in enumerate(encoded_features)}
         
     def _calculate_alignment(
         self,
