@@ -90,6 +90,46 @@ consciousness/
 - **Simulation:** Unreal Engine 5 with real-time physics
 - **Learning:** DreamerV3, PEFT, RLHF
 
+## Available Datasets for Training
+
+### First-Person Interaction Datasets
+
+All datasets below are free for commercial use and research purposes.
+
+#### 1. Ego4D Dataset
+
+- **Description**: Large-scale dataset containing 3,670+ hours of first-person video from 74 worldwide locations License: Ego4D License Agreement
+- **Features**: Daily activities, social interactions, episodic memory
+- **Setup**:
+  ```bash
+  pip install ego4d
+  ego4d --output_directory="~/ego4d_data" --datasets full_scale annotations --metadata
+  ```
+
+#### 2. EPIC-KITCHENS Dataset
+
+- **Description**: First-person videos in kitchen environments
+- **Features**: Object interactions, daily activities, annotated actions
+- **Access**: [EPIC-KITCHENS Portal](https://epic-kitchens.github.io/)
+
+#### 3. Charades-Ego Dataset
+
+- **Description**: 68,000+ video clips of daily activities
+- **Features**: Object/people interactions, paired third/first person views
+- **Access**: [Charades-Ego Dataset](https://allenai.org/plato/charades/)
+
+#### 4. GTEA Gaze+ Dataset
+
+- **Description**: First-person videos with gaze tracking
+- **Features**: Object manipulation, attention mapping, interaction patterns
+- **Access**: [GTEA Gaze+ Portal](http://cbs.ic.gatech.edu/fpv/)
+
+### Dataset Usage
+
+- Detailed setup instructions in `docs/datasets.md`
+- Data preprocessing guidelines in `docs/preprocessing.md`
+- Example notebooks in `notebooks/dataset_examples/`
+
 ## Installation
 
 ### 1. Clone the Repository
