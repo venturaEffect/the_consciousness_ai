@@ -1,0 +1,1728 @@
+VideoLLaMA 3: Frontier Multimodal Foundation
+Models for Image and Video Understanding
+Boqiang Zhang♠, Kehan Li♠, Zesen Cheng♠, Zhiqiang Hu♠, Yuqian Yuan♠,
+Guanzheng Chen♠, Sicong Leng♠, Yuming Jiang♠♢, Hang Zhang♠♢, Xin Li♠♢,
+Peng Jin, Wenqi Zhang, Fan Wang, Lidong Bing, Deli Zhao
+DAMO Academy, Alibaba Group
+♠Equal Contribution♢Project Lead
+https://github.com/DAMO-NLP-SG/VideoLLaMA3
+Abstract
+In this paper, we propose VideoLLaMA3, a more advanced multimodal
+foundation model for image and video understanding. The core design
+philosophy of VideoLLaMA3 is vision-centric. The meaning of “vision-
+centric” is two-fold: the vision-centric training paradigm and vision-centric
+framework design. The key insight of our vision-centric training paradigm
+is thathigh-quality image-text data is crucial for both image and video
+understanding. Instead of preparing massive video-text datasets, we focus
+onconstructinglarge-scaleandhigh-qualityimage-textdatasets. VideoL-
+LaMA3 has four training stages: 1) vision-centric alignment stage , which
+warmsupthevisionencoderandprojector;2) vision-languagepretrain-
+ing stage , whichjointly tunesthevision encoder,projector, and LLMwith
+large-scale image-text data covering multiple types (including scene im-
+ages,documents,charts)aswellastext-onlydata. 3) multi-taskfine-tuning
+stage,whichincorporatesimage-textSFTdatafordownstreamtasksand
+video-textdatatoestablishafoundationforvideounderstanding. 4) video-
+centricfine-tuning , whichfurtherimprovesthemodel’scapabilityinvideo
+understanding. As for the framework design, to better capture fine-grained
+detailsinimages,thepretrainedvisionencoderisadaptedtoencodeimages
+of varying sizes into vision tokens with corresponding numbers, rather
+than a fixed number of tokens. For video inputs, we reduce the number
+ofvisiontokensaccordingtotheirsimilaritysothattherepresentationof
+videos will be more precise and compact. Benefit from vision-centric de-
+signs, VideoLLaMA3 achieves compelling performances in both image and
+video understanding benchmarks.
+1 Introduction
+Recentyearshavewitnessedtherapidgrowthoflargelanguagemodels(LLMs)[ 1–6],which
+significantly enhance natural language processing and understanding. The growth of LLMs
+enablesintelligenceatthelanguagelevel. However,toprogressfurther,weneedintelligence
+Preprint. Work in progress.arXiv:2501.13106v1  [cs.CV]  22 Jan 2025
+RealWorldQA
+(General VQA)InfoVQAtest
+(Document VQA)MathVistatestmini
+(Math VQA)VideoMMEw/osub
+(General Video)PerceptionTesttest
+(Perception Video)MLVUdev
+(Long Video)55.2960.5765.8671.1476.4381.71
+70.7
+66.370.170.168.672.7
+72.6
+68.876.577.6
+70.778.9
+51.663.2
+58.264.465.467.1
+54.963.363.364.264.266.2
+54.967.9
+62.368.9
+65.472.8
+57.470.869.869.070.673.0Molmo
+LLaV A-OneVisionVideoLLaMA2
+LLaV A-VideoQwen2-VL
+InternVL2.5NVILA
+VideoLLaMA3Figure 1: Performance Comparison of VideoLLaMA3 with the previous advanced im-
+age/videoMLLMonvariousrepresentativebenchmarks. Asshowninthefigure,VideoL-
+LaMA3 has achieved very competitive results on various benchmarks. Specifically, VideoL-
+LaMA3notonlydemonstratesstrongvideounderstandingcapabilities(VideoMME,Percep-
+tionTest, MLVU) but also maintains excellent document comprehension abilities (DocVQA)
+and multimodal mathematical reasoning skills (MathVista). Note that LLaVA-OneVision is
+only used for evaluating image benchmarks, while LLaVA-Video is only used for evaluating
+video benchmarks.
+that extends beyond language, as the world itself is inherently multimodal. Specifically, the
+modelshouldbecapableofperceivingbothstaticscenesanddynamicenvironments, which
+necessitatestheabilitytounderstandimagesandvideos. BuildinguponthesuccessofLLMs,
+Multimodal LLMs (MLLMs) [7–10] have been proposed for multimodal understanding.
+Existing MLLMs [ 11–34] have made significant progress in multimodal understanding.
+Image-centricMLLMs[ 28,30–32,35–37],leveraginghigh-qualityimage-textdatasets[ 28,38–
+43] that are easier to collect and curate, have demonstrated strong performance in image
+understanding, such as visual question answering, OCR, and document understanding.
+Beyondstaticcontentlikeimages,video-centricMLLMs[ 22,24,27,30,32,44]musttackle
+the added complexity of modeling the temporal dimension of videos, requiring them to
+handledynamiccontentandcapturedependenciesacrossframes. Thistemporalcomplexity,
+combinedwiththeneedforlarge-scalevideo-textdatasetsthatareoftenoflowerqualityand
+hardertoannotate,makesvideoMLLMsmorechallenging. Thesechallengesunderscore
+the advantages of leveraging image understanding as a foundation for video understanding.
+By extending the robust visual capabilities of image MLLMs, video models can focus on
+and better address the unique challenges of temporal and dynamic content modeling.
+Inherit from VideoLLaMA [ 45] and VideoLLaMA2 [ 46], VideoLLaMA3, a more advanced
+multimodalfoundationmodel,isproposedforbothimageandvideounderstanding. We
+design VideoLLaMA3 in a vision-centric way. Specifically, we propose a vision-centric train-
+ingparadigmandvision-centricframeworkdesigns. Forthetrainingparadigm, considering
+the intrinsic relationship between image and video modalities - where videos are essen-
+tiallysequencesoftemporallycorrelatedimages,weprioritizetheimprovementofimage
+understanding, which in turn enhances the performance of video understanding. Moreover,
+compared to video-text data, image-text data is easier to collect and ensures higher data
+quality. Forvision-centricframeworkdesigns,weproposeadaptingthevisionencoderto
+handleimagesofanyresolutionduringtheimageunderstandingenhancementstageand
+tuning the encoder to efficiently embed video inputs.
+Our vision-centric training paradigm consists of four stages (Figure 2): 1) Vision Encoder
+Adaptation : Thisstagealignsthevisionencoder’sfeaturespacewithLLMs. Inputstothe
+vision encoder are adapted from fixed to dynamic resolutions. Scene images with short
+captions are used to enhance the encoder’s performance, while document and scene text
+images are used to enable the encoder to capture fine-grained visual details. 2) Vision-
+Language Pretraining : This stage establishes the foundation for multimodal understanding
+using detailed image-text data. Scene images are annotated with detailed captions, and
+document and chart data include extensive explanations. To enhance spatial reasoning,
+fine-grained image-text data with bounding boxes are utilized. A small amount of text-only
+data is included to retain the model’s language capabilities. All parameters are unfrozen
+2
+VisionEncoder Adaptation 15.57M dataScene image (11.84M)
+Document(2.80M)
+SceneText (0.93M)
+Scene image (12.56M)
+Document(2.68M)
+Scene Text (4.69M)
+Chart(0.04M)
+Fine-grained(1.0M)
+Text-only(1.0M)Scene image (9.87M)
+Document(1.31M)
+Chart(1.00M)OCR data(0.83M)
+Text-only(2.21M)
+Grounding(0.50M)Multi-Image(0.41M)
+General Video(2.92M)
+General(3.03M)Image-only(0.88M)Text-only(1.56M)Temporal Ground(0.21M)1234Vision-Language AlignmentMulti-task Fine-tuningVideo-centric Fine-tuning21.97M data19.05M dataStreaming(36.2K)
+5.71M data
+Figure 2: Training paradigm of VideoLLaMA3. The training of VideoLLaMA3 has four
+stages: (1) Vision Encoder Adaptation, (2) Vision-Language Alignment, (3) Multi-task
+Fine-tuning, and (4) Video-centric Fine-tuning.
+during this stage. 3) Multi-Task Fine-Tuning : In this stage, the model is fine-tuned for
+downstreamtasks,suchasinteractivequestionanswering. Image-textdatawithquestions
+and answers are employed, along with general video caption data to prepare the model
+for video perception. The use of general video caption data also surprisingly improves
+theperformanceofimageunderstanding. 4)Video-centricFine-tuning : Thisfinalstage
+enhances the model’s performance in video understanding and video question answering.
+Trainingdataincludesgeneralvideos,streamingvideos,videosannotatedwithtemporal
+grounding information, image-only and text-only data.
+Onthemodelside,weenhancethevisionencoderwithtwovision-centricdesigns: 1)we
+adapt thevision encoderto take imageswith dynamic resolutionsas inputs,and 2) welift
+thevisionencodertoreceivevideosandcompressthevideotokensintomorecompacted
+representations. In previous methods [ 28,31,32,47,48], vision tokens are either with fixed
+numbers or with numbers among several fixed choices, which is an inflexible and unnatural
+way to represent images. To alleviate this limitation, we adapt the pretrained vision encoder
+to receive images with variable shapes. This is achieved by replacing the fixed positional
+embeddings with the Rotary Position Embedding (RoPE). We finetune thevision encoder
+inthevisionencoderadaptationstagesothatitcanaccommodatedynamicinputs. Inthis
+way,enablingittoprocesshigh-resolutionimagesandimageswithunusualaspectratios
+with minimal information loss. As for video inputs, we consider the redundant information
+in videos and propose to reduce the number of vision tokens to represent a video. The
+advantagesofvisiontokencompressionaretwo-fold. Oneistomakethevisualembeddings
+of videos more compact and precise so that the model can focus more on the dynamic parts
+ofvideos. Theotheristosavecomputationdemandsduringtrainingandinferenceforvideo
+understanding.
+Thanks to the vision-centric training paradigm and framework designs, our proposed Vide-
+oLLaMA3achievesstate-of-the-artperformanceonbothimageandvideounderstanding
+benchmarks(Figure1). Notably,inimageunderstanding,theperformanceinchartunder-
+standing and vision-related math problems surpasses state-of-the-art models by a large
+margin. While in video understanding, our model achieves state-of-the-art performance
+in most benchmarks including general video understanding, long video understanding,
+temporal reasoning and grounding.
+To summarize, the key contributions of VideoLLaMA3 include:
+•WeproposeVideoLLaMA3,amoreadvancedmultimodalfoundationmodel,for
+bothimageandvideounderstanding. Themodelachievesstate-of-the-artperfor-
+mance on most image and video understanding benchmarks. Notably, VideoL-
+LaMA3 has significant improvements compared to previous versions of VideoL-
+LaMA.
+3
+Visual 
+Encoder
+Pre-trained Large Language Model 
+Projection
+ Query:  What color is the boy‘s hair in the image 1? What is the man doing in video 1?
+VideoLLaMA3: The boy in th eimage 1hasblond e hair, and the man in video 1 is diving .
+Image 1Width: 500Height:
+ 393
+Height:
+ 640
+Width: 420
+Image 2
+Width: 640Height:
+ 369
+Image 3
+Width: 640Height:
+ 480Time: 111s
+Video 1
+Visual 
+Encoder
+Original Video TokensDynamic  Vision Tokens
+Image 1  tokens
+Image 2  tokens
+Image 3 tokens
+Video 1  tokens
+Video 
+Compressor
+Dynamic  Resolution InputFigure 3: The overall pipeline of our VideoLLaMA3. There are two key technical points: ❶
+Any-resolution Vision Tokenization (AVT) : AVT converts images or videos of any resolu-
+tionintoasetof1-Dtokensequences,enablingcompatibilitywithvaryingamountsofinput
+imagesandvideosofdifferentresolutions,therebysupportingmoreflexiblevisioninput;
+❷DifferentialFramePruner(DiffFP) :Servingasavideocompressor,DiffFPeliminates
+videocontentwithminimaldifferencesbetweenadjacentframes. Thisapproachenhances
+video processing efficiency, particularly for long-form videos.
+•We propose the vision-centric training paradigm. Specifically, we propose to im-
+provevideounderstandingcapabilitiesthroughlarge-scaleimageunderstanding
+pretraining.
+•Weproposetwovision-centricframeworkdesignstoadaptvisionencoderstorepre-
+sent images and videos better.
+2 Methodology
+AsshowninFigure3,onthemodelside,VideoLLaMA3consistsoftwokeytechnicalpoints:
+❶Any-resolution Vision Tokenization (AVT) and❷Differential Frame Pruner (DiffFP) .
+When it comes to data, since we propose to improve video understanding capabilities
+based on image understanding, we also develop a pipeline for constructing high-quality
+re-captioned image dataset.
+2.1 Any-resolution Vision Tokenization
+In MLLMs, visual inputs are extracted into vision tokens for multimodal understanding.
+The common practice [ 47,48] is to extract visual inputs with a pre-trained ViT-based vision
+encoder. The pre-trained vision encoder only receives images with fixed resolutions, which
+introducesinformationloss. Toalleviateinformationloss,AnyRestechniques[ 28,31,32]are
+proposed to split images into patches with fixed resolutions. Although AnyRes techniques
+increasethenumberofvisiontokens,itisstillinflexibleandneglectsthepositionrelationship
+within an image when extracting vision tokens. In VideoLLaMA3, we adopt the idea of
+Any-resolution Vision Tokenization (AVT) [ 30,49] to dynamically process images and
+videosofanyresolution. Concretely,weadaptthepre-trainedvisionencoder(ViT-based
+4
+Compute Frame 
+differences
+Prune patches
+Figure 4: The calculation flow of our DiffFP. We prune video tokens based on patch
+similarities in pixel space, removing patches with smaller distances to the previous frame.
+architectures) to handle variable resolutions by employing a strategy to replace the absolute
+positionembeddingsinViTwith2D-RoPE[ 50]. WithAVT,imagesandvideosofdifferent
+resolutions are better represented with more details included in vision tokens. To make
+the vision encoder compatible with AVT, we fine-tune the vision encoder and the projector
+in the stage of Vision Encoder Adaptation (i.e., stage #1 in Figure 2) using scene images,
+document data, and scene images with texts.
+2.2 Differential Frame Pruner
+Forvideos, inputs whichusuallyhave muchmore tokensthanimage inputsafter tokeniza-
+tion, to reduce the computation demand for videos, we apply a per-frame 2 ×2 spatial
+downsamplingbybilinearinterpolationtolimitthecontextlengthwithinacertainrange.
+Besides,consideringthatvideosconsistofframeswithoverlappingcontent,representing
+videosbystackingvisiontokensfromeachframeleadstolengthyandredundanttokens. To
+furtherreducethenumberoftokensofvideos,weproposetheDifferentialFramePruner
+(DiffFP) to prune the video tokens. Inspired by RLT [ 51], we compare the 1-norm distance
+between temporally consecutive patches within the pixel space. We consider temporally
+consecutive patches with smaller distances to be redundant, and the later patches can be
+pruned. Specifically,asshowninFigure4,wefirstcalculatethe1-normdistancebetween
+consecutive frames in the pixel space and then remove patches whose distances fall below a
+pre-defined threshold. Following RLT [51], we set the default threshold to 0.1.
+2.3 Construction of High-Quality Image Re-Caption Dataset
+TotrainourVideoLLaMA3,weconstructedahigh-qualityimagere-captiondataset,VL3-
+Syn7M. All images in this dataset are sourced from COYO-700M [52] and processed using
+our proposed cleaning pipeline as below:
+1)AspectRatioFiltering. Webeginbyfilteringimagesbasedontheiraspectratios,removing
+those with extreme values. This step ensures that the dataset contains images with typical
+aspect ratios, preventing potential biases during feature extraction. For instance, images
+thatareexcessivelylongorwidemaydistortthemodel’sinterpretationduetotheirunusual
+shapes.
+2)AestheticScoreFiltering. Anaestheticscoringmodelisappliedtoevaluatethevisual
+qualityoftheimages. Basedonthesescores,imageswithlowaestheticratingsarediscarded.
+Thisstepeliminatesvisuallypoororpoorlycomposedimages,reducingnoiseandimproving
+the quality of the descriptions generated by the model.
+3)Text-Image Similarity CalculationwithCoarseCaptioning. TheBLIP2 modelisused
+to generate initial captions for images, followed by calculating the text-image similarity
+5
+using the CLIP model. Images with low similarity are excluded, as they are likely to contain
+contentthatischallengingtodescribeconcisely. Thisprocessensuresthattheremaining
+images are both descriptive and interpretable.
+4)VisualFeatureClustering. VisualfeaturesareextractedusingtheCLIPvisionmodel,and
+ak-Nearest-Neighbors(KNN)algorithmisappliedforclustering. Thismethodidentifies
+cluster centers in the visual feature space. From each cluster, we select a fixed number of
+images. Thisapproachensuresdiversitywithinthedatasetwhilemaintainingabalanced
+distributionofsemanticcategories,improvingthemodel’sabilitytogeneralizeacrossvarious
+visual content.
+5)ImageRe-caption. Afterfilteringandclusteringtheimages,weproceedwithdetailed
+re-captioning. Brief captions are generated using InternVL2-8B [ 31,53], while the detailed
+captions are produced with InternVL2-26B [ 31,53]. These two types of captions (VL3-
+Syn7M-short and VL3-Syn7-detailed) are employed at different stages of training to address
+varying needs.
+Throughtheaforementionedcleaningandre-captionprocess,wecreatedtheVL3-Syn7M
+dataset, which consists of 7 million image-caption pairs. This high-quality dataset will be a
+crucial component in training our model, providing a rich and diverse set of images and
+annotations that support strong performance across a wide range of visual tasks.
+3 Training
+As illustrated in Figure 3, VideoLLaMA3 consists of four key components: a vision encoder,
+a video compressor, a projector, and a large language model (LLM). The vision encoder
+extracts visual tokens and is initialized with the pre-trained SigLIP [ 54]. To reduce the
+numberofvisiontokensrepresentingvideos,avideocompressorisemployed. Theprojector
+bridges the features between the vision encoder and the LLM. For the LLM, we utilize
+Qwen2.5 models [5].
+Inspired by previous explorations in MLLMs [ 24,28,30], we develop video understanding
+capabilitiesbasedonstrongimageunderstandingfoundations. Toenablethemodelwith
+strong image and video understanding capabilities simultaneously, the training of Vide-
+oLLaMA3hasfourstages: 1)VisionEncoderAdaptation,2)Vision-LanguageAlignment,
+3)MassiveMulti-taskFine-tuning,and4)Video-centricFine-tuning. Whilethefirstthree
+stagesprimarily focuson improvingimage understanding, thefinalstageis dedicatedto
+video understanding. The details of the training stages are as follows:
+1) VisionEncoder AdaptationStage. In thisstage, wefine-tune thevision encoder,which
+isinitializedwiththepre-trainedSigLIP[ 54],onalarge-scaleimagedataset. Duringthis
+stage, the vision encoder is made trainable, while the language decoder remains frozen.
+This fine-tuning transforms the encoder into a dynamic-resolution processor, enhancing its
+abilitytoprocessimagesofvaryingresolutions. Meanwhile,theprojectoristrainedtobetter
+align the features of the vision encoder with those of the LLM.
+2)Vision-LanguageAlignmentStage. Thisstageprimarilyfocusesonintroducingmulti-
+modal knowledge into the model. During this phase, all parameters are made trainable,
+enabling both the LLM and the vision encoder to befine-tuned for integrating multimodal
+knowledge.
+3) Multi-task Fine-tuning Stage. In this stage, we perform instruction fine-tuning using a
+diversesetofmultimodalquestion-answeringdata, whichincludesbothimageandvideo-
+based questions. This step is crucial for improving the model’s ability to follow natural
+languageinstructionsandenhancingitsmultimodalunderstanding. Moreover,thisstage
+lays the foundation for the model’s video understanding capabilities, enabling it to process
+andanalyzetemporalinformation. Also,inthisstage,weintroducethevideocompressorto
+reduce the number of video tokens.
+4) Video-centric Fine-tuning Stage. In this stage, we focus on enhancing the model’s video
+understandingcapabilities. Allparametersareunfreezedduringthisstage. Thedataused
+in this stage includes video-text data, image-only data and text-only data.
+6
+Image(s) Sequence
+Video Sequence
+Streaming Video SequenceSep. Image Tokens Text Tokens
+\n \n ···What is the
+···
+ ··· ···Time s : Time s : , \n What···Frame Tokens Timestamp Tokens
+···
+Time \n What···
+ ···GPT , This is : ··· ···TimeAnswer Tokens
+This is···Figure 5: Data formats for different data types. ❶For image sequence, we use "\n" to
+separate image tokens from different image; ❷For video sequence, we use "Time: xxs"
+toindicatetimestampsofeachframe,","toseparatedifferentframes,and"\n"toseparate
+tokensfromdifferentvideos; ❸Forstreamingvideosequence,videosandtextsareorganized
+in an interleaved format.
+3.1 Data Format
+The data format for images, videos and streaming videos are shown in Figure 5.
+Image Sequence. Images are represented as a sequence of tokens, referred to as Image
+Tokens. The“\n”characterisusedtoseparatetokensbelongingtodifferentimages. Besides,
+text tokens follow image tokens, separated by “\n”, enabling a mixed representation of
+image and textual data.
+Video Sequence. Frames in a video sequence are represented as Frame Tokens. Before
+tokensforeachframe,aTimestampTokenintheformat"Time: xxs"isinsertedtodenotethe
+timecorrespondingtothatframe. Frameswithinavideosequenceareseparatedbycommas
+",". After the video tokens, “\n” is inserted to separate the video data from any subsequent
+text tokens, ensuring a clear distinction between the two modalities.
+StreamingVideoSequence. Forstreamingvideodata,videoandtexttokensareinterleaved
+inthesequence. Timestamps(i.e.,“Time: xxs”)areinsertedbeforetheframetokens,similar
+to video sequences. To mimic the interactive scenarios of streaming videos, Answer tokens
+(i.e., “GPT: xxx”) may appear within the sequence to denote contextualized outputs or
+interactions. Theinterleavedformatensuresaseamlessintegrationofvideoandtextualdata
+streams.
+3.2 Data Mixture
+Following the principle outlined in LLaVA-OneVision [ 28], i.e., “quality over quantity”, we
+conductrigorouscleaningprocedurestoguaranteedataquality. Inthissection,weprovidea
+detailed description of the data mixture for each stage, as well as the synthesis and cleaning
+methods applied to different data subsets.
+3.2.1 Vision Encoder Adaptation
+Table 1:Data mixture in vision encoder adaptation stage.
+Task Dataset Amount
+Scene Image VL3-Syn7M-short,LLaVA-Pretrain-558k[ 55],Objects365-Recap[ 56],
+SA-1B-Recap [57]11.84M
+SceneTextImage BLIP3-OCR-Recap [58] 0.93M
+Document pdfa-eng-wds [59], idl-wds [60] 2.80M
+The Vision Encoder Adaptation stage is designed to enhance the model’s ability to com-
+prehend a wide range of diverse scenes and improve its feature extraction capacity, with
+aparticularfocusoncapturingfine-grainedinformationsuchasobjects,regions,andtext.
+AsshowninTable1,thetrainingdatainthisstagecombinessceneimagesanddocument
+7
+recognition images, along with a small portion of scene text images. It should be noted that
+all data labeled as "Recap" consists of captions generated with InternVL2-8B [31].
+Forsceneimages,ourdatasourcesincludeVL3-Syn7M-short,LLaVA-Pretrain-558K[ 55],
+Object365 [56], and SA-1B [57]. Notably, the Object365 and SA-1B datasets are included to
+enhance data diversity, as images in this dataset are mainly complex scenes.
+ThescenetextimagesaresourcedfromBLIP3-OCR[ 58]. Boththebriefrecaptionandthe
+text content within the images are used as captions, and the text content caption following a
+left-to-right, top-to-bottom pattern across the image.
+The document images used in this stage are a subset of pdfa-eng-wds [ 59] and idl-wds [ 60].
+Atotalof2.8millionimageswerechosenfromthesetwodatasets,withthetextcontentof
+the documents serving as image captions, following the reading order.
+3.2.2 Vision-Language Alignment
+Table 2:Data mixture in vision-language alignment stage.
+Task Dataset Amount
+Scene Image VL3-Syn7M-detailed, Objects365-Recap [ 56], SA-1B-Recap [ 57],
+COCO2017-Recap [ 61], ShareGPT4o [ 53], TextCaps [ 62],
+ShareGPT4V [63], DenseFusion [64], LLaVA-ReCap (LCS-558K) [28]12.56M
+SceneTextImage Laion-OCR [ 65], COCO-Text [ 66], TextOCR [ 67], BLIP3-OCR-
+Recap [58], LSVT [68], ReCTS [69]4.69M
+Document SynthDoG-EN [ 70], SynthDoG-ZH [ 70], UReader-TR [ 71],
+FUNSD [ 72], DUDE [ 73], Vary-600k [ 74], pdfa-eng-wds [ 59],
+idl-wds [60]2.68M
+Chart Chart-to-Text [75] 0.04M
+Fine-grained Osprey-724K [ 76], MDVP-Data [ 77], ADE20K-Recap [ 78], Ob-
+ject365 [56], Flickr-30K [79], GranD [80]1.00M
+Text-only Evol-Instruct-143K [ 81], Infinity-Instruct-code [ 82], Infinity-Instruct-
+commonsense [82], Infinity-Instruct-math [82]6.25M
+In this stage, we fine-tune the model using high-quality data. As shown in Table 2, we
+curatefivetypesofdatatocoverawiderangeofeverydayscenarios: sceneimages,scene
+textimages,documents,charts,andfine-graineddata,alongwithasubstantialamountof
+high-quality text-only data.
+Forsceneimages,weincludeCOCO-2017[ 66],Object365[ 56],SA-1B[ 57],ShareGPT4o[ 53],
+ShareGPT4V [ 63], DenseFusion [ 64], and LLaVA-Recap (LCS-558K) [ 28]. For Object365,
+COCO-2017, and SA-1B datasets, we combined the original image annotations with
+InternVL2-26B [31] to recaption and generate detailed image captions.
+ThescenetextimagesincludeadiversesetofChineseandEnglishscenetextrecognition
+datasets. Thesedatasets,suchasBLIP3-OCR[ 58],COCO-Text[ 66],TextOCR[ 67],LSVT[ 68],
+and ReCTS [ 69], provide varied examples of text in real-world environments. Furthermore,
+we filter images from the LAION dataset [ 65] to include those with clear and readable text,
+resulting in a collection of 3 million high-quality images, which we term as Laion-OCR
+dataset. For the Laion-OCR dataset captions, we include both the text content and the
+corresponding bounding box annotations of the text locations. The caption format is as
+follows:
+{Caption}. The texts in this image are {Text1}<box>[{Bounding Box 1}]</box>,
+{Text2}<box>[{Bounding Box 2}]</box>, ...
+Asfordocumentimages,weincludepdfa-eng-wds[ 59],idl-wds[ 60],UReader-TR[ 71],Vary-
+600k[74],andSynthDoG[ 70]. SynthDoGdatasetisconstructedbygeneratingsynthetically
+accurate document images, avoiding human annotation errors and ensuring precise model
+8
+training. Furthermore, we add the handwritten document dataset FUNSD [ 72] and the
+complexdocumentdatasetDUDE[ 73]. FUNSDprovidesannotatedhandwrittensamplesfor
+handwritingrecognition,whileDUDEincludesdocumentswithcomplexlayouts,enhancing
+the model’s ability to handle a variety of document types.
+Forchart images,sincecharts sharemanysimilaritieswith documentsintermsofcontent
+presentation, we only include a limited amount of chart data. These data come from the
+Chart-to-Text [75] dataset.
+For fine-grained images, we construct two types of data: region caption data and grounded
+caption data. Region caption data describes the content of specific regions within an im-
+age. These data are derived and constructed from the Ospery-724K [ 76], Object365 [ 56],
+ADE20K [ 77], and MDVP-Data [ 78] datasets. These data help the model to understand
+the details of the image at the region level. Grounded caption data consist of textual de-
+scriptionsofobjectswithcorrespondingboundingboxannotations,primarilyconstructed
+from the Flickr-30K [79] and GranD [80] datasets. Both types of data enhance the model’s
+understanding of images, supporting moreaccurateobject localization andrecognition in
+complex scenes.
+3.2.3 Multi-task Fine-tuning
+Table 3:Data mixture in massive multi-task fine-tuning stage.
+Task Dataset Amount
+Image&TextData
+General LLaVA-SFT-665K [ 38], LLaVA-OV-SI [ 28], Cambrian-cleaned [ 39],
+Pixmo (docs, cap, points, cap-qa, ask-model-anything) [35]9.87M
+Document DocVQA [40], Docmatix [41] 1.31M
+Chart/Figure ChartQA [ 42], MMC_Instruction [ 83], DVQA [ 84],
+LRV_Instruction [85], ChartGemma [86], InfoVQA [87], PlotQA [88]1.00M
+OCR MultiUI [89], in-house data 0.83M
+Grounding RefCoco [90], VCR [91], in-house data 0.50M
+Multi-Image Demon-Full [92], Contrastive_Caption [93] 0.41M
+Text-only Magpie [ 94], Magpie-Pro [ 94], Synthia [ 95], Infinity-Instruct-
+subjective [82], NuminaMath [96]2.21M
+Video Data
+General LLaVA-Video-178K [ 24], ShareGPT4o-Video [ 27], FineVideo [ 97],
+CinePile [ 98], ShareGemini-k400 [ 99], ShareGemini-WebVID [ 99],
+VCG-Human [ 21], VCG-Plus [ 21], VideoLLaMA2 in-house data, Tem-
+poral Grounding in-house data2.92M
+In this stage, we perform instruction tuning with instruction-following data to refine the
+model’sabilitytointerpretandfollownaturallanguageinstructions. Thisdatamixtureis
+designed to cover a wide range of tasks, enabling the model to learn to perform various
+actionsbasedoninstructionsacrossdiversecontextsandmodalities. Additionally,toactivate
+the model’s video understanding capabilities, we incorporate general video data.
+Similartothevision-languagealignmentstage,wedividetheimagedataintosixdistinct
+groups: general,document,chart/figure,OCR,grounding,andmulti-image,asshownin
+Table3. Eachcategorytargetsataspecificaspectofvisualunderstanding,ensuringthemodel
+can effectively handle tasks related to different types of visual information. Alongside these
+visual data categories, we also include a substantial amount of text-only data to improve
+themodel’sability tohandlediverseinstruction-followingtasks involvingbothvisualand
+textual inputs.
+Thegeneralimagedataincludeshigh-qualitydatasets,suchasLLaVA-SFT-665K[ 55]and
+LLaVA-OV-SI [ 28], which serve as foundational resources for enhancing the model’s scene
+understanding. WealsocleanandfiltertheCambrian-10M[ 39]dataset. Furthermore,we
+9
+incorporatemeaningfuldatafromthePixmodataset[ 35],includingtaskssuchasdocument
+analysis, caption generation, and counting. These scene images cover a wide range of tasks,
+including captioning, counting, document understanding, mathematical reasoning, and etc.
+Forconstructingthedocumentandchart/figuredatasets,wecarefullyselecthigh-quality
+data sources and perform quality cleaning to ensure data reliability. It should be noted that
+theDocmatixdatasetisincludedasitcontainsmulti-pageanddiversedocuments,crucial
+for significantly enhancing the model’s ability to understand and long complex document
+structures and content.
+ForOCRdata,weconsidertwocommoncasesinreal-worldscenarios: developmentscenarios
+andnaturalscenarios. Fordevelopmentscenarios,weusetheMultiUIdataset[ 89]toactivate
+the model’s capabilities in understanding and processing text within user interfaces. For
+naturalscenarios,weleveragetheLaion-OCRdatasettoconstructadditionalinstruction-
+tuning data. The instruction-tuning data for OCR consists of the following five sub-tasks: 1)
+Text Existence Detection: Determine whether a specific piece of text exists within the image.
+2)TextLocalization: Locateaspecificpieceoftextwithintheimageandoutputitsbounding
+box. 3)Text Recognitionwithin a Bounding Box: Given abounding box, recognizethetext
+contained within it. 4) Text Comparison Between Images: Given two images, determine in
+which image the specified text appears. 5) Comprehensive Text Detection and Recognition:
+Detect and recognize all text present in the image.
+For grounding images, we select data from established datasets such as RefCOCO [ 90] and
+VCR[91],whichfocusontasksofgroundingvisualelementsinspecifictextualdescriptions.
+For multi-image scenes, we leverage the Demon-Full [ 92] and Contrastive-Caption [ 93]
+datasets. The Demon-Full dataset is particularly valuable as it includes various tasks in-
+volving multi-image scenes, such as comparing differences between two images, generating
+captions for the final image in a comic strip, completing missing text in images with oc-
+cludedportions,determiningwhethermultipleimagesbelongtothesamecategory,and
+more. These tasks help the model handle complex scenarios involving multiple images, pro-
+viding a more comprehensive understanding of how visual information can be interpreted
+across a series of related images. At the same time, such multi-image data further enhances
+the model’s video understanding capabilities.
+For the video data used in this stage, we incorporate commonly used high-quality video
+captiondatasets,alongwithasmallamountofquestion-answeringdata. Inaddition,we
+supplementthesewithhigh-qualitydatafromVideoLLaMA2[ 46]andin-housetemporal
+grounding data. The in-house temporal grounding data specifically focuses on temporal
+relationshipsbetweenvideoframes,enablingthemodeltograspthesequenceofeventsand
+understand the flow of actions across time. These combined data sources contribute to a
+more robust and nuanced video understanding capability for the model.
+3.2.4 Video-centric Fine-tuning
+Table 4:Data mixture in video-centric fine-tuning stage.
+Task Dataset Amount
+General Video LLaVA-Video-178K [ 24], ShareGPT4o-Video [ 27], FineVideo [ 97],
+CinePile [ 98], ShareGemini-k400 [ 99], ShareGemini-WebVID [ 99],
+VCG-Human [ 21], VCG-Plus [ 21], VideoRefer [ 100], VideoLLaMA2
+in-house data, In-house synthetic data3.03M
+Streaming Video ActivityNet [ 101], YouCook2 [ 102], Ego4D-narration [ 103], Ego4D-
+livechat [104]36.2K
+Temporal
+GroundingActivityNet [ 101], YouCook2 [ 102], ViTT [ 105], QuerYD [ 106],
+HiREST [107], Charades-STA [108], Moment-10M [109], COIN [110]0.21M
+Image-only LLaVA-SFT-665K [38], LLaVA-OV-SI [28] 0.88M
+Text-only Magpie [94], Tulu 3 [111] 1.56M
+10
+The video-centric fine-tuning stage is designed to tune VideoLLaMA3 to a video specialist
+andfullyunleashitsvideounderstandingabilitybyfocusingmainlyonlarge-scaleandhigh-
+quality video instruction following. We first collect videos with generally annotated caption,
+question, and answer from multiple open-source datasets including LLaVA-Video [ 24],
+ShareGPT-4o[ 27],FineVideo[ 97],CinePile[ 98],ShareGemini[ 99],VideoGPT+[ 21]and
+VideoRefer[ 100]. Theseabout2.7Mvideo-centricconversationseventuallyformadataset
+across various scenes and tasks to serve as examples for teaching the model to understand
+complex dynamic and static content in videos.
+In addition, we further expand the data scale and strengthen the model by synthesizing
+dense captions and QAs of specific aspects. Specifically, following the pipeline proposed in
+[24], we first filter 68K dynamic videos from Panda-70M [ 112] dataset by optical flow, and
+thenemployQwen2-VL-72B[ 30]togeneratediversedensecaptionsandQAsforeachvideo
+from the aspects of temporal understanding, spatial understanding, object description, and
+time-order understanding. Finally, 242K question-answer pairs are used for training.
+Besidesgeneralvideo-centricconversations,wealsointroducethefeatureofstreamingvideo
+understandingandtemporalgroundingtoextendtheapplicationscenariosofourmodel. For
+streamingvideounderstanding,weacquiredatafromActivityNet[ 101],YouCook2[ 102],
+andEgo4D[ 103],andorganizevideoframesandmultipletemporaldensecaptionsinan
+interleavedmannerasdescribedinSection3.1,aimingatenhancingtheabilitytounderstand
+fine-grained events in video and to sustain multi-turn conversations in streaming video.
+Sincethesevideosaregenerallylong,wecutthemintosmallsegmentsofuptotwominutes
+according to the time interval of dense captions, and remove clips with overly dense and
+sparse captions. The synthetic streaming conversation from VideoLLM-Online [ 104] is also
+involved. For temporal grounding, we collect 205K data from datasets including Activi-
+tyNet[101],YouCook2[ 102],ViTT[105],QuerYD[ 106],HiREST[ 107],Charades-STA[ 108],
+Moment-10M [ 109], and COIN [ 110], and directly convert the grounding annotation to text
+format such as “1.0-2.0 s” for training.
+Finally,weemloyacertainamountofimage-onlyandtext-onlydatafromLLaVA[ 38],LLaVA-
+OneVision [ 28], Magpie [ 94], and Tulu 3 [ 111] for mitigating the impact of catastrophic
+forgetting on the model’s capabilities.
+3.3 Implementation Details
+In this part, we briefly introduce the implementation details of each training stage. For
+allstages,weadoptthecosinelearningratescheduler. Thewarmupratioofthelearning
+rate is set as 0.03. The maximum token length is set as 16384, while the maximum token
+length for vision tokens is set as 10240. In the stage of Vision Encoder Adaptation, when
+training VideoLLaMA3-2B, we initialize the vision encoder with the pre-trained weights of
+SigLIP[54]andtheLLMwiththepre-trainedweightsofQwen2.5-2B[ 5]. ForVideoLLaMA3-
+7B, the vision encoder is initialized with the fine-tuned SigLIP weights in VideoLLaMA3-2B
+andtheLLMisinitializedwithQwen2.5-7B[ 5]. Theprojectorisimplementedasatwo-layer
+MLPwithGELUastheactivationfunction. Inthisstage,weonlytrainthevisionencoder
+and projector, and their learning rates are set as 1.0×10−5and 1.0×10−3, respectively. For
+theremainingstages,thelearningratesfortheLLM,theprojector,andthevisionencoder
+are set as 1.0×10−5,1.0×10−5,2.0×10−6, respectively. The differential frame pruner is
+applied in the multi-task fine-tuning stage and the video-centric fine-tuning stage where
+video data is involved. The threshold to discard similar visual tokens is 0.1. To limit context
+length, the visual tokens of videos are spatially downsampled after vision encoder by a
+factorof 2usingbilinearinterpolation. Thevisualtokensofimagesareonlydownsampledin
+the video-centric fine-tuning stage to align with video data. For loading video data, we first
+sampleframesat 1framepersecondusingFFmpeg. Theseframeswillbefurthersampled
+uniformly if the total number of frames is greater than a certain value, which is set to 180to
+accommodate most videos that last less than 3minutes.
+11
+Table 5:Evaluation results of 2B models on image benchmarks.∗denotes the reproduced
+results. The best results are in boldand the second best ones are underlined .
+BenchmarkModel
+SmolVLM
+2B
+InternVL2.5
+2B
+Qwen2-VL
+2BVideoLLaMA3
+2B
+Document/Chart/Scene Text Understanding
+ChartQA 65.3* 79.2 73.5 79.8
+DocVQA test 81.6 88.7 90.1 91.9
+InfoVQA test - 60.9 65.5 69.4
+OCRBench 622* 804 767∗779
+Math
+MathVista testmini 44.6 51.3 43.0 59.2
+MathVision test 6.5* 14.7 12.4 15.5
+Multi Image
+MMMU-Pro 17.1* 23.7 26.0 28.6
+MMMU val 38.8 43.6 41.1 45.3
+BLINK test 42.3* 44.0 43.1∗44.2
+Knowledge/General QA
+RealWorldQA 48.8* 60.1 62.9 67.3
+AI2D 62.1* 74.9 69.9 78.2
+GQA 49.2* 59.5* 59.8∗62.7
+MME 1600* 2005∗1872 1901
+4 Experiment
+4.1 Image-based Evaluation
+4.1.1 Baselines
+To comprehensively evaluate the image performance of VideoLLaMA3, we compare it
+againstadiversesetofbaselines. Forthe2Bversionofthemodel,weselectseveralstrong
+methods, including SmolVLM [ 37], InternVL2.5-2B [ 32], and Qwen2VL-2B [ 30]. For the 7B
+model,therearemoreoptionsavailable. WechoosetocompareagainstMolmo-7B-D[ 35],
+InternVL2.5-8B [32], LLaVA-OneVision [28], NVILA [36], and Qwen2VL-8B [30].
+4.1.2 Benchmarks
+To evaluate the image recognition and perception capabilities of VideoLLaMA3, we conduct
+assessments on several representative benchmarks commonly used in Image-LLMs. These
+benchmarks cover four dimensions: document/chart/scene text understanding, mathemati-
+cal reasoning, multi-image understanding, and general knowledge QA.
+Document/Chart/Scene Text Understanding. To evaluate VideoLLaMA3’s ability to un-
+derstand various forms oftexts in images, including documents, charts, and scene text,we
+conduct assessments on a range of benchmarks. Specifically, we use: 1) DocVQA [ 113]
+for document understanding, which evaluates the model’s ability to process and extract
+information from text in documents; 2) ChartQA [ 42] and InfoVQA [ 113] for chart un-
+derstanding,assessingthemodel’sabilitytointerpretandreasonaboutdatapresentedin
+graphicalformssuchasbarchartsandlinegraphs;and3)OCRBench[ 114]forscenetext
+imageunderstanding,whichteststhemodel’scapacitytoextractandcomprehendtextfrom
+images of real-world scenes.
+Mathematical Reasoning. VideoLLaMA3’s mathematical reasoning capabilities are evalu-
+atedthroughtheMathVista[ 115]andMathVision[ 116]benchmarks. Thesebenchmarks
+12
+Table 6:Evaluation results of 7B models on image benchmarks.∗denotes the reproduced
+results.†denotestheresults retrievedfromtheofficialleaderboard. Thebestresultsare in
+boldand the second best ones are underlined .
+Molmo-7B-D7B
+InternVL2.58B
+LLaVA-OneVision7B
+NVILA8B
+Qwen2-VL8B
+VideoLLaMA37B
+Document/Chart/Scene Text Understanding
+ChartQA 84.1 84.8 80.0 86.1 83.0 86.3
+DocVQA test 92.2 93.0 87.5 93.7 94.5 94.9
+InfoVQA test 72.6 77.6 68.8 70.7 76.5 78.9
+OCRBench - 822 621 676* 845 828
+Math
+MathVista testmini 51.6 64.4 63.2 65.4 58.2 67.1
+MathVision test - 19.7 - 11.9* 16.3 26.2
+Multi Image
+MMMU-Pro - 34.3 24.1†29.5* 31.4∗33.6
+MMMU val 45.3 56.0 48.8 49.9 54.1 48.8
+BLINK test - 54.8 48.2 47.0∗43.1∗55.2
+Knowledge/General QA
+RealWorldQA 70.7 70.1 66.3 68.6 70.1 72.7
+AI2D 93.2 84.5 81.4 92.3 83.0 84.7
+GQA - - 62.3 - 62.4∗64.9
+MME - 2344 1998 2219 2327 2102
+focusonevaluatingthemodel’sabilitytoreasonaboutandsolvemathematicalproblems
+presentedinvisualformats,includingtext-basedmathematicalexpressionsandproblem-
+solving tasks that require visual interpretation.
+Multi-image Understanding. To assess VideoLLaMA3’s ability to understand and reason
+about multiple images in conjunction, we evaluate the model on several widely used bench-
+marks, includingMMMU-Pro [ 117], MMMU[ 118], andBLINK [ 119]. These benchmarks
+test the model’s ability to draw connections between images, handle multiple visual inputs.
+GeneralKnowledgeQA. Finally,toevaluateVideoLLaMA3’sperformanceingeneralques-
+tion answering, particularly in real-world and complex scenarios, we conduct assessments
+using several challenging benchmarks. The benchmarks include: 1) RealWorldQA [ 120],
+which focuses on answering questions based on realistic images drawn from everyday sce-
+narios, 2) AI2D [ 121], which evaluates the model’s ability to reason about diagrams and
+scienceimages,3)GQA[ 122],whichassessesgeneralquestionansweringwithafocuson
+complex visual reasoning tasks, and 4) MME, which includes a wide variety of general
+knowledge questions that require a deep understanding of visual information.
+4.1.3 Evaluation Protocols
+When evaluating on benchmarks, we set the temparature as 0.0. The maximum token
+length is set as the same as the training stage. For benchmarks involving the MCQ, we will
+givethepromptlike“Answerwiththeoptionletterfromthegivenchoicesdirectly.”. For
+the benchmarks with short answers, we will give the prompt like “Answer the question
+with a single word or phrase.”. We follow the original benchmarks to calculate the final
+13
+Table 7:Evaluation results of 2B models on video benchmarks. * denotes the reproduced
+results.†denotestheresults retrievedfromtheofficialleaderboard. Thebestresultsare in
+boldand the second best ones are underlined .
+BenchmarkModel
+ Apollo
+2B
+InternVL2.5
+2B
+Qwen2-VL
+2BVideoLLaMA3
+2B
+General Video Understanding
+VideoMME w/o sub 53.0 51.9 55.6 59.6
+VideoMME w/ sub 54.6 54.1 60.4 63.4
+MMVU val - 33.6∗36.5†39.9
+MVBench - 68.8 63.2 65.5
+EgoSchema test - 58.1∗54.9 58.5
+PerceptionTest test 61.0 66.3∗53.9 68.0
+ActivityNet-QA - 54.1∗53.3∗58.2
+Long Video Understanding
+MLVU dev 63.3 58.9∗62.7∗65.4
+LongVideoBench val - 52.0 48.7∗57.1
+LVBench - 37.3∗38.0∗40.4
+Temporal Reasoning
+TempCompass 60.8 57.7∗62.2∗63.4
+NextQA - 75.6∗77.2∗81.1
+Charades-STA - - - 55.5
+scores, and we also align our evaluation protocols with other evaluation toolkits, such as
+lmms-eval [123, 124] and VLMEvalKit [125].
+4.1.4 Evaluation Results
+We evaluate our VideoLLaMA3 model on the previously mentioned benchmarks. The
+evaluation results for our 2B model are presented in Table 5. As shown, VideoLLaMA3
+demonstratessignificantimprovementsacrossarangeoftaskscomparedtopriormodels.
+For example, in OCR benchmarks such as InfoVQA, VideoLLaMA3 achieves a performance
+scoreof69.4%,comparedtothepreviousbestscoreof65.5%. Inmathematicalreasoning
+tasks, such as MathVista, our 2B model scores 59.2%, surpassing the state-of-the-art method
+by 7.9%. For multi-image benchmarks like MMMU-Pro, VideoLLaMA3 outperforms the
+previous top-performing method by 2.6%. In real-world knowledge QA tasks, such as
+RealWorldQA, VideoLLaMA3 achieves the highest performance with a score of 67.3%,
+compared to 62.9% from prior methods.
+Similarly, we evaluate our larger 7B model on various image benchmarks, with results sum-
+marized in Table 6. From the table, it is clear that VideoLLaMA3 consistently outperforms
+prior models on most benchmarks. Notably, in mathematical reasoning tasks, our 7B model
+surpassesthepreviousbestby6.5%onMathVision. Inchartunderstandingtasks,weob-
+serve a 1.3% performance improvement over previous methods on InfoVQA. Additionally,
+ingeneralreasoningtaskslikeRealWorldQA,VideoLLaMA3outperformspriormodelsby
+2.0%.
+Overall, the results confirm that VideoLLaMA3 provides consistent advancements across a
+broad range of benchmarks, demonstrating its efficacy and versatility in handling complex
+tasks,includingOCR,mathematicalreasoning,andgeneralknowledge. Theseimprovements
+positionVideoLLaMA3asapowerfultoolforreal-worldapplications,advancingthefieldof
+multi-modal learning.
+14
+Table 8:Evaluation results of 7B models on video benchmarks. * denotes the reproduced
+results.†denotestheresults retrievedfromtheofficialleaderboard. Thebestresultsare in
+boldand the second best ones are underlined .
+Qwen2-VL7B
+InternVL2.58B
+LLaVA-Video7B
+NVILA8B
+Apollo7B
+VideoLLaMA2.1-7BVideoLLaMA3-7B
+General Video Understanding
+VideoMME w/o sub 63.3 64.2 63.3 64.2 61.3 54.9 66.2
+VideoMME w/ sub 69.0 66.9 69.7 70.0 63.3 56.4 70.3
+MMVU val 42.1†41.1†42.4∗43.7∗- 39.5†44.1
+MVBench 67.0 72.0 58.6 68.1 - 57.3 69.7
+EgoSchema test 66.7 66.2∗57.3 54.3∗- 53.1 63.3
+PerceptionTest test 62.3 68.9∗67.9∗65.4∗- 54.9 72.8
+ActivityNet-QA 57.4∗58.9∗56.5 60.9 - 53.0 61.3
+Long Video Understanding
+MLVU dev 69.8∗69.0∗70.8∗70.6∗70.9 57.4 73.0
+LongVideoBench val 55.6†60.0 58.2 57.7 58.5 - 59.8
+LVBench 44.2∗41.5∗40.3∗42.6∗- 36.3 43.7
+Temporal Reasoning
+TempCompass 67.9†68.3∗65.4 69.7∗64.9 56.8 68.1
+NextQA 81.2∗85.0∗83.2 82.2 - 75.6 84.5
+Charades-STA - - - - - - 60.7
+4.2 Video-based Evaluation
+4.2.1 Baselines
+To comprehensively evaluate the video performance of VideoLLaMA3, we compare it with
+a diverse set of baseline models. Similar to image evaluation, there are few available models
+witha2Bparametersizeinthecommunity. Weselectseveralstrongbaselines, including
+Apollo-2B [ 14], InternVL2.5-2B [ 32], and Qwen2VL-2B [ 30]. For the 7B model, we compare
+it with general models such as Qwen2VL-8B [ 30], InternVL2.5-8B [ 32], and NVILA [ 36],
+as well as proprietary models like LLaVA-Video [ 24], Apollo-7B [ 14], and our previous
+generation model, VideoLLaMA2 [46].
+4.2.2 Benchmarks
+The video understanding capabilities of VideoLLaMA3 are systematically evaluated across
+threecoredimensions: generalunderstanding,temporalreasoning,andlong-formvideo
+comprehension.
+General Video Understanding. We assess VideoLLaMA3’s general video understanding
+capabilities through established benchmarks: (1) Multi-Choice Video Question Answer-
+ing(MC-VQA)tasks,includingMVBench[ 26],VideoMME[ 126],EgoSchema[ 127],and
+Perception-Test [ 128]. (2) Open-Ended Video Question Answering (OE-VQA) tasks, includ-
+ing ActivityNet-QA [ 129] and VCGBench [ 25]. This evaluation suite follows the protocol of
+VideoLLaMA2 [ 46]. We also run evaluations on MMVU [ 130] which includes both the task
+types mentioned above.
+Long Video Understanding. To further examine the capacity of VideoLLaMA3 to process
+and comprehend long-form video content, we assess performance on three long-video
+15
+understanding (LVU) benchmarks: (1) MLVU [ 131]: diverse long-video understanding
+tasksforvideosrangingfrom3minutestomorethan2hours, (2)LongVideoBench[ 132]:
+videoreasoningoverthereferredcontextwithinlongvideo-languageinterleavedinputs,
+and (3) LVBench [133]: extreme long video understanding.
+Video Temporal Reasoning. To assess the temporal awareness and reasoning capabilities
+of VideoLLaMA3, we conduct evaluations on the following tasks: (1) Temporal Perception
+and Reasoning tasks, including TempCompass [ 134] and NextQA [ 135]; and (2) Temporal
+SentenceGroundingtaskonCharades-STA[ 108]benchmark,withmeanIntersectionover
+Union (mIoU) metric.
+4.2.3 Evaluation Protocols
+We expand the max number of visual tokens to 16K when evaluating our models on video-
+based benchmarks, ensuring that each frame corresponds to a reasonable number of tokens
+andthetotalcontext lengthiswithinthemaximumrange ofthebaseLLM.Themaximum
+numberofframesissetto180,whichisthesameastraining. Forreproducibility,wekeep
+these hyperparameters the same on all benchmarks and disable sampling when decoding.
+For general multi-chocies question answering evaluation, we follow the official setting to
+constructtheinstructionusingprovidedquestionsandoptions. Anadditionpromptlike
+“Answerwiththeoption’sletterfromthegivenchoicesdirectly"isaddedtocontrolthemodel
+output. In addition, we apply CoT prompt on MMVU benchmark following the official
+evaluationprotocol. Fortemporalgroundingevaluation,weaddanextraprompt“Please
+output the start and end timestamps in seconds" after the question. The numbers in the
+model response are extracted by regular expression, and then treated as one or multiple
+time intervals. Based on this strategy, we finally report the mIoU bewteen the ground-truth
+intervals and the predicted intervals.
+4.2.4 Evaluation Restuls.
+Table7evaluatestheperformanceofVideoUnderstandingmodelswith2Bmodelsize. Vide-
+oLLAMA3consistentlydemonstratescompetitiveresultsandoutperformsbaselinemethods.
+In General Video Understanding, VideoLLAMA3 achieves the highest scores onVideoMME
+w/o sub (59.6%), VideoMME w/ sub (63.4%), ActivityNet-QA (58.2%), PerceptionTest-test
+(68.0%),MVBench(65.5%),andMMVU(37.6%). OnMVBench,itrankssecond(65.5%),
+slightlybehindInternVL2.52B(68,8%). ForLongVideoUnderstanding,VideoLLAMA3
+achievesthebestperformanceonallbenchmarks: MLVU-dev(65.4%),LongVideoBench-
+val (57.1%), and LVBench (40.4%), showcasing its superior ability to handle long video
+content. In Temporal Reasoning, VideoLLAMA3 leads on TempCompass (63.4%), and
+NextQA(81.1%), andCharades-STA(55.5%). ComparedtoApollo-2B,InternVL2.5-2B,and
+Qwen2-VL-2B,VideoLLAMA3notonlysecuresthetoppositioninmostbenchmarksbut
+alsodemonstratesconsistentsuperiorityintasksrequiringcomprehensiveandlong-term
+video understanding, reinforcing its strong capability across diverse video-related tasks.
+As for the VideoLLaMA3-7B model, the results are shown in Table 8. On 7B model size,
+VideoLLaMA3-7Bstillexhibitscompetitiveresults. Forgeneralvideounderstanding,itleads
+on5outof7benchmarks,includingVideoMMEw/osub,VideoMMEw/sub,PerceptionTest-
+test,andActivityNet-QA.OnMVBench,italsoachievescomparableresultstoInternVL2.5-8B.
+For long video understanding, VideoLLaMA3-7B scores the highest on MLVU-dev, and
+achieves the second best results on LongVideoBench-val and LVBench.
+4.3 Case Study
+ChartImageUnderstanding. InFigure6,weshowtwocasesforchartimageunderstand-
+ing. In the first case, VideoLLaMA3 can analyze stock trends and offer some reasonable
+suggestions for investment. As for the second case, the model can compare the performance
+of MLLMs and know the tradeoff between the number of paramters and performances.
+OCRandDocumentUnderstanding. Figure7showstwocasesforimageswithtexts. In
+this first example, the model can successfully parse the words in the design image, and offer
+16
+some suggestions to make the poster better. In the second image, we ask VideoLLaMA3 to
+perform OCR task on the given document image. VideoLLaMA3 can successfully recognize
+the words in the document image, demonstrating the strong performance of VideoLLaMA3
+in understanding dense information in images.
+Multi-Image Understanding. Figure 8 gives three examples on multi-image understanding
+tasks. In the first example, VideoLLaMA3 can tell the differences between two types of
+birds. The second example demonstrates that VideoLLaMA3 is able to locate answers from
+long documents (even with multiple images) rather than simplying parsing words. It is an
+advancedcapabilitybeyondOCR.Whileinthelastexample,VideoLLaMA3canunderstand
+storylines from comic strips.
+GeneralImageandVideoUnderstanding. Figure9demonstratesVideoLLaMA3’scapa-
+bilityinunderstandinggeneralimages,includingVQAtasks,answeringquestionsusing
+knowledges and providing videos with captions. Also in Figure 10, we give fives cases
+for video understanding. VideoLLaMA3 can comprehend video content through temporal
+dimensions, rather than relying solely on inferences from static content.
+Long video understanding, temporal grounding, and video-image joint understanding.
+InFigure11,wepresentseveralcasesinvolvingmorecomplexvideotasks,includinglong
+video grounding, video temporal grounding, and video-image joint understanding. Our
+VideoLLaMA3 model demonstrates the ability to perform complex long video question-
+answeringtasks. Fortasksrequiringtemporalgrounding,ourmodelaccuratelyidentifies
+the specified time. Additionally, for video-image joint understanding, the model effectively
+capturestherelationshipsbetweenvideosandimages,enablingittotacklemoreintricate
+tasks.
+4.4 Ablation Study
+Table 9:Ablation Study on Vision Encoders.
+Model GQA AI2D ChartQA DocVQA valMME
+clip-vit-large-patch14-336 [136] 61.50 56.28 18.32 24.86 1668.41
+dfn5B-clip-vit-h-14-378 [137] 62.70 56.87 16.40 23.09 1665.35
+siglip-so400m-patch14-384 [54] 62.92 57.12 22.44 31.32 1667.92
+InMLLMs,theembeddingsofpre-trainedvisionencodershouldbetrainedtoalignwith
+embeddingsofLLMs. Therefore,therepresentationperformanceofvisionencoderiscrucial
+tothefinalperformanceofMLLMs. Inthiswork, westudytheimpactofdifferentvision
+encoders. Specifically, we compare three pre-trained transformer-based vision encoders:
+CLIP[136],DFN[137],andSigLIP[ 54]. Duetothecomputationlimitation,weperformthe
+studyonthesubsetofthewholedataset. Also,toinvestigatetheperformanceoftheoriginal
+pre-trained weights, we fix the weights of vision encoders and keep the visual inputs as
+the fixed resolution, which is the same as the pretrained resolution of the vision encoder
+(336×336forCLIP, 378×378forDFN,and 384×384forSigLIP,). Thetraininghasthree
+stages: 1) Training projector with LLaVA-Pretrain-558K [ 55]; 2) Tuning all parameters with
+our recaptioned COYO data; 3) SFT with LLaVA-SFT-665K [ 38]. The comparison results
+are shown in Table. 9. SigLIP outperforms the other two vision encoders, especially in fine-
+grainedunderstandingtasksinvolvingtexts. Basedonthisablationstudy,wechoosethe
+pretrainedSigLIPasourbasevisionencoder,andthenadaptittotakingdynamicresolutions
+as inputs.
+5 Related Work
+Multimodal LLMs for Native Video Understanding. Early video MLLMs primarily relied
+on sparsely sampled frames and simple connectors, such as MLPs [ 11,12,138], tokeniz-
+ers [139], and Q-formers [ 140,141], to link visual encoders with large language models.
+17
+Question : What do you think of 
+this stock? Is it worth holding? 
+Why?VideoLLaMA  3: The stock  shown  in this chart  appears  to be 
+a volatile  and potentially  risky  investment . The price  has been  
+fluctuating  significantly,  with sharp  peaks  and drops . This kind of 
+volatility  can be indicative  of a stock  that is not stable  or reliable . 
+While  the MACD  indicator  shows  some  positive  momentum , 
+suggesting  potential  for future  growth,  the overall  pattern  of the 
+stock  price  is concerning . The large  red candlesticks  at the bottom  
+of the chart  indicate  significant  selling  pressure,  which  could  be a 
+sign of investor  uncertainty  or negative  news  affecting  the stock . 
+Without  more  context  about  the company's  fundamentals,  industry  
+trends,  or market  conditions,  it's difficult  to make  a definitive  
+recommendation . However,  based  solely  on the price  action  shown  
+in this chart,  I would  advise  caution . The stock  seems  to be 
+experiencing  high volatility,  which  increases  risk for investors . If 
+you're  considering  holding  this stock,  l'd suggest  doing  thorough  
+research  and possibly  diversifying  your portfolio  to mitigate  risk. It 
+might  be better  to wait for more  stable  price  action  or consider  
+alternative  investments  that appear  less volatile .
+Question : Which model do you think is the strongest? Why?
+VideoLLaMA  3: The strongest  model  in the graph  is Qwen 2-VL-7B, as it has the highest  average  
+performance  and the most  activated  parameters . This suggests  that it has a more  powerful  architecture  and is 
+better  at processing  visual  information .
+Question : Which model do you think is the optimal? Why?
+VideoLLaMA  3: The optimal  model  in the graph  is DeepSeek -VL2, as it has a good  balance  between  
+average  performance  and activated  parameters . It performs  well without  being  overly  complex,  making  it a good  
+choice  for applications  that require  high  performance  but also need  to be efficient .
+Figure 6: Case study of chart images understanding.
+18
+Question : What is this 
+image designed for? 
+What do you think are 
+the shortcomings of 
+the design of this 
+poster? How can it be 
+improved?VideoLLaMA  3: This image  appears  to be designed  as a poster  for a 
+Fall Festival  planning  meeting . The main  text “Planning Meeting”  is 
+prominently  displayed,  followed  by “FallFestival”  in a larger,  more  decorative  
+font.The design  hassome  shortcomings :1. Lack  of visual  hierarchy : The text
+doesn‘t  clearly  differentiate  between  the meeting  and the festival .2. 
+Insufficient  information : It doesn’t  provide details  about  the date,  time,  
+location,  or purpose  of themeeting .3. Limited  color  palette : The use of green  
+andorange  leaves  on a white  background  might  not be very eye-catching  or 
+memorable .To improve  this design :1.Add a clear  visual  hierarchy  by using  
+different  font sizes and styles  for “Planning  Meeting”  and “Fall  Festival .”2.
+Include  essential  details  like date,  time,  and location below  the main  text.3. 
+Use a more  vibrant  color  scheme that stands  out, perhaps  incorporating  autumn  
+colors like reds,  yellows,  and oranges .4. Consider  adding  asmall  icon or 
+graphic  related  to fall (e.g., a pumpkin  oracorn)  to make  it more  visually  
+appealing .5. Ensure  thetext is legible  and easy to read,  especially  from  a
+distance .By addressing  these  issues,  the poster  would become  more  effective  
+at communicating  important information  and attracting  attention  to the Fall 
+Festival planning  meeting .
+Question : Please parse all the text in 
+the document, from left to right, from 
+top to bottom.
+VideoLLaMA  3: Here  is the text from  the document : Whilst  
+the problem  of wear  is present,  the results  are still excellent  when  
+compared  with the results  from metal -on-metal  given  above . When  
+dealing  with patients,  a modification  to something  that is very 
+successful  would  appear  to be a safer  and more  appropriate  solution . 
+Problem :- Femoral  Heads
+A major  problem  is in vivo damage  to metal  femoral  heads . (Isaac  et 
+al, 1992 ; Jasty  et al, 1994 ). Relatively  small  amounts  of damage  can 
+produce  dramatic  effects :
+".... a single  transverse  scratch  can increase  the wear  rate of the 
+polyethylene  to a remarkable  extent .”
+Dowson  et al (1987 )
+However,  ceramic  femoral  heads  have  been  shown  to behave  in 
+significantly  different  ways :
+"A ceramic  femoral  head  is not only less prone  to damage  by 
+particles  of bone  cement  in three  body  wear  processes,  but any 
+damage  produced  is less likely  to cause  increased  wear  rates  of 
+UHMWPE  acetabular  cups.”
+Cooper  et al (1991 )
+This has been  shown  to have  significant  effects  on clinical  wear  rates :
+Wear  rate, metal  head :- 0.10mm per year
+Wear  rate, ceramic  head :- 0.03mm per year
+Schuller  and Marti  (1990 )
+It has also been  shown  that the new generation  of Zirconia  ceramics  
+perform  significantly  better  as a bearing  surface  than the current  
+generation  of Alumina  ceramics  offering  a further  45% reduction  in 
+polyethylene  wear  (Kumar  et al, 1991 )
+It has further  been  shown  that femoral  head -size affects  volumetric  
+wear  rates…
+Figure 7: Case study of OCR and document images.
+19
+Question: Please elaborate on the difference between these two animals.Animal1:                                                           Animal2:
+VideoLLaMA3:Animal1isbrownwithawhiteneckwhileanimal2isyellowwithblackstripesandredontheback.
+Question: What are the requirements for team grading and when will it take place?
+VideoLLaMA3:TheteamgradingprocesswilltakeplaceinAugust/September2021.PlayersarenotgradedinUnder10s,andonlythoseplayerswhowishtotryoutforDivision1teamsneedtoattendthetrials.
+Question: With the narratives paired with the initial images, how would you conclude the story using the last picture?Caption#1:Jack and Lizzy enjoying their holiday at the part with other kids around. But they made mistake by not informing their parrentsabout their whereabouts.Caption#2:Their parents Martha and Jeff were really tensed about their kids. Jeff was really angry on Martha about not following the kids properly. The argument leads to some bad misunderstanding. They decided to search their kids outside.VideoLLaMA3:JackandLizzywereplayinginthepark.Theywereenjoyingtheirtime.MarthaandJefffoundthemandtheywereveryhappy.Theywererelievedthattheyaresafe.
+Figure 8: Case study of multi-image understanding.
+20
+Question : What part of a 
+basketball game is this?VideoLLaMA  3: This appears  to be a free throw  situation  in a 
+basketball  game . The player  wearing  number  23 is standing  at the free 
+throw  line, which  is typically  located  15 feet from  the basket . He's 
+holding  the ball and preparing  to take a shot,  with his arms  raised  above  
+his head  in the classic  free throw  stance . The presence  of other  players  on 
+the court,  including  those  wearing  green  jerseys,  suggests  this is during  
+an actual  game  rather  than a practice  session . The crowd  visible  in the 
+background  further  supports  that this is taking  place  during  an official
+match . Free throws  are a crucial  part of basketball,  often  occurring  after 
+fouls  or technical  violations . This moment  captures  the tension  and focus  
+as the player  attempts  to score  points  for his team .
+Question : Discuss the historical impact 
+and the significance of this painting in 
+the art world.VideoLLaMA  3: The Mona  Lisa,  painted  by Leonardo  
+da Vinci  in the early  16th century , is one of the most  iconic  and 
+influential  paintings  in the history  of art. It represents  a pinnacle  
+of Renaissance  art, characterized  by its lifelike  representation,  
+subtle  use of light and shadow,  and the enigmatic  smile  of the 
+subject . The painting's  historical  impact  lies in its technical  
+mastery  and its enduring  mystery , which  has captivated  viewers  
+for centuries . The Mona  Lisa has been  a subject  of fascination,  
+inspiring  countless  imitations,  parodies,  and references  in 
+popular  culture . Its significance  extends  beyond  its artistic  value ; 
+it symbolizes  the Renaissance’s  humanistic  ideals  and the 
+pursuit  of knowledge  and beauty . The painting's  fame  has also 
+contributed  to the establishment  of museums  as cultural  
+institutions,  with the Louvre  Museum  in Paris  being  one of the 
+world’s  most  visited  due in part to the Mona  Lisa.
+Question : Please describe this video in detail.
+VideoLLaMA  3: Thevideo begins with aview ofspace ,showcasing aspacecraft flying through thevastness
+ofthecosmos .Thescene transitions toagroup ofpuppies dressed inastronaut suits, sitting inside thespacecraft .
+They appear tobeonamission, looking outintotheunknown .Thecamera then captures astunning view ofEarth
+from space ,with thepuppies stillvisible inside thespacecraft .Thevideo wraps upwith aclose -upofthepuppies,
+highlighting their adorable andcurious expressions asthey explore thewonders ofspace .
+Figure 9: Case study of images with general knowledge.
+21
+Question : What is unusual in the video?
+VideoLLaMA  3: The unusual aspect of the video is that a large bear and two smaller bears are sitting at a 
+wooden table, eating sushi in a serene forest setting. 
+Question : What objects appear in the video? What is the order and position of objects?
+VideoLLaMA  3: The video shows a backyard with a wooden planter box, a patio area with white outdoor 
+furniture, and a house with large glass sliding doors . The camera pans to the right , revealing more of the backyard 
+and patio area. Inside the house, there is a living room with a couch, a TV mounted on the wall, and a kitchen 
+area with white cabinets and stainless steel  appliances.
+Question : Which keyboard key is the last to disappear?
+VideoLLaMA  3: The key with the number '1' is the last to disappear.
+Question : Describe this video in detail.
+VideoLLaMA  3: In the video, there is a unicorn made out of bubbles . The unicorn is blowing bubbles out of 
+its mouth . The bubbles are floating in the air . There is also a yellow rubber duck nearby.
+Question : Who won the competition ?
+VideoLLaMA  3: The athlete with the number 184 on his jersey won the competition.
+Figure 10: Case study of video understanding.
+22
+Question: Please describe the video in detail.
+VideoLLaMA 3:The video shows a montage of various locations in Russia. It starts with a person walking along a tightrope over icy water, followed by scenes of landscapes and cityscapes. The video also includes an advertisement for a Russian travel destination, showcasing the country's natural beauty. The montage is accompanied by music, creating a visually appealing experience.
+Question: When did the man pour the cola into the cup? Please output the start and end timestamps.
+VideoLLaMA 3:The man poured the cola into the cup from 23.1 to 36.8.
+00:1900:3601:1301:5002:2703:0403:4104:1804:5405:3106:0806:4507:2207:5908:36
+00:0000:0500:1100:1600:2200:2300:2800:3500:3600:4500:5000:5601:0201:0701:13
+Question: <video> What is the connection between the video and the following image?  <image>VideoLLaMA 3: The video and the image do not seem to be related. The video features a kitten and a chick cuddling together, while the image shows a woman walking down a city street at night.
+Figure11: Casestudyoflongvideounderstanding,temporalgrounding,andvideo-image
+joint understanding.
+23
+Subsequentmodelsproposevariousmethodstoovercometokenlimitationsandsupport
+long-formvideounderstanding. Forexample,some[ 13]directlyextendthecontextwindow
+of LLMs, while others [ 24,142–149] introduce video token compression techniques that
+perform pooling across spatial, temporal, or both dimensions. While most approaches
+utilizeimage-basedencoders[ 14–18,27],someincorporatevideo-specificencoderstobetter
+capture temporal dependencies [19–22].
+Morerecentworks[ 22,23,150–157]extendbeyondvisualinputsbyincorporatingaudio,
+usingseparateencodersforeachmodalityandintegratingthemthroughanLLMdecoder.
+These models leverage joint instruction tuning on video-audio datasets [ 158–160] to cap-
+tureinteractionsbetweenvisualandauditoryinformation. Additionally,recentadvances
+in streaming video understanding focus on real-time processing [ 161–165], employing
+techniqueslikeadaptivememoryandincrementalprocessingfortaskssuchasliveevent
+detection and real-time captioning. Previous works [ 14,19,22,24,142,149] typically follow
+a training recipe that involves an alignment phase, followed by supervised fine-tuning, with
+instruction-tuning datasets [ 18,24–27] often being video dominant. However, we propose a
+vision-centrictraining paradigmto enhancevideounderstanding capabilitiesby focusing
+on large-scale image understanding pre-training. This approach leverages high-quality
+image-text datasets to build robust vision encoders that are then adapted for video tasks.
+Multimodal LLMs for General Vision Understanding. Recently, a growing number of
+generalMLLMshavebeendevelopedtoprocessbothimagesandvideos. While,inprinciple,
+models designed to handle multiple images are inherently capable of processing video data,
+achieving optimal performance requires dedicated training on video-specific datasets.
+Previousstudies[ 28,29,93,166]havedemonstratedthatgeneralMLLMswithrobustimage
+understandingcapabilitiescanachieveremarkableperformanceonvideounderstanding
+tasks, even with minimal or no dedicated video training data. These findings highlight the
+effectivenessoftasktransferfromimagestovideos,showcasingthemodels’strongvideo
+comprehension and cross-scenario adaptability.
+Furthermore,Qwen2-VL[ 30]adoptsaunifiedframeworkforprocessingbothimagesand
+videos, enhancingthemodel’svisual perception capabilities. Modelssuch asQwen2-VL,
+InternVL-2[ 31],andInternVL-2.5[ 32],whichscalebothmodelsizes(rangingfrom1billion
+to 78 billion parameters) and the volume of training data, have achieved highly competitive
+performance in both image and video understanding tasks. To address the challenges of
+processing longer video inputs, recent studies [ 33,34] have proposed solutions such as
+adapting model architectures by incorporating a hybrid design of Mamba and Transformer
+blocks or training with extensive long video datasets to support extended input and output
+sequences.
+Recentstudies[ 4,167,168]haveintegratedtext,image,andvideomodalitieswithaudioand
+speech modalities to improve models’ video understanding and cross-scenario performance.
+Additionally,Aria[ 8]utilizesafine-grainedmixture-of-expertsdecoder,whichenablesmore
+efficient training and inference compared to dense decoders when handling multimodal
+inputs.
+6 Discussion, Limitations, and Future Work
+6.1 Discussion
+TheintroductionofVideoLLaMA3marksasignificantadvancementintherealmofMLLMs,
+particularly in bridging the gap between image and video understanding. By adopting a
+vision-centric training paradigm, VideoLLaMA3 leverages the robustness of image-centric
+data to enhance video comprehension, effectively mitigating the challenge associated with
+temporal dynamics and the complexity of video data. This approach underscores the
+inferent value of high-quality image-text datasets, which are more readily available and
+easier to curate compared to their video-text counterparts. The success of VideoLLaMA3 on
+diversebenchmarks,includingVideoMME,PerceptionTest,MLVU,DocVQA,andMathVista,
+demonstrates its versatility and efficacy across various multimodal tasks.
+24
+The model’s ability to maintain strong performance in both image and video domains
+highlightstheeffectivenessofourvision-centricframeworkdesigns. Specifically,thedynamic
+resolution adaptation and vision token compression strategies facilitate a more flexible and
+efficientrepresentationofvisualinputs,enablingthemodeltohandleawiderangeofimage
+andvideoformatswithminimalinformationloss. Thisflexibilityiscrucialforreal-world
+applications where visual data can vary significantly in resolution and aspect ratio.
+Furthermore,themulti-taskfine-tuningstageofourtrainingparadigmcontributestothe
+model’s robust generalization capabilities. By exposing VideoLLaMA3 to a variety of down-
+stream tasks, including interactive question answering and video captioning, the model
+develops a comprehensive understanding of both static and dynamic visual information.
+ThiscomprehensivetrainingenablesVideoLLaMA3toexcelnotonlyinstandardbenchmarks
+but also in specialized tasks that require nuanced comprehension of visual content.
+6.2 Limitations
+Despite the impressive performance of VideoLLaMA3, several limitations must be acknowl-
+edged.
+Video Data Quality and Diversity. While leveraging large-scale image-text datasets has
+proven beneficial, the quality and diversity of video-text datasets remain a constraint. Video
+data often suffer from lower annotation quality and limited diversity, which can impede the
+model’s ability to generalize across different video domains and genres.
+Real-timeProcessing. Thecurrentmodelarchitecturemaynotbeoptimizedforreal-time
+video processing tasks, which is essential for applications such as autonomous driving and
+livevideoanalytics. Thecomputationaloverheadassociatedwithprocessinghigh-resolution
+and lengthy video inputs can hinder real-time performance.
+Generalization to Unseen Modalities. While VideoLLaMA3 excels in image and video
+understanding, its capability to generalize to other modalities, such as audio or speech data,
+remainsunexplored. Integratingadditionalmodalitiescouldfurtherenhancethemodel’s
+multimodal comprehension but poses significant challenges in terms of architecture and
+training.
+6.3 Future Work
+Building on the foundations laid by VideoLLaMA3, several avenues for future research are
+proposed to address the identified limitations and further enhance the model’s capabilities.
+Enhanced Video-Text Datasets. Investing in the creation and curation of higher quality
+and more diverse video-text datasets will be crucial. Incorporating annotations that capture
+nuancedtemporalandcontextualinformationcansignificantlyimprovethemodel’stemporal
+understanding and generalization across different video domains.
+Real-time Inference Optimization. Optimizing the model architecture for real-time in-
+ference by reducinglatency andimproving processingspeed isessentialforapplications
+requiring immediate responses. Techniques such as model acceleration, parallel processing,
+and efficient tokenization strategies can contribute to achieving real-time performance.
+Multimodal Expansion. Extending VideoLLaMA3 to incorporate additional modalities
+like audio, speech, and sensor data can create a more holistic understanding of multimodal
+inputs. Researchintounifiedarchitecturesthatseamlesslyintegratemultipledatatypeswill
+be pivotal in achieving comprehensive multimodal intelligence.
+Advanced Post-Training Techniques. Implementing more sophisticated post-training
+methodologies,suchasscalingRLtechniquesforMLLMs,canfurtherrefineVideoLLaMA3’s
+performance. RLHF and other RL-based approaches can be employed to better align the
+model’s outputs with human preferences and task-specific requirements. Scaling these RL
+techniquestoaccommodatethecomplexitiesofmultimodaldatawillenhancethemodel’s
+ability to generate more accurate, contextually appropriate, and user-aligned responses,
+thereby advancing its overall multimodal intelligence.
+25
+Insummary,whileVideoLLaMA3representsasignificantstepforwardinmultimodalAI,
+addressing its current limitations through targeted research and development will pave the
+way for even more powerful and versatile models in the future.
+26
+References
+[1] OpenAI. Gpt-4o system card, 2024. 1
+[2] Anthropic. The claude 3 model family: Opus, sonnet, haiku.
+[3]Gemini Team Google. Gemini 1.5: Unlocking multimodal understanding across
+millions of tokens of context. arXiv preprint arXiv:2403.05530 , 2024.
+[4]Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey, Abhishek Kadian, Ahmad Al-
+Dahle, Aiesha Letman, Akhil Mathur, Alan Schelten, Amy Yang, Angela Fan, et al.
+The llama 3 herd of models. arXiv preprint arXiv:2407.21783 , 2024. 24
+[5]An Yang, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu,
+Chengyuan Li, Dayiheng Liu, Fei Huang, Haoran Wei, et al. Qwen2. 5 technical
+report.arXiv preprint arXiv:2412.15115 , 2024. 6, 11
+[6]Aixin Liu, Bei Feng, Bing Xue, Bingxuan Wang, Bochao Wu, Chengda Lu, Chenggang
+Zhao,ChengqiDeng,ChenyuZhang,ChongRuan,etal. Deepseek-v3technicalreport.
+arXiv preprint arXiv:2412.19437 , 2024. 1
+[7]Peng Wang, Shuai Bai, Sinan Tan, Shijie Wang, Zhihao Fan, Jinze Bai, Keqin Chen,
+Xuejing Liu, Jialin Wang, Wenbin Ge, et al. Qwen2-vl: Enhancing vision-language
+model’s perception of the world at any resolution. arXiv preprint arXiv:2409.12191 ,
+2024. 2
+[8]DongxuLi,YudongLiu,HaoningWu,YueWang,ZhiqiShen,BowenQu,XinyaoNiu,
+Fan Zhou, Chengen Huang, Yanpeng Li, Chongyan Zhu, Xiaoyi Ren, Chao Li, Yifan
+Ye, Peng Liu, Lihuan Zhang, Hanshu Yan, Guoyin Wang, Bei Chen, and Junnan Li.
+Aria: An open multimodal native mixture-of-experts model, 2025. 24
+[9]ZhiyuWu,XiaokangChen,ZizhengPan,XingchaoLiu,WenLiu,DamaiDai,Huazuo
+Gao, Yiyang Ma, Chengyue Wu, Bingxuan Wang, et al. Deepseek-vl2: Mixture-of-
+experts vision-language models for advanced multimodal understanding. arXiv
+preprint arXiv:2412.10302 , 2024.
+[10]Zhe Chen, Weiyun Wang, Yue Cao, Yangzhou Liu, Zhangwei Gao, Erfei Cui, Jinguo
+Zhu,ShenglongYe,HaoTian,ZhaoyangLiu,etal. Expandingperformancebound-
+ariesofopen-sourcemultimodalmodelswithmodel,data,andtest-timescaling. arXiv
+preprint arXiv:2412.05271 , 2024. 2
+[11]BinLin,BinZhu,YangYe,MunanNing,PengJin,andLiYuan. Video-llava: Learn-
+ing united visual representation by alignment before projection. arXiv preprint
+arXiv:2311.10122 , 2023. 2, 17
+[12]KirolosAtaallah,XiaoqianShen,EslamAbdelrahman,EssamSleiman,DeyaoZhu,
+Jian Ding, and Mohamed Elhoseiny. Minigpt4-video: Advancing multimodal llms
+for video understanding with interleaved visual-textual tokens. arXiv preprint
+arXiv:2404.03413 , 2024. 17
+[13]Peiyuan Zhang, Kaichen Zhang, Bo Li, Guangtao Zeng, Jingkang Yang, Yuanhan
+Zhang, Ziyue Wang, Haoran Tan, Chunyuan Li, and Ziwei Liu. Long context transfer
+from language to vision. arXiv preprint arXiv:2406.16852 , 2024. 24
+[14]Orr Zohar, Xiaohan Wang, Yann Dubois, Nikhil Mehta, Tong Xiao, Philippe Hansen-
+Estruch, Licheng Yu, Xiaofang Wang, Felix Juefei-Xu, Ning Zhang, et al. Apollo:
+Anexplorationofvideounderstandinginlargemultimodalmodels. arXivpreprint
+arXiv:2412.10360 , 2024. 15, 24
+[15]Enxin Song, Wenhao Chai, Tian Ye, Jenq-Neng Hwang, Xi Li, and Gaoang Wang.
+Moviechat+: Question-aware sparse memory for long video question answering.
+arXiv preprint arXiv:2404.17176 , 2024.
+27
+[16]Jiajun Fei, Dian Li, Zhidong Deng, Zekun Wang, Gang Liu, and Hui Wang. Video-
+ccam: Enhancingvideo-languageunderstandingwithcausalcross-attentionmasks
+for short and long videos. arXiv preprint arXiv:2408.14023 , 2024.
+[17]Jiajun Liu, Yibing Wang, Hanghang Ma, Xiaoping Wu, Xiaoqi Ma, Xiaoming Wei,
+JianbinJiao,EnhuaWu,andJieHu. Kangaroo: Apowerfulvideo-languagemodel
+supporting long-context video input. arXiv preprint arXiv:2408.15542 , 2024.
+[18]Zuyan Liu, Yuhao Dong, Ziwei Liu, Winston Hu, Jiwen Lu, and Yongming Rao. Oryx
+mllm: On-demand spatial-temporal understanding at arbitrary resolution. arXiv
+preprint arXiv:2409.12961 , 2024. 24
+[19]Yi Wang, Kunchang Li, Xinhao Li, Jiashuo Yu, Yinan He, Guo Chen, Baoqi Pei,
+Rongkun Zheng, Jilan Xu, Zun Wang, et al. Internvideo2: Scaling video founda-
+tion models for multimodal video understanding. arXiv preprint arXiv:2403.15377 ,
+2024. 24
+[20]Raehyuk Jung, Hyojun Go, Jaehyuk Yi, Jiho Jang, Daniel Kim, Jay Suh, Aiden Lee,
+Cooper Han, Jae Lee, Jeff Kim, et al. Pegasus-v1 technical report. arXiv preprint
+arXiv:2404.14687 , 2024.
+[21]Muhammad Maaz, Hanoona Rasheed, Salman Khan, and Fahad Shahbaz Khan.
+Videogpt+: Integratingimageandvideoencodersforenhancedvideounderstanding.
+arxiv, 2024. 9, 10, 11
+[22]ZesenCheng,SicongLeng,HangZhang,YifeiXin,XinLi,GuanzhengChen,Yongxin
+Zhu, Wenqi Zhang, Ziyang Luo, Deli Zhao, et al. Videollama 2: Advancing
+spatial-temporal modeling and audio understanding in video-llms. arXiv preprint
+arXiv:2406.07476 , 2024. 2, 24
+[23]Guangzhi Sun, Wenyi Yu, Changli Tang, Xianzhao Chen, Tian Tan, Wei Li, Lu Lu,
+Zejun Ma, Yuxuan Wang, and Chao Zhang. video-salmonn: Speech-enhanced audio-
+visual large language models. arXiv preprint arXiv:2406.15704 , 2024. 24
+[24]Yuanhan Zhang, Jinming Wu, Wei Li, Bo Li, Zejun Ma, Ziwei Liu, and Chunyuan Li.
+Video instruction tuning with synthetic data. arXiv preprint arXiv:2410.02713 , 2024. 2,
+6, 9, 10, 11, 15, 24
+[25]Muhammad Maaz, Hanoona Rasheed, Salman Khan, and Fahad Shahbaz Khan.
+Video-chatgpt: Towards detailed video understanding via large vision and language
+models. In Proceedingsofthe62ndAnnualMeetingoftheAssociationforComputational
+Linguistics (ACL 2024) , 2024. 15
+[26]Kunchang Li, Yali Wang, Yinan He, Yizhuo Li, Yi Wang, Yi Liu, Zun Wang, Jilan
+Xu, Guo Chen, Ping Luo, et al. Mvbench: A comprehensive multi-modal video
+understanding benchmark. arXiv preprint arXiv:2311.17005 , 2023. 15
+[27]Lin Chen, Xilin Wei, Jinsong Li, Xiaoyi Dong, Pan Zhang, Yuhang Zang, Zehui Chen,
+Haodong Duan, Bin Lin, Zhenyu Tang, et al. Sharegpt4video: Improving video
+understanding andgenerationwith bettercaptions. arXiv preprintarXiv:2406.04325 ,
+2024. 2, 9, 10, 11, 24
+[28]Bo Li, Yuanhan Zhang, Dong Guo, Renrui Zhang, Feng Li, Hao Zhang, Kaichen
+Zhang, Yanwei Li, Ziwei Liu, and Chunyuan Li. Llava-onevision: Easy visual task
+transfer. arXiv preprint arXiv:2408.03326 , 2024. 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 24
+[29]JiaboYe,HaiyangXu,HaoweiLiu,AnwenHu,MingYan,QiQian,JiZhang,FeiHuang,
+and Jingren Zhou. mplug-owl3: Towards long image-sequence understanding in
+multi-modal large language models, 2024. 24
+[30]Peng Wang, Shuai Bai, Sinan Tan, Shijie Wang, Zhihao Fan, Jinze Bai, Keqin Chen,
+XuejingLiu,JialinWang,WenbinGe,YangFan,KaiDang,MengfeiDu,Xuancheng
+Ren,RuiMen,DayihengLiu,ChangZhou,JingrenZhou,andJunyangLin. Qwen2-vl:
+Enhancingvision-languagemodel’sperceptionoftheworldatanyresolution,2024.
+2, 4, 6, 11, 12, 15, 24
+28
+[31]Zhe Chen, Jiannan Wu, Wenhai Wang, Weijie Su, GuoChen, SenXing, Zhong Muyan,
+Qinglong Zhang, Xizhou Zhu, Lewei Lu, et al. Internvl: Scaling up vision foundation
+modelsandaligningforgenericvisual-linguistictasks. arXivpreprintarXiv:2312.14238 ,
+2023. 3, 4, 6, 8, 24
+[32]Zhe Chen, Weiyun Wang, Yue Cao, Yangzhou Liu, Zhangwei Gao, Erfei Cui, Jinguo
+Zhu,ShenglongYe,HaoTian,ZhaoyangLiu,LixinGu,XuehuiWang,QingyunLi,
+YiminRen,ZixuanChen,JiapengLuo,JiahaoWang,TanJiang,BoWang,Conghui
+He,BotianShi,XingchengZhang,HanLv,YiWang,WenqiShao,PeiChu,Zhongying
+Tu, TongHe, ZhiyongWu, HuipengDeng, JiayeGe, KaiChen, KaipengZhang, Limin
+Wang, Min Dou, Lewei Lu, Xizhou Zhu, Tong Lu, Dahua Lin, Yu Qiao, Jifeng Dai,
+and Wenhai Wang. Expandingperformance boundariesof open-source multimodal
+models with model, data, and test-time scaling, 2025. 2, 3, 4, 12, 15, 24
+[33]Xidong Wang, Dingjie Song, Shunian Chen, Chen Zhang, and Benyou Wang.
+Longllava: Scalingmulti-modalllmsto1000imagesefficientlyviaahybridarchitec-
+ture, 2024. 24
+[34]Pan Zhang, Xiaoyi Dong, Yuhang Zang, Yuhang Cao, Rui Qian, Lin Chen, Qipeng
+Guo,HaodongDuan,BinWang,LinkeOuyang,SongyangZhang,WenweiZhang,
+Yining Li, Yang Gao, Peng Sun, Xinyue Zhang, Wei Li, Jingwen Li, Wenhai Wang,
+Hang Yan, Conghui He, Xingcheng Zhang, Kai Chen, Jifeng Dai, Yu Qiao, Dahua Lin,
+and Jiaqi Wang. Internlm-xcomposer-2.5: A versatile large vision language model
+supporting long-contextual input and output, 2024. 2, 24
+[35]Matt Deitke, Christopher Clark, Sangho Lee, Rohun Tripathi, Yue Yang, Jae Sung
+Park, Mohammadreza Salehi, Niklas Muennighoff, Kyle Lo, Luca Soldaini, Jiasen Lu,
+Taira Anderson, Erin Bransom, Kiana Ehsani, Huong Ngo, YenSung Chen, Ajay Patel,
+MarkYatskar,ChrisCallison-Burch,AndrewHead,RoseHendrix,FavyenBastani,
+EliVanderBilt,NathanLambert,YvonneChou,ArnaviChheda,JennaSparks,Sam
+Skjonsberg,MichaelSchmitz,AaronSarnat,ByronBischoff,PeteWalsh,ChrisNewell,
+PiperWolters,TanmayGupta,Kuo-HaoZeng,JonBorchardt,DirkGroeneveld,Jen
+Dumas, Crystal Nam, Sophie Lebrecht, Caitlin Wittlif, Carissa Schoenick, Oscar
+Michel, Ranjay Krishna, Luca Weihs, Noah A. Smith, Hannaneh Hajishirzi, Ross
+Girshick, Ali Farhadi, and Aniruddha Kembhavi. Molmo and pixmo: Open weights
+andopendataforstate-of-the-artmultimodalmodels. arXivpreprintarXiv:2409.17146 ,
+2024. 2, 9, 10, 12
+[36]Zhijian Liu, Ligeng Zhu, Baifeng Shi, Zhuoyang Zhang, Yuming Lou, Shang Yang,
+Haocheng Xi, Shiyi Cao, Yuxian Gu, Dacheng Li, et al. Nvila: Efficient frontier visual
+language models. arXiv preprint arXiv:2412.04468 , 2024. 12, 15
+[37]Hugging Face Team. Smolvlm - small yet mighty vision language model. https:
+//huggingface.co/blog/smolvlm , 2023. Accessed: 2025-01-19. 2, 12
+[38]Chunyuan Li, Cliff Wong, Sheng Zhang, Naoto Usuyama, Haotian Liu, Jianwei Yang,
+Tristan Naumann, Hoifung Poon, and Jianfeng Gao. Llava-med: Training a large
+language-and-vision assistant for biomedicine in one day. Advances in Neural Informa-
+tion Processing Systems , 36, 2024. 2, 9, 10, 11, 17
+[39]Shengbang Tong, Ellis Brown, Penghao Wu, Sanghyun Woo, Manoj Middepogu,
+Sai Charitha Akula, Jihan Yang, Shusheng Yang, Adithya Iyer, Xichen Pan, Austin
+Wang,RobFergus,YannLeCun,andSainingXie. Cambrian-1: Afullyopen,vision-
+centric exploration of multimodal llms. arXiv preprint arXiv:2406.16860 , 2024. 9
+[40]MineshMathew,DimosthenisKaratzas,andC.V.Jawahar. Docvqa: Adatasetforvqa
+on document images, 2021. 9
+[41]HugoLaurençon,AndrésMarafioti,VictorSanh,andLéoTronchon. Buildingand
+better understanding vision-language models: insights and future directions., 2024. 9
+29
+[42]AhmedMasry,DoXuanLong,JiaQingTan,ShafiqJoty,andEnamulHoque. Chartqa:
+A benchmark for question answering about charts with visual and logical reasoning.
+arXiv preprint arXiv:2203.10244 , 2022. 9, 12
+[43]Kung-HsiangHuang,HouPongChan,YiR.Fung,HaoyiQiu,MingyangZhou,Shafiq
+Joty, Shih-Fu Chang, and Heng Ji. From pixels to insights: A survey on automatic
+chart understanding in the era of large foundation models, 2024. 2
+[44]Hang Zhang, Xin Li, and Lidong Bing. Video-llama: An instruction-tuned audio-
+visual language model for video understanding. arXiv preprint arXiv:2306.02858 , 2023.
+2
+[45]Hang Zhang, Xin Li, and Lidong Bing. Video-llama: An instruction-tuned audio-
+visual language model for video understanding. In Yansong Feng and Els Lefever,
+editors,Proceedings of the 2023 Conference on Empirical Methods in Natural Language
+Processing, EMNLP 2023 - System Demonstrations, Singapore, December 6-10, 2023 , pages
+543–553. Association for Computational Linguistics, 2023. 2
+[46]ZesenCheng,SicongLeng,HangZhang,YifeiXin,XinLi,GuanzhengChen,Yongxin
+Zhu, Wenqi Zhang, Ziyang Luo, Deli Zhao, and Lidong Bing. Videollama 2: Advanc-
+ing spatial-temporal modeling and audio understanding in video-llms. arXiv preprint
+arXiv:2406.07476 , 2024. 2, 10, 15
+[47]HaotianLiu,ChunyuanLi,QingyangWu,andYongJaeLee. Visualinstructiontuning.
+arXiv preprint arXiv:2304.08485 , 2023. 3, 4
+[48]HaotianLiu,ChunyuanLi,YuhengLi,andYongJaeLee. Improvedbaselineswith
+visual instruction tuning. arXiv preprint arXiv:2310.03744 , 2023. 3, 4
+[49]Mostafa Dehghani, Basil Mustafa, Josip Djolonga, Jonathan Heek, Matthias Minderer,
+Mathilde Caron, Andreas Steiner, Joan Puigcerver, Robert Geirhos, Ibrahim Alab-
+dulmohsin,etal. Patchn’pack: Navit,avisiontransformerforanyaspectratioand
+resolution. arXiv preprint arXiv:2307.06304 , 2023. 4
+[50]Jianlin Su, Murtadha Ahmed, Yu Lu, Shengfeng Pan, Wen Bo, and Yunfeng Liu.
+Roformer: Enhancedtransformerwithrotarypositionembedding. Neurocomputing ,
+568:127063, 2024. 5
+[51]Rohan Choudhury, Guanglei Zhu, Sihan Liu, Koichiro Niinuma, Kris M Kitani, and
+László Jeni. Don’t look twice: Faster video transformers with run-length tokenization.
+arXiv preprint arXiv:2411.05222 , 2024. 5
+[52]MinwooByeon,BeomheePark,HaecheonKim,SungjunLee,WoonhyukBaek,andSae-
+hoon Kim. Coyo-700m: Image-text pair dataset. https://github.com/kakaobrain/
+coyo-dataset , 2022. 5
+[53]ZheChen,WeiyunWang,HaoTian,ShenglongYe,ZhangweiGao,ErfeiCui,Wenwen
+Tong, Kongzhi Hu, Jiapeng Luo, Zheng Ma, Ji Ma, Jiaqi Wang, Xiao wen Dong, Hang
+Yan, Hewei Guo, Conghui He, Zhenjiang Jin, Chaochao Xu, Bin Wang, Xingjian Wei,
+WeiLi,WenjianZhang,BoZhang,LeweiLu,XizhouZhu,TongLu,DahuaLin,and
+YuQiao. Howfararewetogpt-4v? closingthegaptocommercialmultimodalmodels
+with open-source suites. ArXiv, abs/2404.16821, 2024. 6, 8
+[54]XiaohuaZhai,BasilMustafa,AlexanderKolesnikov,andLucasBeyer. Sigmoidloss
+for language image pre-training. 2023 IEEE/CVF International Conference on Computer
+Vision (ICCV) , pages 11941–11952, 2023. 6, 11, 17
+[55]HaotianLiu,ChunyuanLi,YuhengLi,andYongJaeLee. Improvedbaselineswith
+visual instruction tuning, 2023. 7, 8, 9, 17
+[56]Shuai Shao, Zeming Li, Tianyuan Zhang, Chao Peng, Gang Yu, Xiangyu Zhang, Jing
+Li,andJianSun. Objects365: Alarge-scale,high-qualitydatasetforobjectdetection. In
+2019 IEEE/CVF International Conference on Computer Vision (ICCV) , pages 8429–8438,
+2019. 7, 8, 9
+30
+[57]Alexander Kirillov, Eric Mintun, Nikhila Ravi, Hanzi Mao, Chloe Rolland, Laura
+Gustafson, Tete Xiao, Spencer Whitehead, Alexander C Berg, Wan-Yen Lo, et al.
+Segmentanything. In ProceedingsoftheIEEE/CVFInternationalConferenceonComputer
+Vision, pages 4015–4026, 2023. 7, 8
+[58]LeXue,ManliShu,AnasAwadalla,JunWang,AnYan,SenthilPurushwalkam,Honglu
+Zhou,VirajPrabhu,YutongDai,MichaelS.Ryoo,ShrikantB.Kendre,JieyuZhang,
+CanQin,ShuZhenZhang,Chia-ChihChen,NingYu,JuntaoTan,TulikaAwalgaonkar,
+Shelby Heinecke, Huan Wang, Yejin Choi, Ludwig Schmidt, Zeyuan Chen, Silvio
+Savarese, Juan Carlos Niebles, Caiming Xiong, and Ran Xu. xgen-mm (blip-3): A
+family of open large multimodal models. ArXiv, abs/2408.08872, 2024. 7, 8
+[59] pdfa-eng-wds. https://huggingface.co/datasets/pixparse/pdfa-eng-wds . 7, 8
+[60] idl-wds. https://huggingface.co/datasets/pixparse/idl-wds . 7, 8
+[61]Tsung-Yi Lin, Michael Maire, Serge Belongie, James Hays, Pietro Perona, Deva Ra-
+manan, Piotr Dollár, and C Lawrence Zitnick. Microsoft coco: Common objects in
+context. In Computer Vision–ECCV 2014: 13th European Conference, Zurich, Switzerland,
+September 6-12, 2014, Proceedings, Part V 13 , pages 740–755. Springer, 2014. 8
+[62]Oleksii Sidorov, Ronghang Hu, Marcus Rohrbach, and Amanpreet Singh. Textcaps: a
+dataset for image captioning with reading comprehension. In Computer Vision–ECCV
+2020: 16thEuropeanConference, Glasgow, UK, August 23–28, 2020, Proceedings, Part II 16 ,
+pages 742–758. Springer, 2020. 8
+[63]LinChen,JisongLi,XiaoyiDong,PanZhang,ConghuiHe,JiaqiWang,FengZhao,and
+DahuaLin. Sharegpt4v: Improvinglargemulti-modalmodelswithbettercaptions.
+arXiv preprint arXiv:2311.12793 , 2023. 8
+[64]XiaotongLi,FanZhang,HaiwenDiao,YuezeWang,XinlongWang,andLing-YuDuan.
+Densefusion-1m: Mergingvisionexpertsforcomprehensivemultimodalperception.
+arXiv preprint arXiv:2407.08303 , 2024. 8
+[65]ChristophSchuhmann,RomainBeaumont,RichardVencu,CadeGordon,RossWight-
+man,MehdiCherti,TheoCoombes,AarushKatta,ClaytonMullis,MitchellWortsman,
+etal. Laion-5b: Anopenlarge-scaledatasetfortrainingnextgenerationimage-text
+models. Advances in Neural Information Processing Systems , 35:25278–25294, 2022. 8
+[66]Andreas Veit, Tomas Matera, Lukas Neumann, Jiri Matas, and Serge Belongie. Coco-
+text: Dataset and benchmark for text detection and recognition in natural images.
+arXiv preprint arXiv:1601.07140 , 2016. 8
+[67]Amanpreet Singh, Guan Pang, Mandy Toh, Jing Huang, Wojciech Galuba, and Tal
+Hassner. Textocr: Towards large-scale end-to-end reasoning for arbitrary-shaped
+scene text. In Proceedings of the IEEE/CVF conference on computer vision and pattern
+recognition , pages 8802–8812, 2021. 8
+[68]YipengSun,ZihanNi,Chee-KhengChng,YuliangLiu,CanjieLuo,ChunChetNg,
+Junyu Han, Errui Ding, Jingtuo Liu, Dimosthenis Karatzas, Chee Seng Chan, and
+LianwenJin.Icdar2019competitiononlarge-scalestreetviewtextwithpartiallabeling
+- rrc-lsvt. 2019 International Conference on Document Analysis and Recognition (ICDAR) ,
+pages 1557–1562, 2019. 8
+[69]Xi Liu, Rui Zhang, Yongsheng Zhou, Qianyi Jiang, Qi Song, Nan Li, Kai Zhou, Lei
+Wang, Dong Wang, Minghui Liao, et al. Icdar 2019 robust reading challenge on
+reading chinese text on signboard. arXiv preprint arXiv:1912.09641 , 2019. 8
+[70]Geewook Kim, Teakgyu Hong, Moonbin Yim, JeongYeon Nam, Jinyoung Park,
+Jinyeong Yim, Wonseok Hwang, Sangdoo Yun, Dongyoon Han, and Seunghyun Park.
+Ocr-freedocumentunderstandingtransformer. In EuropeanConferenceonComputer
+Vision, pages 498–517. Springer, 2022. 8
+31
+[71]JiaboYe,AnwenHu,HaiyangXu,QinghaoYe,MingshiYan,GuohaiXu,Chenliang
+Li, Junfeng Tian, Qi Qian, Ji Zhang, Qin Jin, Liang He, Xin Lin, and Feiyan Huang.
+Ureader: Universal ocr-free visually-situated language understanding with multi-
+modallargelanguagemodel. In ConferenceonEmpiricalMethodsinNaturalLanguage
+Processing , 2023. 8
+[72]Guillaume Jaume, Hazim Kemal Ekenel, and Jean-Philippe Thiran. Funsd: A dataset
+for form understanding in noisy scanned documents. In 2019 International Conference
+onDocumentAnalysisandRecognitionWorkshops(ICDARW) ,volume2,pages1–6,2019.
+8, 9
+[73]Jordy Van Landeghem, Rubèn Tito, Łukasz Borchmann, Michał Pietruszka, Dawid Ju-
+rkiewicz, Rafał Powalski, Paweł Józiak, Sanket Biswas, Mickaël Coustaty, and Tomasz
+Stanisławek. Icdar 2023 competition on document understanding of everything
+(dude). In InternationalConferenceonDocumentAnalysisandRecognition ,pages420–
+434, 2023. 8, 9
+[74]HaoranWei,LingyuKong,JinyueChen,LiangZhao,ZhengGe,JinrongYang,Jianjian
+Sun,ChunruiHan,andXiangyuZhang. Vary: Scalingupthevisionvocabularyfor
+large vision-language models. arXiv preprint arXiv:2312.06109 , 2023. 8
+[75]Shankar Kantharaj, Rixie Tiffany Leong, Xiang Lin, Ahmed Masry, Megh Thakkar,
+EnamulHoque,andShafiqJoty. Chart-to-text: Alarge-scalebenchmarkforchartsum-
+marization. In Proceedingsofthe60thAnnualMeetingoftheAssociationforComputational
+Linguistics (Volume 1: Long Papers) , 2022. 8, 9
+[76]Yuqian Yuan, Wentong Li, Jian Liu, Dongqi Tang, Xinjie Luo, Chi Qin, Lei Zhang,
+and Jianke Zhu. Osprey: Pixel understanding with visual instruction tuning. In
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,
+pages 28202–28211, 2024. 8, 9
+[77]WeifengLin,XinyuWei,RuichuanAn,PengGao,BochengZou,YulinLuo,Siyuan
+Huang, Shanghang Zhang, and Hongsheng Li. Draw-and-understand: Leverag-
+ing visual prompts to enable mllms to comprehend what you want. arXiv preprint
+arXiv:2403.20271 , 2024. 8, 9
+[78]Bolei Zhou, Hang Zhao, Xavier Puig, Tete Xiao, Sanja Fidler, Adela Barriuso, and
+Antonio Torralba. Semantic understanding of scenes through the ade20k dataset.
+International Journal of Computer Vision , 127:302–321, 2019. 8, 9
+[79]Peter Young, Alice Lai, Micah Hodosh, and Julia Hockenmaier. From image descrip-
+tions to visual denotations: New similarity metrics for semantic inference over event
+descriptions. Transactions of the Association for Computational Linguistics , 2:67–78, 2014.
+8, 9
+[80]Hanoona Rasheed, Muhammad Maaz, Sahal Shaji, Abdelrahman Shaker, Salman
+Khan, Hisham Cholakkal, Rao M Anwer, Eric Xing, Ming-Hsuan Yang, and Fa-
+hadSKhan. Glamm: Pixelgroundinglargemultimodalmodel. In Proceedingsofthe
+IEEE/CVFConferenceonComputerVisionandPatternRecognition ,pages13009–13018,
+2024. 8, 9
+[81]Guiming Hardy Chen, Shunian Chen, Ruifei Zhang, Junying Chen, Xiangbo Wu,
+Zhiyi Zhang, Zhihong Chen, Jianquan Li, Xiang Wan, and Benyou Wang. Allava:
+Harnessing gpt4v-synthesized data for a lite vision-language model, 2024. 8
+[82]Beijing Academy of Artificial Intelligence (BAAI). Infinity instruct. GitHub repository,
+HuggingFace repository , 2024. 8, 9
+[83]FuxiaoLiu,XiaoyangWang,WenlinYao,JianshuChen,KaiqiangSong,SangwooCho,
+Yaser Yacoob, and Dong Yu. Mmc: Advancing multimodal chart understanding with
+large-scale instruction tuning. arXiv preprint arXiv:2311.10774 , 2023. 9
+32
+[84]KushalKafle,ScottCohen,BrianPrice,andChristopherKanan. Dvqa: Understanding
+data visualizations via question answering. In CVPR, 2018. 9
+[85]Fuxiao Liu, Kevin Lin, Linjie Li, Jianfeng Wang, Yaser Yacoob, and Lijuan Wang.
+Aligning large multi-modal model with robust instruction tuning. arXiv preprint
+arXiv:2306.14565 , 2023. 9
+[86]Ahmed Masry, Megh Thakkar, Aayush Bajaj, Aaryaman Kartha, Enamul Hoque, and
+ShafiqJoty. Chartgemma: Visualinstruction-tuningforchartreasoninginthewild,
+2024. 9
+[87]Minesh Mathew, Viraj Bagal, Rubèn Tito, Dimosthenis Karatzas, Ernest Valveny, and
+CV Jawahar. Infographicvqa. In Proceedings of the IEEE/CVF Winter Conference on
+Applications of Computer Vision , pages 1697–1706, 2022. 9
+[88]Nitesh Methani, Pritha Ganguly, Mitesh M Khapra, and Pratyush Kumar. Plotqa:
+Reasoningoverscientificplots. In ProceedingsoftheIEEE/CVFWinterConferenceon
+Applications of Computer Vision , pages 1527–1536, 2020. 9
+[89]Junpeng Liu, Tianyue Ou, Yifan Song, Yuxiao Qu, Wai Lam, Chenyan Xiong, Wenhu
+Chen,GrahamNeubig,andXiangYue. Harnessingwebpageuisfortext-richvisual
+understanding, 2024. 9, 10
+[90]SaharKazemzadeh,VicenteOrdonez,MarkMatten,andTamaraBerg. Referitgame:
+Referring to objects in photographs of natural scenes. In Proceedings of the 2014
+conference on empirical methods in natural language processing (EMNLP) , pages 787–798,
+2014. 9, 10
+[91]Rowan Zellers, Yonatan Bisk, Ali Farhadi, and Yejin Choi. From recognition to cogni-
+tion: Visualcommonsensereasoning. In TheIEEEConferenceonComputerVisionand
+Pattern Recognition (CVPR) , June 2019. 9, 10
+[92]JunchengLi,KaihangPan,ZhiqiGe,MingheGao,WeiJi,WenqiaoZhang,Tat-Seng
+Chua, Siliang Tang, Hanwang Zhang, and Yueting Zhuang. Fine-tuning multimodal
+llms to follow zero-shot demonstrative instructions. In The Twelfth International Confer-
+ence on Learning Representations , 2024. 9, 10
+[93]DongfuJiang,XuanHe,HuayeZeng,CongWei,MaxKu,QianLiu,andWenhuChen.
+Mantis: Interleaved multi-image instruction tuning, 2024. 9, 10, 24
+[94]Zhangchen Xu,Fengqing Jiang, LuyaoNiu, Yuntian Deng, RadhaPoovendran, Yejin
+Choi,andBillYuchenLin. Magpie: Alignmentdatasynthesisfromscratchbyprompt-
+ing aligned llms with nothing. ArXiv, abs/2406.08464, 2024. 9, 10, 11
+[95]MigelTissera. Synthia-70b-v1.2: Syntheticintelligentagent. https://huggingface.
+co/migtissera/Synthia-13B , 2023. 9
+[96]JiaLi,EdwardBeeching,LewisTunstall,BenLipkin,RomanSoletskyi,ShengyiHuang,
+Kashif Rasul, Longhui Yu, Albert Q Jiang, Ziju Shen, et al. Numinamath: The largest
+publicdatasetinai4mathswith860kpairsofcompetitionmathproblemsandsolutions.
+Hugging Face repository , 13, 2024. 9
+[97]Miquel Farré, Andi Marafioti, Lewis Tunstall, Leandro Von Werra, and Thomas Wolf.
+Finevideo. https://huggingface.co/datasets/HuggingFaceFV/finevideo , 2024.
+9, 10, 11
+[98]RuchitRawal,KhalidSaifullah, MiquelFarré,RonenBasri,DavidJacobs, Gowthami
+Somepalli,andTomGoldstein. Cinepile: Alongvideoquestionansweringdataset
+and benchmark. arXiv preprint arXiv:2405.08813 , 2024. 9, 10, 11
+[99]Share. Sharegemini: Scaling up video caption data for multimodal large language
+models, June 2024. 9, 10, 11
+33
+[100]YuqianYuan,HangZhang, WentongLi,ZesenCheng, BoqiangZhang,LongLi, Xin
+Li,DeliZhao,WenqiaoZhang,YuetingZhuang,etal. Videorefersuite: Advancing
+spatial-temporalobjectunderstandingwithvideollm. arXivpreprintarXiv:2501.00599 ,
+2024. 10, 11
+[101]Ranjay Krishna, Kenji Hata, Frederic Ren, Li Fei-Fei, and Juan Carlos Niebles. Dense-
+captioning events in videos. In Proceedings of the IEEE international conference on
+computer vision , pages 706–715, 2017. 10, 11
+[102]Luowei Zhou, Chenliang Xu, and Jason Corso. Towards automatic learning of proce-
+dures from web instructional videos. In Proceedings of the AAAI Conference on Artificial
+Intelligence , number 1, 2018. 10, 11
+[103]Kristen Grauman, Andrew Westbury, Eugene Byrne, Zachary Chavis, Antonino
+Furnari,RohitGirdhar,JacksonHamburger,HaoJiang,MiaoLiu,XingyuLiu,etal.
+Ego4d: Around the world in 3,000 hours of egocentric video. In Proceedings of the
+IEEE/CVFConferenceonComputerVisionandPatternRecognition ,pages18995–19012,
+2022. 10, 11
+[104]Joya Chen, Zhaoyang Lv, Shiwei Wu, Kevin Qinghong Lin, Chenan Song, Difei Gao,
+Jia-Wei Liu, Ziteng Gao, Dongxing Mao, and Mike Zheng Shou. Videollm-online:
+Onlinevideolargelanguagemodelforstreamingvideo. In ProceedingsoftheIEEE/CVF
+Conference on Computer Vision and Pattern Recognition , pages 18407–18418, 2024. 10, 11
+[105]Gabriel Huang, BoPang, Zhenhai Zhu,Clara Rivera, andRadu Soricut. Multimodal
+pretraining for dense video captioning. arXiv preprint arXiv:2011.11760 , 2020. 10, 11
+[106]Andreea-MariaOncescu,JoaoFHenriques,YangLiu,AndrewZisserman,andSamuel
+Albanie. Queryd: A video dataset with high-quality text and audio narrations. In
+ICASSP 2021-2021 IEEE International Conference on Acoustics, Speech and Signal Process-
+ing (ICASSP) , pages 2265–2269. IEEE, 2021. 10, 11
+[107]AbhayZala,JaeminCho,SatwikKottur,XilunChen,BarlasOguz,YasharMehdad,
+and Mohit Bansal. Hierarchical video-moment retrieval and step-captioning. In
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,
+pages 23056–23065, 2023. 10, 11
+[108]Jiyang Gao, Chen Sun, Zhenheng Yang, and Ram Nevatia. Tall: Temporal activity
+localizationvialanguagequery. In ProceedingsoftheIEEEinternationalconferenceon
+computer vision , pages 5267–5275, 2017. 10, 11, 16
+[109]Long Qian, Juncheng Li, Yu Wu, Yaobo Ye, Hao Fei, Tat-Seng Chua, Yueting Zhuang,
+and Siliang Tang. Momentor: Advancing video large language model with fine-
+grained temporal reasoning. arXiv preprint arXiv:2402.11435 , 2024. 10, 11
+[110]Yansong Tang, Dajun Ding, Yongming Rao, Yu Zheng, Danyang Zhang, Lili Zhao,
+Jiwen Lu, and JieZhou. Coin: A large-scale datasetfor comprehensive instructional
+videoanalysis. In ProceedingsoftheIEEE/CVFConferenceonComputerVisionandPattern
+Recognition , pages 1207–1216, 2019. 10, 11
+[111]Nathan Lambert, Jacob Morrison, Valentina Pyatkin, Shengyi Huang, Hamish Ivison,
+Faeze Brahman, Lester James V. Miranda, Alisa Liu, Nouha Dziri, Shane Lyu, Yuling
+Gu, Saumya Malik, Victoria Graf, Jena D. Hwang, Jiangjiang Yang, Ronan Le Bras,
+OyvindTafjord,ChrisWilhelm,LucaSoldaini,NoahA.Smith,YizhongWang,Pradeep
+Dasigi, and HannanehHajishirzi. Tülu3: Pushingfrontiers in openlanguage model
+post-training. 2024. 10, 11
+[112]Tsai-ShienChen,AliaksandrSiarohin,WilliMenapace,EkaterinaDeyneka,Hsiang-
+wei Chao, Byung Eun Jeon, Yuwei Fang, Hsin-Ying Lee, Jian Ren, Ming-Hsuan Yang,
+et al. Panda-70m: Captioning 70m videos with multiple cross-modality teachers.
+arXiv preprint arXiv:2402.19479 , 2024. 11
+34
+[113]Minesh Mathew, Dimosthenis Karatzas, and CV Jawahar. Docvqa: A dataset for vqa
+ondocumentimages. In ProceedingsoftheIEEE/CVFwinterconferenceonapplicationsof
+computer vision , pages 2200–2209, 2021. 12
+[114]YuliangLiu,ZhangLi,BiaoYang,ChunyuanLi,XuchengYin,Cheng-linLiu,Lianwen
+Jin, and Xiang Bai. On the hidden mystery of ocr in large multimodal models. arXiv
+preprint arXiv:2305.07895 , 2023. 12
+[115]Pan Lu, Hritik Bansal, Tony Xia, Jiacheng Liu, Chunyuan Li, Hannaneh Hajishirzi,
+Hao Cheng, Kai-Wei Chang, Michel Galley, and Jianfeng Gao. Mathvista: Evaluating
+mathematical reasoning of foundation models in visual contexts. arXiv preprint
+arXiv:2310.02255 , 2023. 12
+[116]Ke Wang, Junting Pan, Weikang Shi, Zimu Lu, Mingjie Zhan, and Hongsheng Li.
+Measuring multimodal mathematical reasoning with math-vision dataset. arXiv
+preprint arXiv:2402.14804 , 2024. 12
+[117]Xiang Yue, Tianyu Zheng,YuanshengNi, Yubo Wang, Kai Zhang,Shengbang Tong,
+Yuxuan Sun, Botao Yu, Ge Zhang, Huan Sun, et al. Mmmu-pro: A more robust multi-
+discipline multimodal understanding benchmark. arXiv preprint arXiv:2409.02813 ,
+2024. 13
+[118]XiangYue,YuanshengNi,KaiZhang,TianyuZheng,RuoqiLiu,GeZhang,Samuel
+Stevens,DongfuJiang,WeimingRen,YuxuanSun,etal. Mmmu: Amassivemulti-
+discipline multimodal understanding and reasoning benchmark for expert agi. In
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,
+pages 9556–9567, 2024. 13
+[119] Xingyu Fu, Yushi Hu, Bangzheng Li, Yu Feng, Haoyu Wang, Xudong Lin, Dan Roth,
+Noah A Smith, Wei-Chiu Ma, and Ranjay Krishna. Blink: Multimodal large language
+models can see but not perceive. In European Conference on Computer Vision , pages
+148–166, 2025. 13
+[120]xai. Realworldqa benchmark. https://huggingface.co/datasets/xai-org/
+RealworldQA , 2024. 13
+[121]AniruddhaKembhavi,MikeSalvato,EricKolve,MinjoonSeo,HannanehHajishirzi,
+and Ali Farhadi. A diagram is worth a dozen images. In Computer Vision–ECCV 2016:
+14th European Conference, Amsterdam, The Netherlands, October 11–14, 2016, Proceedings,
+Part IV 14 , pages 235–251, 2016. 13
+[122]Drew A Hudson and Christopher D Manning. Gqa: A new dataset for real-world
+visualreasoningandcompositionalquestionanswering.In ProceedingsoftheIEEE/CVF
+conference on computer vision and pattern recognition , pages 6700–6709, 2019. 13
+[123]Kaichen Zhang, Bo Li, Peiyuan Zhang, Fanyi Pu, Joshua Adrian Cahyono, Kairui Hu,
+Shuai Liu, Yuanhan Zhang, Jingkang Yang, Chunyuan Li, and Ziwei Liu. Lmms-eval:
+Reality check on the evaluation of large multimodal models, 2024. 14
+[124]Li* Bo, Zhang* Peiyuan, Zhang* Kaichen, Pu* Fanyi, Du Xinrun, Dong Yuhao, Liu
+Haotian, Zhang Yuanhan, Zhang Ge, Li Chunyuan, and Ziwei Liu. Lmms-eval:
+Accelerating the development of large multimoal models, March 2024. 14
+[125]HaodongDuan,JunmingYang,YuxuanQiao,XinyuFang,LinChen,YuanLiu,Xiaoyi
+Dong, Yuhang Zang, Pan Zhang, Jiaqi Wang, et al. Vlmevalkit: An open-source
+toolkit for evaluating large multi-modality models. In Proceedings of the 32nd ACM
+International Conference on Multimedia , pages 11198–11201, 2024. 14
+[126]Chaoyou Fu, Yuhan Dai, Yondong Luo, Lei Li, Shuhuai Ren, Renrui Zhang, Zihan
+Wang,ChenyuZhou,YunhangShen,MengdanZhang,etal. Video-mme: Thefirst-
+ever comprehensive evaluation benchmark of multi-modal llms in video analysis.
+arXiv preprint arXiv:2405.21075 , 2024. 15
+35
+[127]Karttikeya Mangalam, Raiymbek Akshulakov, and Jitendra Malik. Egoschema: A
+diagnostic benchmark for very long-form video language understanding. Advances in
+Neural Information Processing Systems , 36, 2024. 15
+[128] VioricaPatraucean,LucasSmaira,AnkushGupta,AdriaRecasens,LarisaMarkeeva,
+DylanBanarse,SkandaKoppula,MateuszMalinowski,YiYang,CarlDoersch,etal.
+Perceptiontest: Adiagnosticbenchmarkformultimodalvideomodels. Advancesin
+Neural Information Processing Systems , 36, 2024. 15
+[129]Zhou Yu, Dejing Xu, Jun Yu, Ting Yu, Zhou Zhao, Yueting Zhuang, and Dacheng
+Tao. Activitynet-qa: Adatasetforunderstandingcomplexwebvideosviaquestion
+answering. In Proceedings of the AAAI Conference on Artificial Intelligence , pages 9127–
+9134, 2019. 15
+[130]Yilun Zhao, Lujing Xie, Haowei Zhang, Guo Gan, Yitao Long, Zhiyuan Hu, Tongyan
+Hu,WeiyuanChen,ChuhanLi, JunyangSong, ZhijianXu,Chengye Wang,Weifeng
+Pan, Ziyao Shangguan, Xiangru Tang, Zhenwen Liang, Yixin Liu, Chen Zhao, and
+Arman Cohan. Mmvu: Measuring expert-level multi-discipline video understanding,
+2025. 15
+[131]Junjie Zhou, Yan Shu, Bo Zhao, Boya Wu, Shitao Xiao, Xi Yang, Yongping Xiong,
+Bo Zhang, Tiejun Huang, and Zheng Liu. Mlvu: A comprehensive benchmark for
+multi-task long video understanding. arXiv preprint arXiv:2406.04264 , 2024. 16
+[132]HaoningWu,DongxuLi,BeiChen,andJunnanLi. Longvideobench: Abenchmark
+for long-context interleaved video-language understanding, 2024. 16
+[133]WeihanWang,ZehaiHe,WenyiHong,YeanCheng,XiaohanZhang,JiQi,Xiaotao
+Gu, Shiyu Huang, Bin Xu, Yuxiao Dong, et al. Lvbench: An extreme long video
+understanding benchmark. arXiv preprint arXiv:2406.08035 , 2024. 16
+[134]YuanxinLiu,ShichengLi,YiLiu,YuxiangWang,ShuhuaiRen,LeiLi,SishuoChen,
+Xu Sun, and Lu Hou. Tempcompass: Do video llms really understand videos? arXiv
+preprint arXiv:2403.00476 , 2024. 16
+[135]JunbinXiao,XindiShang,AngelaYao,andTat-SengChua. Next-qa: Nextphaseof
+question-answeringtoexplainingtemporalactions. In ProceedingsoftheIEEE/CVF
+conference on computer vision and pattern recognition , pages 9777–9786, 2021. 16
+[136]Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini
+Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learn-
+ing transferable visual models from natural language supervision. In International
+conference on machine learning , pages 8748–8763, 2021. 17
+[137]AlexFang,AlbinMadappallyJose,AmitJain,LudwigSchmidt,AlexanderToshev,
+and Vaishaal Shankar. Data filtering networks. arXiv preprint arXiv:2309.17425 , 2023.
+17
+[138]Muhammad Maaz, Hanoona Rasheed, Salman Khan, and Fahad Shahbaz Khan.
+Video-chatgpt: Towards detailed video understanding via large vision and language
+models. arXiv preprint arXiv:2306.05424 , 2023. 17
+[139]YangJin,ZhichengSun,KunXu,LiweiChen,HaoJiang,QuzheHuang,ChengruSong,
+Yuliang Liu, Di Zhang, Yang Song, et al. Video-lavit: Unified video-language pre-
+trainingwithdecoupledvisual-motionaltokenization. arXivpreprintarXiv:2402.03161 ,
+2024. 17
+[140]Hang Zhang, Xin Li, and Lidong Bing. Video-llama: An instruction-tuned audio-
+visual language model for video understanding. arXiv preprint arXiv:2306.02858 , 2023.
+17
+36
+[141]Kunchang Li, Yali Wang, Yinan He, Yizhuo Li, Yi Wang, Yi Liu, Zun Wang, Jilan
+Xu, Guo Chen, Ping Luo, et al. Mvbench: A comprehensive multi-modal video
+understanding benchmark. In Proceedings of the IEEE/CVF Conference on Computer
+Vision and Pattern Recognition , pages 22195–22206, 2024. 17
+[142]XiaoqianShen,YunyangXiong,ChangshengZhao,LemengWu,JunChen,Chenchen
+Zhu,ZechunLiu,FanyiXiao,BalakrishnanVaradarajan,FlorianBordes,etal. Longvu:
+Spatiotemporal adaptive compression for long video-language understanding. arXiv
+preprint arXiv:2410.17434 , 2024. 24
+[143]Lin Xu,YilinZhao, DaquanZhou, Zhijie Lin,See KiongNg, and JiashiFeng. Pllava:
+Parameter-free llava extension from images to videos for video dense captioning.
+arXiv preprint arXiv:2404.16994 , 2024.
+[144]Peng Jin, Ryuichi Takanobu, Wancai Zhang, Xiaochun Cao, and Li Yuan. Chat-univi:
+Unifiedvisualrepresentationempowerslargelanguagemodelswithimageandvideo
+understanding. In Proceedings of the IEEE/CVF Conference on Computer Vision and
+Pattern Recognition , pages 13700–13710, 2024.
+[145] Mingze Xu, Mingfei Gao, Zhe Gan, Hong-You Chen, Zhengfeng Lai, Haiming Gang,
+Kai Kang, and Afshin Dehghan. Slowfast-llava: A strong training-free baseline for
+video large language models. arXiv preprint arXiv:2407.15841 , 2024.
+[146]YuetianWeng,MingfeiHan,HaoyuHe,XiaojunChang,andBohanZhuang. Longvlm:
+Efficient long video understanding via large language models. In European Conference
+on Computer Vision , pages 453–470. Springer, 2025.
+[147]Zhende Song, Chenchen Wang, Jiamu Sheng, Chi Zhang, Gang Yu, Jiayuan Fan, and
+Tao Chen. Moviellm: Enhancing long video understanding with ai-generated movies.
+arXiv preprint arXiv:2403.01422 , 2024.
+[148]Yanwei Li, Chengyao Wang, and Jiaya Jia. Llama-vid: An image is worth 2 tokens
+inlargelanguagemodels. In EuropeanConferenceonComputerVision ,pages323–340.
+Springer, 2025.
+[149]ReubenTan,XimengSun,PingHu,Jui-hsienWang,HaniehDeilamsalehy,BryanA
+Plummer, Bryan Russell, and Kate Saenko. Koala: Key frame-conditioned long
+video-llm. In ProceedingsoftheIEEE/CVFConferenceonComputerVisionandPattern
+Recognition , pages 13581–13591, 2024. 24
+[150]Qilang Ye, Zitong Yu, Rui Shao, Xinyu Xie, Philip Torr, and Xiaochun Cao. Cat:
+enhancing multimodal large language model to answer questions in dynamic audio-
+visual scenarios. In European Conference on Computer Vision , pages 146–164. Springer,
+2025. 24
+[151]Fangxun Shu, Lei Zhang, Hao Jiang, and Cihang Xie. Audio-visual llm for video
+understanding. arXiv preprint arXiv:2312.06720 , 2023.
+[152]Yixuan Su, Tian Lan, Huayang Li, Jialu Xu, Yan Wang, and Deng Cai. Pandagpt: One
+model to instruction-follow them all. arXiv preprint arXiv:2305.16355 , 2023.
+[153]Chenyang Lyu, Minghao Wu, Longyue Wang, Xinting Huang, Bingshuai Liu, Zefeng
+Du,ShumingShi,andZhaopengTu. Macaw-llm: Multi-modallanguagemodeling
+with image, audio, video, and text integration. arXiv preprint arXiv:2306.09093 , 2023.
+[154]Artemis Panagopoulou, Le Xue, Ning Yu, Junnan Li, Dongxu Li, Shafiq Joty, Ran Xu,
+SilvioSavarese,CaimingXiong,andJuanCarlosNiebles. X-instructblip: Aframework
+foraligningx-modalinstruction-awarerepresentationstollmsandemergentcross-
+modal reasoning. arXiv preprint arXiv:2311.18799 , 2023.
+[155]Jiaming Han, Kaixiong Gong, Yiyuan Zhang, Jiaqi Wang, Kaipeng Zhang, Dahua Lin,
+Yu Qiao, Peng Gao, and Xiangyu Yue. Onellm: One framework to align all modalities
+withlanguage. In ProceedingsoftheIEEE/CVFConferenceonComputerVisionandPattern
+Recognition , pages 26584–26595, 2024.
+37
+[156]Shoubin Yu, Jaehong Yoon, and Mohit Bansal. Crema: Multimodal composi-
+tional video reasoning via efficient modular adaptation and fusion. arXiv preprint
+arXiv:2402.05889 , 2024.
+[157]Yunlong Tang, Daiki Shimada, Jing Bi, and Chenliang Xu. Avicuna: Audio-visual llm
+withinterleaverandcontext-boundaryalignmentfortemporalreferentialdialogue.
+arXiv preprint arXiv:2403.16276 , 2024. 24
+[158]PinciYang,XinWang,XuguangDuan,HongChen,RunzeHou,CongJin,andWenwu
+Zhu. Avqa: A datasetfor audio-visualquestion answeringon videos. Proceedings of
+the 30th ACM International Conference on Multimedia , 2022. 24
+[159]HudaAlAmri,VincentCartillier,AbhishekDas,JueWang,StefanLee,PeterAnderson,
+Irfan Essa, Devi Parikh, Dhruv Batra, Anoop Cherian, Tim K. Marks, and Chiori Hori.
+Audiovisualscene-awaredialog. 2019IEEE/CVFConferenceonComputerVisionand
+Pattern Recognition (CVPR) , pages 7550–7559, 2019.
+[160]Qilang Ye, Zitong Yu, Rui Shao, Xinyu Xie, Philip Torr, and Xiaochun Cao. Cat:
+Enhancing multimodal large language model to answer questions in dynamic audio-
+visual scenarios, 2024. 24
+[161]HaojiZhang,YiqinWang,YansongTang,YongLiu,JiashiFeng,JifengDai,andXiaojie
+Jin. Flash-vstream: Memory-basedreal-timeunderstandingforlongvideostreams.
+arXiv preprint arXiv:2406.08085 , 2024. 24
+[162]RuiQian,XiaoyiDong,PanZhang,YuhangZang,ShuangruiDing,DahuaLin,and
+Jiaqi Wang. Streaming long videounderstanding with large language models. arXiv
+preprint arXiv:2405.16009 , 2024.
+[163]Joya Chen, Zhaoyang Lv, Shiwei Wu, Kevin Qinghong Lin, Chenan Song, Difei Gao,
+Jia-Wei Liu, Ziteng Gao, Dongxing Mao, and Mike Zheng Shou. Videollm-online:
+Onlinevideolargelanguagemodelforstreamingvideo. 2024IEEE/CVFConference
+on Computer Vision and Pattern Recognition (CVPR) , pages 18407–18418, 2024.
+[164]Pan Zhang, Xiao wen Dong, Yuhang Cao, Yuhang Zang, Rui Qian, Xilin Wei, Lin
+Chen,YifeiLi,JunboNiu,ShuangruiDing,QipengGuo,HaodongDuan,XinChen,
+Han Lv, Zheng Nie, Min Zhang, Bin Wang, Wenwei Zhang, Xinyue Zhang, Jiaye Ge,
+Wei Li, Jingwen Li, Zhongying Tu, Conghui He, Xingcheng Zhang, Kai Chen, Yuanbo
+Qiao,DahuaLin,andJiaqiWang. Internlm-xcomposer2.5-omnilive: Acomprehensive
+multimodal system for long-term streaming video and audio interactions. 2024.
+[165]JihaoLiu,ZhidingYu,ShiyiLan,ShihaoWang,RongyaoFang,JanKautz,Hongsheng
+Li, and Jose M. Alvare. Streamchat: Chatting with streaming video. 2024. 24
+[166]Feng Li, Renrui Zhang, Hao Zhang, Yuanhan Zhang, Bo Li, Wei Li, Zejun Ma, and
+Chunyuan Li. Llava-next-interleave: Tackling multi-image, video, and 3d in large
+multimodal models, 2024. 24
+[167]Chaoyou Fu, Haojia Lin, Zuwei Long, Yunhang Shen, Meng Zhao, Yifan Zhang,
+Shaoqi Dong, Xiong Wang, Di Yin, Long Ma, Xiawu Zheng, Ran He, Rongrong Ji,
+YunshengWu,CaifengShan,andXingSun. Vita: Towardsopen-sourceinteractive
+omni multimodal llm, 2024. 24
+[168]Chaoyou Fu, Haojia Lin, Xiong Wang, Yi-Fan Zhang, Yunhang Shen, Xiaoyu Liu,
+Yangze Li, Zuwei Long, Heting Gao, Ke Li, Xiawu Zheng, Rongrong Ji, Xing Sun,
+CaifengShan,andRanHe. Vita-1.5: Towardsgpt-4olevelreal-timevisionandspeech
+interaction, 2025. 24
+38
