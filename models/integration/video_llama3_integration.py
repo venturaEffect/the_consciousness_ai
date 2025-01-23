@@ -15,9 +15,10 @@ Dependencies:
 
 from transformers import Blip2ForConditionalGeneration, Blip2Processor
 import torch
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 from models.memory.emotional_memory_core import EmotionalMemoryCore
 from models.core.consciousness_core import VisualProcessor
+import numpy as np
 
 class VideoLLaMA3Integration:
     def __init__(self, config: Dict):
@@ -38,6 +39,25 @@ class VideoLLaMA3Integration:
         """Process a video and return the visual context"""
         # Implement video processing logic here
         pass
+
+    def process_stream_frame(self, frame: np.ndarray) -> Dict:
+        """Process a single video frame from a live stream."""
+        # 1. Convert frame to the format required by the model
+        # 2. Use AVT + DiffFP logic here or in your VisualProcessor
+        # 3. Return visual context for real-time usage
+        pass
+
+    def process_video_stream(self, frames: List[np.ndarray]) -> Dict:
+        """
+        Process multiple frames in a stream for real-time analysis.
+        """
+        batch_contexts = []
+        for frame in frames:
+            context = self.process_stream_frame(frame)
+            # Optionally index context in [`EmotionalMemoryCore.store_visual_memory`](models/memory/emotional_memory_core.py)
+            # Or pass it to [`VisualProcessor`](models/core/consciousness_core.py)
+            batch_contexts.append(context)
+        return {"streamContexts": batch_contexts}
 
     def integrate_with_acm(self, video_path: str):
         """Integrate video processing with ACM"""
