@@ -130,6 +130,49 @@ All datasets below are free for commercial use and research purposes.
 - Data preprocessing guidelines in `docs/preprocessing.md`
 - Example notebooks in `notebooks/dataset_examples/`
 
+## Real-Time Integration with VideoLLaMA3
+
+### Overview
+
+VideoLLaMA3 supports processing live video or frames from simulations in real time. This helps the AI agent interpret its environment dynamically, especially in an Unreal Engine simulation.
+
+### Requirements
+
+- High-performance GPU (e.g., NVIDIA RTX 40-series) or TPU for low-latency inference.
+- (Optional) Tools like NVIDIA TensorRT or TorchServe for additional optimization.
+
+### Implementation Steps
+
+1. **Frame Streaming**  
+   Capture frames in real time (e.g., from Unreal Engine) and send them to your Python process via sockets or shared memory.
+
+2. **VideoLLaMA3 Processing**  
+   In Python, use the methods in `VideoLLaMA3Integration` (e.g., `process_stream_frame`) to process each frame:
+
+   ```python
+   frame = ...  # Captured from simulation
+   context = video_llama3_integration.process_stream_frame(frame)
+   ```
+
+3. **Emotional Memory & Consciousness Updates**
+
+The output can be stored in `EmotionalMemoryCore` or forwarded to `ConsciousnessCore` to trigger reinforcement learning or consciousness updates.
+
+4. **Performance Considerations**
+
+- Use smaller resolutions or frame skipping for higher FPS.
+- Keep total inference latency under ~100ms for near real-time interaction.
+
+**Example**
+
+```python
+# Inside your simulation loop
+while simulation_running:
+    frame = unreal_engine_capture()  # Or another method
+    output = video_llama3_integration.process_stream_frame(frame)
+    consciousness_core.update_state(output)
+```
+
 ## Installation
 
 ### 1. Clone the Repository
@@ -342,3 +385,7 @@ For commercial use, please contact the authors.
 <img alt="License: MIT NC" src="https://img.shields.io/badge/License-MIT NC-blue.svg">
 
 This project is licensed under MIT with non-commercial use restrictions. For commercial licensing inquiries, please contact: <a href="mailto:info@theconsciousness.ai">info@theconsciousness.ai</a>
+
+```
+
+```
