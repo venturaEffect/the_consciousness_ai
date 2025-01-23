@@ -1,0 +1,3 @@
+video_llama3:
+  model_name: "DAMO-NLP-SG/VideoLLaMA3"
+  device: "cuda" # or "cpu" if GPU is not available

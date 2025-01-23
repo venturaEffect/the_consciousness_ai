@@ -228,6 +228,15 @@ pip install palm-e
 pip install whisper-v3
 ```
 
+### Integration with VideoLLaMA3
+
+To integrate VideoLLaMA3 into the ACM project, follow these steps:
+
+1. **Clone the VideoLLaMA3 Repository:**
+   ```bash
+   git clone https://github.com/DAMO-NLP-SG/VideoLLaMA3.git
+   ```
+
 ### Running the Project
 
 Activate your virtual environment and start the narrative engine:

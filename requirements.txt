@@ -1,8 +1,8 @@
 # -------------------------------------------------------
 # Deep Learning & AI
 # -------------------------------------------------------
-torch>=2.0.0
-transformers>=4.30.0
+torch
+transformers
 huggingface_hub>=0.16.4
 bitsandbytes>=0.37.0
 accelerate>=0.20.0
@@ -24,7 +24,7 @@ faiss-cpu>=1.7.0
 # -------------------------------------------------------
 # Vision & Audio Processing
 # -------------------------------------------------------
-opencv-python>=4.8.0
+opencv-python
 opencv-contrib-python>=4.8.0
 Pillow>=10.0.0
 librosa>=0.10.0
@@ -42,7 +42,7 @@ protobuf>=4.23.0
 # -------------------------------------------------------
 # Data Processing & ML
 # -------------------------------------------------------
-numpy>=1.24.0
+numpy
 pandas>=2.0.0
 scikit-learn>=1.3.0
 scipy>=1.10.0

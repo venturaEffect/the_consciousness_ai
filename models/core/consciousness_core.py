@@ -11,6 +11,7 @@ from models.memory.emotional_memory_core import EmotionalMemoryCore
 from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
 from models.language.llama_3_3 import LlamaForCausalLM
 from models.predictive.attention_mechanism import ConsciousnessAttention
+from models.integration.video_llama3_integration import VideoLLaMA3Integration
 
 
 @dataclass
@@ -25,7 +26,7 @@ class ConsciousnessState:
 
 
 class ConsciousnessCore:
-    def __init__(self, config):
+    def __init__(self, config: Dict):
         """Sets up narrative generation, memory modules, and attention mechanisms."""
         self.config = config
 
@@ -39,6 +40,7 @@ class ConsciousnessCore:
         self.memory = EmotionalMemoryCore(self.config)
         self.emotion = EmotionalGraphNetwork()
         self.attention = ConsciousnessAttention(self.config)
+        self.video_llama3 = VideoLLaMA3Integration(config['video_llama3'])
 
         # Meta-memory tracking.
         self.meta_memory = {
@@ -91,6 +93,11 @@ class ConsciousnessCore:
             'emotional_context': emotional_embedding,
             'meta_memory_state': self.meta_memory
         }, current_state
+
+    def process_input(self, input_data: Dict):
+        if 'video_path' in input_data:
+            self.video_llama3.integrate_with_acm(input_data['video_path'])
+        # Other processing...
 
     def _generate_narrative(
         self,
