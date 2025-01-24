@@ -281,7 +281,7 @@ LLaMA 3.3 is large and requires a GPU (16 GB VRAM recommended) and CUDA installe
 Install bitsandbytes for reduced memory usage:
 
 ```bash
-pip install bitsandbytes
+pip install bitsandbytes.
 ```
 
 ### Unreal Engine Prerequisites
