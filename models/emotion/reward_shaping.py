@@ -70,7 +70,6 @@ class EmotionalRewardShaper(nn.Module):
         self,
         emotion_values: Dict[str, float],
         attention_level: float,
-        context: Optional[Dict] = None,
         meta_memory: Optional[Dict] = None
     ) -> float:
         """
@@ -79,7 +78,6 @@ class EmotionalRewardShaper(nn.Module):
         Args:
             emotion_values: Dict of emotional signals (valence, arousal, etc.).
             attention_level: Current attention level or weighting factor.
-            context: Additional context (e.g., state, action) if needed.
             meta_memory: Additional memory-based data or patterns.
 
         Returns:

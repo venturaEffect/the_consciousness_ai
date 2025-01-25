@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+import time
 
 # Placeholder: from models.memory.memory_store import MemoryStore
 # If your code references memory_store, define a minimal stub or real class.
@@ -76,43 +77,21 @@ class EmotionalMemoryCore(nn.Module):
         self.initial_weight = 0.1
 
         self.metrics = MemoryMetrics()
+        self.experiences = []
 
     def store_experience(
         self,
-        experience: torch.Tensor,
-        emotional_context: Optional[Dict] = None,
-        narrative_state: Optional[Dict] = None
-    ) -> str:
-        """
-        Store a new experience with controlled adaptation.
-
-        Args:
-            experience: Tensor containing encoded experience data.
-            emotional_context: Dict of emotional signals.
-            narrative_state: Additional context about the narrative or environment.
-        """
-        # Encode or process the experience if needed.
-        experience_embedding = self.experience_encoder(experience)
-
-        # Calculate stability score from placeholders.
-        stability_score = self._calculate_stability(
-            experience_embedding,
-            emotional_context
-        )
-
-        # Distinguish novel from stable experiences.
-        if stability_score < self.novelty_threshold:
-            memory_key = self._store_novel_experience(
-                experience_embedding, emotional_context, narrative_state
-            )
-        else:
-            memory_key = self._reinforce_pattern(
-                experience_embedding, emotional_context, narrative_state
-            )
-
-        # Update metrics or stats.
-        self._update_metrics(stability_score, emotional_context, narrative_state)
-        return memory_key
+        state: torch.Tensor,
+        emotion: Dict[str, float],
+        reward: float
+    ):
+        # Store emotional experience with metadata
+        self.experiences.append({
+            'state': state,
+            'emotion': emotion,
+            'reward': reward,
+            'timestamp': time.time()
+        })
 
     def process_experience(
         self,
