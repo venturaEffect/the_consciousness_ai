@@ -184,5 +184,14 @@ class TestConsciousnessPipeline(unittest.TestCase):
             initial_eval['consciousness_score']
         )
 
+    def test_stream_processing(self):
+        """Test real-time stream processing capabilities"""
+        frame = torch.randn(3, 224, 224)  # Test frame
+        result = self.consciousness.process_visual_stream(frame)
+        
+        self.assertIn('visual_context', result)
+        self.assertIn('attention_metrics', result)
+        self.assertTrue(0 <= result['attention_metrics']['attention_level'] <= 1)
+
 if __name__ == '__main__':
     unittest.main()

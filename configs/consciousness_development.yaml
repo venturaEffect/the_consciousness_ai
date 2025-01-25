@@ -253,3 +253,14 @@ training:
     eval_steps: 500
     save_steps: 1000
     metrics: ["emotional_coherence", "narrative_stability", "memory_retention"]
+
+video_processing:
+  stream_buffer_size: 32
+  batch_size: 8
+  attention_threshold: 0.7
+  memory_update_freq: 10 # frames
+
+consciousness_development:
+  min_attention_level: 0.6
+  memory_coherence_threshold: 0.7
+  emotional_awareness_threshold: 0.65

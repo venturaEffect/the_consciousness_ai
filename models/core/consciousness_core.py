@@ -101,6 +101,17 @@ class ConsciousnessCore:
             self.video_llama3.integrate_with_acm(input_data['video_path'])
         # Other processing...
 
+    def process_visual_stream(self, frame_tensor: torch.Tensor) -> Dict:
+        """Process visual input stream for consciousness development"""
+        visual_context = self.video_llama3.process_stream_frame(frame_tensor)
+        
+        consciousness_state = self.update_consciousness_state(
+            visual_context=visual_context,
+            attention_level=visual_context['attention_metrics']['attention_level']
+        )
+        
+        return consciousness_state
+
     def _generate_narrative(
         self,
         input_state: Dict[str, torch.Tensor],

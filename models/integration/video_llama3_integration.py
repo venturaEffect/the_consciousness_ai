@@ -29,7 +29,7 @@ class VideoLLaMA3Integration:
         """
         self.config = config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model, self.processor = self._load_video_llama3_model()
+        self.model, self.processor, self.tokenizer = self._load_video_llama3_model()
         self.visual_processor = VisualProcessor(config)
         self.memory = EmotionalMemoryCore(config)  # Assuming your EmotionalMemoryCore is flexible
         self.frame_buffer = []
@@ -62,19 +62,24 @@ class VideoLLaMA3Integration:
         """
         try:
             with autocast():  # Add mixed precision
-                # Buffer frames for batch processing
-                self.frame_buffer.append(frame)
+                visual_context = self.processor.process_image(frame)
+                attention_output = self.attention.process_visual(visual_context)
                 
-                if len(self.frame_buffer) >= self.max_buffer_size:
-                    return self._process_batch()
+                if attention_output['attention_level'] > self.config['attention_threshold']:
+                    # Store high-attention moments
+                    self.memory.store_visual_memory(
+                        visual_context,
+                        attention_output['attention_level']
+                    )
                     
-                return self._process_single_frame(frame)
-                
+                return {
+                    'visual_context': visual_context,
+                    'attention_metrics': attention_output
+                }
         except RuntimeError as e:
             if "out of memory" in str(e):
                 torch.cuda.empty_cache()
-                self.frame_buffer.clear()
-                return self._process_single_frame(frame, use_fallback=True)
+                # Implement fallback processing
             raise
 
     def _process_batch(self) -> Dict:
