@@ -562,3 +562,57 @@
         type: file
       - path: /tech documentation/The Virasoro Minimal String/_page_74_Figure_0.jpeg
         type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_75_Figure_6.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_99_Figure_6.jpeg
+        type: file
+      - path: /tech documentation/The Virasoro Minimal String/_page_9_Figure_0.jpeg
+        type: file
+  - path: /tests
+    type: directory
+    contents:
+    - path: /tests/integration
+      type: directory
+      contents:
+      - path: /tests/integration/test_development_stages.py
+        type: file
+    - path: /tests/test_consciousness_development.py
+      type: file
+    - path: /tests/test_consciousness_integration.py
+      type: file
+    - path: /tests/test_consciousness_metrics.py
+      type: file
+    - path: /tests/test_consciousness_pipeline.py
+      type: file
+    - path: /tests/test_consciousness_system.py
+      type: file
+    - path: /tests/test_emotional_memory_integration.py
+      type: file
+    - path: /tests/test_emotional_reinforcement.py
+      type: file
+    - path: /tests/test_emotional_reinforcement_integration.py
+      type: file
+    - path: /tests/test_emotional_reinforcement_success.py
+      type: file
+    - path: /tests/test_emotional_rl_metrics.py
+      type: file
+    - path: /tests/test_emotion_classifier.py
+      type: file
+    - path: /tests/test_ethical_dilemmas.py
+      type: file
+    - path: /tests/test_memory_core.py
+      type: file
+    - path: /tests/test_memory_indexing.py
+      type: file
+    - path: /tests/test_narrative_engine.py
+      type: file
+    - path: /tests/test_reinforcement_core.py
+      type: file
+    - path: /tests/test_simple_task.py
+      type: file
+    - path: /tests/test_simulation_integration.py
+      type: file
+    - path: /tests/test_social_interactions.py
+      type: file
+    - path: /tests/test_video_llama3_integration.py
+      type: file
