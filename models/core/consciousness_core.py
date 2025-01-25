@@ -12,6 +12,8 @@ from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
 from models.language.llama_3_3 import LlamaForCausalLM
 from models.predictive.attention_mechanism import ConsciousnessAttention
 from models.integration.video_llama3_integration import VideoLLaMA3Integration
+from simulations.enviroments.interactive_vr_environment import InteractiveVREnvironment
+
 
 
 @dataclass

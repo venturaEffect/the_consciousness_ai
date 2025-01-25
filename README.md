@@ -302,7 +302,7 @@ For Windows and macOS, refer to [Unreal Engine Docs](https://docs.unrealengine.c
 **PaLM-E Integration:**
 
 ```bash
-pip install palm-e
+pip install palme
 ```
 
 **Whisper v3 Integration:**

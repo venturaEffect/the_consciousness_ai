@@ -7,6 +7,8 @@ from models.self_model.reinforcement_core import ReinforcementCore
 from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
 from simulations.api.simulation_manager import SimulationManager
 from simulations.scenarios.consciousness_scenarios import ConsciousnessScenarioManager
+from simulations.enviroments.interactive_vr_environment import InteractiveVREnvironment
+
 
 class TestSimulationIntegration(unittest.TestCase):
     def setUp(self):

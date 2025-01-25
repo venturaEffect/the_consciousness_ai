@@ -60,3 +60,32 @@ class PavilionVREnvironment(VREnvironment):
         info['emotional_context'] = emotional_context
         
         return next_state, reward, done, info
+
+# simulations/enviroments/interactive_vr_environment.py
+
+from .vr_environment import VREnvironment
+import logging
+from typing import Dict, Any
+import numpy as np
+
+class InteractiveVREnvironment(VREnvironment):
+    """Generic VR environment for emotional reinforcement learning"""
+    
+    def __init__(self, config: Dict, emotion_network):
+        super().__init__()
+        self.config = config
+        self.emotion_network = emotion_network
+        self.face_recognition = None
+        
+    def initialize_environment(self, map_name: str) -> bool:
+        """Initialize VR environment and load map"""
+        try:
+            success = super().initialize_environment(map_name)
+            if not success:
+                return False
+            self._setup_interaction_components()
+            logging.info(f"Interactive VR environment initialized with map: {map_name}")
+            return True
+        except Exception as e:
+            logging.error(f"Error initializing environment: {e}")
+            return False

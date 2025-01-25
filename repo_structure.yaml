@@ -1,0 +1,44 @@
+  - path: /2501.13106v1.pdf
+    type: file
+  - path: /2501.13106v1.txt
+    type: file
+  - path: /configs
+    type: directory
+    contents:
+    - path: /configs/consciousness_development.yaml
+      type: file
+    - path: /configs/consciousness_metrics.yaml
+      type: file
+    - path: /configs/reinforcement.yaml
+      type: file
+    - path: /configs/vision_language.yaml
+      type: file
+  - path: /data
+    type: directory
+    contents:
+    - path: /data/emotions
+      type: directory
+      contents:
+      - path: /data/emotions/emowoz.csv
+        type: file
+      - path: /data/emotions/goemotions.json
+        type: file
+    - path: /data/simulations
+      type: directory
+      contents:
+      - path: /data/simulations/api
+        type: directory
+        contents:
+      - path: /data/simulations/tasks.json
+        type: file
+  - path: /docs
+    type: directory
+    contents:
+    - path: /docs/architechture.md
+      type: file
+    - path: /docs/contributing.md
+      type: file
+    - path: /docs/datasets.md
+      type: file
+    - path: /docs/installation.md
+      type: file

@@ -33,20 +33,6 @@ reinforcement:
     meta_batch_size: 16
     context_length: 32
 
-  # Pavilion Integration
-  pavilion:
-    enabled: true
-    face_recognition:
-      model: "pavilion_face_rec_v1"
-      emotion_threshold: 0.7
-    environment:
-      render_quality: "epic"
-      physics_substeps: 2
-      emotion_feedback_rate: 10
-    interaction:
-      max_distance: 2.0
-      emotion_memory_length: 100
-
 # Configuration for ACM reinforcement learning and adaptation
 narrator_model:
   name: "llama-3.3"
@@ -102,3 +88,16 @@ feedback_mechanisms:
     coherence_weight: 0.6
     stability_weight: 0.4
     minimum_consensus: 0.7
+
+vr_environment:
+  enabled: true
+  face_recognition:
+    model: "face_recognition_v1"
+    emotion_threshold: 0.7
+  environment:
+    render_quality: "epic"
+    physics_substeps: 2
+    emotion_feedback_rate: 10
+  interaction:
+    max_distance: 2.0
+    emotion_memory_length: 100

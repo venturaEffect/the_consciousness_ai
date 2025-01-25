@@ -9,7 +9,7 @@ The ACM architecture integrates multiple components to achieve synthetic awarene
    - Unreal Engine 5 for immersive environments
    - Stressful scenario generation for attention triggering
    - Real-time interaction tracking
-   - Pavilion integration for humanoid agents
+   - Interactive VR integration for agent simulation
 
 2. **Reinforcement Learning Core:**
 
