@@ -9,6 +9,8 @@
       type: file
     - path: /configs/consciousness_metrics.yaml
       type: file
+    - path: /configs/emotion_detection.yaml
+      type: file
     - path: /configs/reinforcement.yaml
       type: file
     - path: /configs/vision_language.yaml
@@ -65,6 +67,11 @@
   - path: /models
     type: directory
     contents:
+    - path: /models/audio
+      type: directory
+      contents:
+      - path: /models/audio/whisper_processor.py
+        type: file
     - path: /models/controller
       type: directory
       contents:
@@ -89,6 +96,8 @@
     - path: /models/emotion
       type: directory
       contents:
+      - path: /models/emotion/multimodal_detector.py
+        type: file
       - path: /models/emotion/reward_shaping.py
         type: file
       - path: /models/emotion/tgnn
