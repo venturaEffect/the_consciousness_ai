@@ -27,9 +27,8 @@ class EmotionalMetrics:
 
 @dataclass
 class EmotionalRLMetrics:
-    """Tracks emotional reinforcement learning outputs."""
     emotional_reward: float = 0.0
-    policy_adaptation: float = 0.0
+    policy_adaptation: float = 0.0  
     learning_stability: float = 0.0
     exploration_ratio: float = 0.0
     consciousness_alignment: float = 0.0

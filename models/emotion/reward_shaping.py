@@ -85,29 +85,20 @@ class EmotionalRewardShaper(nn.Module):
         Returns:
             Shaped reward value (float).
         """
+        # Encode emotions into embeddings
         emotional_embedding = self._encode_emotions(emotion_values)
         base_reward = self._calculate_base_reward(emotional_embedding)
 
-        # Optionally incorporate meta-memory influence.
+        # Apply memory influence
         if meta_memory:
             memory_gate_val = self._calculate_memory_influence(
-                emotional_embedding,
+                emotional_embedding, 
                 meta_memory
             )
-            # Increase or decrease the base reward based on memory gating.
             base_reward *= (1.0 + memory_gate_val)
 
-        # Apply attention modulation.
-        attention_modulated = base_reward * (1.0 + attention_level)
-
-        # Update internal metrics for analysis.
-        self._update_metrics(
-            emotional_embedding=emotional_embedding,
-            base_reward=base_reward,
-            attention_level=attention_level
-        )
-
-        return attention_modulated
+        # Modulate by attention
+        return base_reward * (1.0 + attention_level)
 
     def _encode_emotions(self, emotion_values: Dict[str, float]) -> torch.Tensor:
         """
