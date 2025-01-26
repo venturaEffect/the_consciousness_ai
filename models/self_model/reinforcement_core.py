@@ -79,6 +79,12 @@ class ReinforcementCore:
         self.current_task_params = adaptation_result.get('adapted_params', {})
         return adaptation_result
 
+    def compute_reward(self, state, emotion_values, action_info):
+        base_reward = self._get_base_reward(state, action_info)
+        shaped_reward = self.emotion_shaper.compute_emotional_reward(emotion_values, base_reward)
+        # ...
+        return shaped_reward
+
     def compute_reward(
         self,
         state: Any,

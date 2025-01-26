@@ -147,3 +147,14 @@ class EmotionalRewardShaper(nn.Module):
         self.metrics.memory_influence = float(base_reward)
         self.metrics.narrative_alignment = 0.0  # Adjust if you integrate narratives.
         self.metrics.adaptation_rate = attention_level
+
+    def compute_emotional_reward(self, emotion_values: Dict[str, float], base_reward: float) -> float:
+        valence = emotion_values.get('valence', 0.0)
+        arousal = emotion_values.get('arousal', 0.0)
+        dominance = emotion_values.get('dominance', 0.0)
+
+        # Example shaping logic
+        shaped = base_reward + 0.1 * valence + 0.05 * dominance
+        if arousal > 0.8:
+            shaped -= 0.1
+        return shaped
