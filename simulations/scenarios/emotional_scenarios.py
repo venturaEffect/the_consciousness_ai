@@ -173,3 +173,33 @@ class EmotionalScenarioGenerator:
             }
             for i in range(3)
         ]
+
+class EmotionalScenario:
+    """
+    Manages incremental complexity in tasks for RL with emotional feedback.
+    """
+    def __init__(self, config: Dict):
+        self.config = config
+        self.stage = 0
+
+    def get_initial_state(self):
+        """
+        Returns the initial environment state for the current stage.
+        """
+        if self.stage == 0:
+            # Simple for survival tasks
+            return {"food": 5, "threat_level": 0.2}
+        elif self.stage == 1:
+            # Add social interactions
+            return {"peers": 3, "threat_level": 0.3}
+        # Future stages
+        return {}
+
+    def update_scenario(self, agent):
+        """
+        Gradually increase complexity based on agent performance.
+        """
+        performance_score = agent.get_performance_score()
+        if performance_score > self.config.get("threshold_stage_1", 100) and self.stage == 0:
+            self.stage = 1
+        # Potentially move to further stages

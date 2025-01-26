@@ -8,7 +8,7 @@ Emotional memory system implementing:
 
 import torch
 import torch.nn as nn
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 import time
 
@@ -45,7 +45,7 @@ class EmotionalMemoryCore(nn.Module):
       - Predictive modeling
     """
 
-    def __init__(self, config):
+    def __init__(self, config: Dict):
         """
         Initialize emotional memory system.
 
@@ -56,6 +56,10 @@ class EmotionalMemoryCore(nn.Module):
                 etc.
         """
         super().__init__()
+
+        self.config = config
+        self.capacity = config.get("capacity", 10000)
+        self.experiences = []
 
         # Placeholder references to memory store, gating, predictor, etc.
         # Replace these with actual classes or stubs.
@@ -77,7 +81,6 @@ class EmotionalMemoryCore(nn.Module):
         self.initial_weight = 0.1
 
         self.metrics = MemoryMetrics()
-        self.experiences = []
 
     def store_experience(
         self,
@@ -92,6 +95,30 @@ class EmotionalMemoryCore(nn.Module):
             'reward': reward,
             'timestamp': time.time()
         })
+        if len(self.experiences) > self.capacity:
+            self.experiences.pop(0)
+
+    def store_transition(self, transition: Dict[str, Any]):
+        """
+        transition example: {
+          "state": ...,
+          "action": ...,
+          "emotion_values": {"valence": ..., "arousal": ..., "dominance": ...},
+          "reward": ...,
+          "next_state": ...,
+          "done": ...
+        }
+        """
+        self.experiences.append(transition)
+        if len(self.experiences) > self.capacity:
+            self.experiences.pop(0)
+
+    def sample_batch(self, batch_size: int = 32):
+        """
+        Return a random sample from experiences.
+        """
+        import random
+        return random.sample(self.experiences, min(batch_size, len(self.experiences)))
 
     def process_experience(
         self,

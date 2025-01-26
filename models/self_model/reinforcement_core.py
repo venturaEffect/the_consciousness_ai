@@ -9,10 +9,11 @@ from models.narrative.narrative_engine import NarrativeEngine
 from models.self_model.emotion_context_tracker import EmotionContextTracker
 from models.self_model.belief_system import BeliefSystem
 from models.self_model.meta_learner import MetaLearner
+from models.emotion.reward_shaping import EmotionalRewardShaper
 
 
 class ReinforcementCore:
-    def __init__(self, config: Dict):
+    def __init__(self, config: Dict, emotion_shaper: EmotionalRewardShaper):
         """
         Core reinforcement module integrating DreamerV3, memory,
         emotion context, and meta-learning.
@@ -24,6 +25,7 @@ class ReinforcementCore:
                 - 'positive_emotion_bonus': float
                 - 'meta_config': sub-config for meta-learning (optional)
                 - 'memory_capacity': optional capacity for MemoryCore
+            emotion_shaper: instance of EmotionalRewardShaper
         """
         # Initialize memory; use config capacity if present.
         capacity = config.get('memory_capacity', 100000)
@@ -41,6 +43,7 @@ class ReinforcementCore:
 
         # Top-level config references.
         self.config = config
+        self.emotion_shaper = emotion_shaper
         self.emotional_scale = config.get('emotional_scale', 2.0)
         self.positive_emotion_bonus = config.get('positive_emotion_bonus', 0.5)
 
@@ -64,6 +67,18 @@ class ReinforcementCore:
             'reward_history': deque(maxlen=10000)
         }
 
+        self.gamma = config.get("gamma", 0.99)
+        self.q_network = self._init_q_network(config)
+        self.optimizer = self._init_optimizer()
+
+    def _init_q_network(self, config: Dict):
+        # Stub for Q-network or policy network
+        pass
+
+    def _init_optimizer(self):
+        # Stub for optimizer initialization
+        pass
+
     def adapt_to_scenario(self, scenario_data: Dict) -> Dict:
         """
         Adapt to a new scenario using meta-learning, if enabled.
@@ -79,11 +94,31 @@ class ReinforcementCore:
         self.current_task_params = adaptation_result.get('adapted_params', {})
         return adaptation_result
 
-    def compute_reward(self, state, emotion_values, action_info):
-        base_reward = self._get_base_reward(state, action_info)
+    def compute_reward(self, state: Any, action: int, emotion_values: Dict[str, float], base_reward: float):
+        """
+        :param state: current environment state
+        :param action: chosen action
+        :param emotion_values: dict with {'valence', 'arousal', 'dominance'}
+        :param base_reward: base environment reward
+        """
         shaped_reward = self.emotion_shaper.compute_emotional_reward(emotion_values, base_reward)
-        # ...
         return shaped_reward
+
+    def update_policy(self, transition: Dict[str, Any]):
+        """
+        Example policy update stub.
+        """
+        state = transition["state"]
+        action = transition["action"]
+        reward = transition["reward"]
+        next_state = transition["next_state"]
+
+        # Q-learning or other RL update logic
+        loss = (reward + self.gamma * self.q_network(next_state).max() - self.q_network(state)[action])**2
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
 
     def compute_reward(
         self,
