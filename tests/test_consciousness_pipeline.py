@@ -10,6 +10,8 @@ from models.memory.emotional_memory_core import EmotionalMemoryCore
 from models.predictive.attention_mechanism import ConsciousnessAttention
 from models.evaluation.consciousness_monitor import ConsciousnessMonitor
 from simulations.scenarios.consciousness_scenarios import ConsciousnessScenarioManager
+from models.core.consciousness_core import ConsciousnessCore
+from models.integration.video_llama3_integration import VideoLLaMA3Integration
 
 """
 End-to-end tests for the Artificial Consciousness Module (ACM) development pipeline.
@@ -62,6 +64,21 @@ class TestConsciousnessPipeline(unittest.TestCase):
         # Test data
         self.test_scenarios = []
         self.consciousness_scores = []
+
+        # Create stub objects for video_llama3.
+        class DummyProcessor:
+            def __call__(self, x, return_tensors="pt"):
+                import torch
+                # Return a tensor with the proper shape
+                return torch.tensor(x, dtype=torch.float32).unsqueeze(0)
+        
+        class DummyModel:
+            def generate(self, **kwargs):
+                return {"dummy_output": 1}
+        
+        config = {"max_buffer_size": 4, "device": "cpu"}
+        self.video_llama3 = VideoLLaMA3Integration(config, DummyModel(), DummyProcessor())
+        self.core = ConsciousnessCore({}, self.video_llama3)
 
     def test_end_to_end_consciousness_development(self):
         """Test complete consciousness development cycle"""
@@ -192,6 +209,13 @@ class TestConsciousnessPipeline(unittest.TestCase):
         self.assertIn('visual_context', result)
         self.assertIn('attention_metrics', result)
         self.assertTrue(0 <= result['attention_metrics']['attention_level'] <= 1)
+
+    def test_visual_stream_processing(self):
+        # Create a dummy tensor input simulating a frame.
+        frame = torch.randn(3, 224, 224)
+        state = self.core.process_visual_stream(frame)
+        self.assertIn("visual_context", state)
+        self.assertIn("attention_level", state)
 
 if __name__ == '__main__':
     unittest.main()
