@@ -1,0 +1,43 @@
+multimodal_detector:
+  video_llama3:
+    model_name: "DAMO-NLP-SG/VideoLLaMA3"
+    device: "cuda"
+    batch_size: 1
+    frame_resolution: [720, 1280]
+
+  llama3:
+    model_path: "models/llama-3"
+    max_length: 512
+    temperature: 0.7
+    top_p: 0.9
+
+  whisper:
+    model: "large-v3"
+    language: "en"
+    task: "transcribe"
+
+  fusion:
+    hidden_size: 512
+    num_emotions: 5
+    fusion_type: "attention"
+    dropout: 0.1
+
+  training:
+    learning_rate: 1e-4
+    batch_size: 16
+    num_epochs: 100
+    gradient_clip: 1.0
+
+  memory:
+    capacity: 10000
+    consolidation_rate: 0.01
+
+reward_shaping:
+  valence_weight: 0.1
+  dominance_weight: 0.05
+  arousal_penalty: 0.1
+  arousal_threshold: 0.8
+
+rl:
+  gamma: 0.99
+  learning_rate: 1e-4

@@ -100,22 +100,16 @@ class EmotionalMemoryCore(nn.Module):
 
     def store_transition(self, transition: Dict[str, Any]):
         """
-        transition example: {
-          "state": ...,
-          "action": ...,
-          "emotion_values": {"valence": ..., "arousal": ..., "dominance": ...},
-          "reward": ...,
-          "next_state": ...,
-          "done": ...
-        }
+        Stores a transition including state, action, emotional metrics, reward, and next state.
         """
         self.experiences.append(transition)
+        # Remove oldest if capacity exceeded.
         if len(self.experiences) > self.capacity:
             self.experiences.pop(0)
 
     def sample_batch(self, batch_size: int = 32):
         """
-        Return a random sample from experiences.
+        Returns a random batch of transitions.
         """
         import random
         return random.sample(self.experiences, min(batch_size, len(self.experiences)))

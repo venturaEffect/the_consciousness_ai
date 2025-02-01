@@ -1,7 +1,7 @@
 # simulations/scenarios/emotional_scenarios.py
 
 import numpy as np
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
 
@@ -176,30 +176,29 @@ class EmotionalScenarioGenerator:
 
 class EmotionalScenario:
     """
-    Manages incremental complexity in tasks for RL with emotional feedback.
+    Manages simulation tasks, increasing complexity progressively.
     """
-    def __init__(self, config: Dict):
+
+    def __init__(self, config: Dict[str, float]):
         self.config = config
         self.stage = 0
 
-    def get_initial_state(self):
+    def get_initial_state(self) -> Dict:
         """
-        Returns the initial environment state for the current stage.
+        Returns the initial state configuration for the current simulation stage.
         """
         if self.stage == 0:
-            # Simple for survival tasks
+            # Basic survival task state
             return {"food": 5, "threat_level": 0.2}
         elif self.stage == 1:
-            # Add social interactions
+            # Introduce social interaction parameters
             return {"peers": 3, "threat_level": 0.3}
-        # Future stages
         return {}
 
-    def update_scenario(self, agent):
+    def update_scenario(self, agent: Any) -> None:
         """
-        Gradually increase complexity based on agent performance.
+        Increase the simulation complexity based on agent performance.
         """
         performance_score = agent.get_performance_score()
         if performance_score > self.config.get("threshold_stage_1", 100) and self.stage == 0:
             self.stage = 1
-        # Potentially move to further stages
