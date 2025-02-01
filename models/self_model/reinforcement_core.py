@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import numpy as np
 from collections import deque
 from typing import Dict, Any
@@ -13,7 +14,11 @@ from models.emotion.reward_shaping import EmotionalRewardShaper
 
 
 class ReinforcementCore:
-    def __init__(self, config: Dict, emotion_shaper: EmotionalRewardShaper):
+    """
+    Core RL module that integrates emotional rewards into policy updates.
+    """
+
+    def __init__(self, config: Dict[str, Any], emotion_shaper: EmotionalRewardShaper):
         """
         Core reinforcement module integrating DreamerV3, memory,
         emotion context, and meta-learning.
@@ -71,13 +76,12 @@ class ReinforcementCore:
         self.q_network = self._init_q_network(config)
         self.optimizer = self._init_optimizer()
 
-    def _init_q_network(self, config: Dict):
-        # Stub for Q-network or policy network
-        pass
+    def _init_q_network(self, config: Dict[str, Any]) -> nn.Module:
+        # Stub: Replace with actual Q-network initialization
+        return nn.Sequential(nn.Linear(128, 64), nn.ReLU(), nn.Linear(64, 4))
 
     def _init_optimizer(self):
-        # Stub for optimizer initialization
-        pass
+        return torch.optim.Adam(self.q_network.parameters(), lr=self.config.get("learning_rate", 1e-4))
 
     def adapt_to_scenario(self, scenario_data: Dict) -> Dict:
         """
@@ -94,30 +98,30 @@ class ReinforcementCore:
         self.current_task_params = adaptation_result.get('adapted_params', {})
         return adaptation_result
 
-    def compute_reward(self, state: Any, action: int, emotion_values: Dict[str, float], base_reward: float):
+    def compute_reward(self, state: Any, action: int, emotion_values: Dict[str, float], base_reward: float) -> float:
         """
-        :param state: current environment state
-        :param action: chosen action
-        :param emotion_values: dict with {'valence', 'arousal', 'dominance'}
-        :param base_reward: base environment reward
+        Computes the reward by modulating the base reward with emotional feedback.
         """
-        shaped_reward = self.emotion_shaper.compute_emotional_reward(emotion_values, base_reward)
-        return shaped_reward
+        return self.emotion_shaper.compute_emotional_reward(emotion_values, base_reward)
 
-    def update_policy(self, transition: Dict[str, Any]):
+    def update_policy(self, transition: Dict[str, Any]) -> None:
         """
-        Example policy update stub.
+        Applies a Q-learning update with emotional reward shaping.
         """
         state = transition["state"]
         action = transition["action"]
         reward = transition["reward"]
         next_state = transition["next_state"]
 
-        # Q-learning or other RL update logic
-        loss = (reward + self.gamma * self.q_network(next_state).max() - self.q_network(state)[action])**2
+        # Compute Q-values and target
+        q_values = self.q_network(torch.tensor(state, dtype=torch.float32))
+        next_q_values = self.q_network(torch.tensor(next_state, dtype=torch.float32))
+        target = reward + self.gamma * torch.max(next_q_values)
 
+        loss = (q_values[action] - target) ** 2
         self.optimizer.zero_grad()
         loss.backward()
+        nn.utils.clip_grad_norm_(self.q_network.parameters(), max_norm=1.0)
         self.optimizer.step()
 
     def compute_reward(

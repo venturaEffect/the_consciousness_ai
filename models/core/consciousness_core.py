@@ -4,8 +4,9 @@ emotional memory, and controlled adaptation for experience processing.
 """
 
 import torch
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, Optional, Tuple, List, Any
 from dataclasses import dataclass
+import logging
 
 from models.memory.emotional_memory_core import EmotionalMemoryCore
 from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
@@ -28,9 +29,16 @@ class ConsciousnessState:
 
 
 class ConsciousnessCore:
-    def __init__(self, config: Dict):
+    """
+    Main module for processing sensory inputs and updating
+    the agent’s internal conscious state.
+    """
+    def __init__(self, config: Dict[str, Any], video_llama3: Any):
         """Sets up narrative generation, memory modules, and attention mechanisms."""
         self.config = config
+        self.video_llama3 = video_llama3
+        self.state = {}  # Current internal conscious state
+        self.logger = logging.getLogger(__name__)
 
         # Base narrative model (LLaMA 3.3).
         self.narrator = LlamaForCausalLM.from_pretrained(
@@ -42,7 +50,6 @@ class ConsciousnessCore:
         self.memory = EmotionalMemoryCore(self.config)
         self.emotion = EmotionalGraphNetwork()
         self.attention = ConsciousnessAttention(self.config)
-        self.video_llama3 = VideoLLaMA3Integration(config['video_llama3'])
 
         # Meta-memory tracking.
         self.meta_memory = {
@@ -101,16 +108,23 @@ class ConsciousnessCore:
             self.video_llama3.integrate_with_acm(input_data['video_path'])
         # Other processing...
 
-    def process_visual_stream(self, frame_tensor: torch.Tensor) -> Dict:
-        """Process visual input stream for consciousness development"""
-        visual_context = self.video_llama3.process_stream_frame(frame_tensor)
-        
-        consciousness_state = self.update_consciousness_state(
-            visual_context=visual_context,
-            attention_level=visual_context['attention_metrics']['attention_level']
-        )
-        
-        return consciousness_state
+    def process_visual_stream(self, frame_tensor: torch.Tensor) -> Dict[str, Any]:
+        """
+        Process visual input stream using VideoLLaMA3.
+        Returns the updated conscious state.
+        """
+        try:
+            visual_context = self.video_llama3.process_stream_frame(frame_tensor)
+            attention_level = visual_context.get("attention_metrics", {}).get("attention_level", 0.0)
+            # Update internal state (stub logic)
+            self.state.update({
+                "visual_context": visual_context,
+                "attention_level": attention_level
+            })
+            return self.state
+        except Exception as e:
+            self.logger.error("Error in processing visual stream: %s", e, exc_info=True)
+            raise
 
     def _generate_narrative(
         self,

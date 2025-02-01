@@ -21,109 +21,82 @@ from models.core.consciousness_core import VisualProcessor
 import numpy as np
 import cv2
 from torch.cuda.amp import autocast
+import logging
 
 class VideoLLaMA3Integration:
-    def __init__(self, config: Dict):
+    """
+    Integration of VideoLLaMA3 for processing real-time frames.
+    Provides batched processing with error handling and GPU memory management.
+    """
+
+    def __init__(self, config: Dict[str, Any], model: Any, processor: Any):
         """
-        :param config: Dict containing model_name, device, optional params
+        :param config: Dictionary of configuration parameters.
+        :param model: Pre-loaded VideoLLaMA3 model.
+        :param processor: Pre-loaded processor for model input conversion.
         """
         self.config = config
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model, self.processor, self.tokenizer = self._load_video_llama3_model()
-        self.visual_processor = VisualProcessor(config)
-        self.memory = EmotionalMemoryCore(config)  # Assuming your EmotionalMemoryCore is flexible
+        self.model = model
+        self.processor = processor
+        self.logger = logging.getLogger(__name__)
         self.frame_buffer = []
         self.max_buffer_size = config.get("max_buffer_size", 32)
 
-    def _load_video_llama3_model(self):
-        """
-        Load the VideoLLaMA3 model and processor.
-        """
-        model_name = self.config.get("model_name", "DAMO-NLP-SG/VideoLLaMA3")
-        model = Blip2ForConditionalGeneration.from_pretrained(model_name).to(self.device)
-        processor = Blip2Processor.from_pretrained(model_name)
-        return model, processor
-
-    def process_video(self, video_path: str) -> Dict:
-        """Process a video and return the visual context"""
-        # Implement video processing logic here
-        pass
-
-    @torch.no_grad()
     def process_stream_frame(self, frame: np.ndarray) -> Dict[str, Any]:
         """
-        Process a single frame from a real-time video stream.
-        1) Convert the input frame into the format required by the model
-        2) Use AVT + DiffFP-like logic (high-level example)
-        3) Produce a short text/embedding representation for reasoning
-
-        :param frame: A single video frame in BGR or RGB format
-        :return: A dictionary with vision embeddings, text description, or other relevant context
+        Processes a single frame. Buffers frames until max_buffer_size is reached,
+        then executes batch processing.
         """
         try:
-            with autocast():  # Add mixed precision
-                visual_context = self.processor.process_image(frame)
-                attention_output = self.attention.process_visual(visual_context)
-                
-                if attention_output['attention_level'] > self.config['attention_threshold']:
-                    # Store high-attention moments
-                    self.memory.store_visual_memory(
-                        visual_context,
-                        attention_output['attention_level']
-                    )
-                    
-                return {
-                    'visual_context': visual_context,
-                    'attention_metrics': attention_output
-                }
+            with autocast():
+                self.frame_buffer.append(frame)
+                if len(self.frame_buffer) >= self.max_buffer_size:
+                    return self._process_batch()
+                return self._process_single_frame(frame)
         except RuntimeError as e:
-            if "out of memory" in str(e):
+            if "out of memory" in str(e).lower():
                 torch.cuda.empty_cache()
-                # Implement fallback processing
+                self.logger.warning("GPU OOM during processing; falling back to single frame with reduced resolution.")
+                self.frame_buffer.clear()
+                return self._process_single_frame(frame, use_fallback=True)
+            self.logger.error("Unexpected error in process_stream_frame: %s", e, exc_info=True)
             raise
 
-    def _process_batch(self) -> Dict:
-        # Process multiple frames efficiently
-        batch = torch.stack(self.frame_buffer)
-        result = self.model(batch)
-        self.frame_buffer.clear()
-        return result
+    def _process_batch(self) -> Dict[str, Any]:
+        """
+        Process buffered frames as a batch.
+        """
+        try:
+            # Convert buffered frames to torch tensor (assuming proper pre-processing)
+            batch = self.processor(self.frame_buffer, return_tensors="pt").to(self.config.get("device", "cpu"))
+            result = self.model.generate(**batch)
+            self.frame_buffer.clear()
+            return {"batch_result": result}
+        except Exception as e:
+            self.logger.error("Error in batch processing: %s", e, exc_info=True)
+            raise
 
-    def _process_single_frame(self, frame: np.ndarray, use_fallback: bool = False) -> Dict:
-        if use_fallback:
-            # Reduce resolution/precision if OOM occurred
-            frame = self._reduce_resolution(frame)
-        return self.model(frame.unsqueeze(0))
+    def _process_single_frame(self, frame: np.ndarray, use_fallback: bool = False) -> Dict[str, Any]:
+        """
+        Process a single frame with possible fallback adjustments.
+        """
+        try:
+            if use_fallback:
+                frame = self._reduce_resolution(frame)
+            # Process a single frame
+            input_tensor = self.processor(frame, return_tensors="pt").to(self.config.get("device", "cpu"))
+            output = self.model.generate(**input_tensor)
+            return {"result": output}
+        except Exception as e:
+            self.logger.error("Error processing single frame: %s", e, exc_info=True)
+            raise
 
     def _reduce_resolution(self, frame: np.ndarray) -> np.ndarray:
-        # Implement resolution reduction for OOM cases
+        """
+        Reduce resolution of the frame to alleviate memory issues.
+        """
         return frame[::2, ::2]
 
-    def process_video_stream(self, frame_list: List[np.ndarray]) -> Dict[str, Any]:
-        """
-        Process a list of frames for real-time analysis.
-        Returns a batch of contexts for each frame.
-        """
-        batch_contexts = []
-        for frame in frame_list:
-            context = self.process_stream_frame(frame)
-            batch_contexts.append(context)
-        return {"streamContexts": batch_contexts}
-
-    def integrate_with_acm(self, frame_list: List[np.ndarray]) -> Dict[str, Any]:
-        """
-        High-level method to unify frames into the overall consciousness pipeline.
-        - This might coordinate emotional RL feedback, gating with conscious core, etc.
-        """
-        visual_contexts = self.process_video_stream(frame_list)
-        
-        # Example: Incorporate with VisualProcessor or consciousness gating
-        for vc in visual_contexts["streamContexts"]:
-            self.visual_processor.process_visual_context(vc)
-        
-        return visual_contexts
-
     def __del__(self):
-        # Cleanup
         self.frame_buffer.clear()
         torch.cuda.empty_cache()

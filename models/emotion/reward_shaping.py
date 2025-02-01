@@ -66,6 +66,11 @@ class EmotionalRewardShaper(nn.Module):
         # Metrics tracking.
         self.metrics = RewardMetrics()
 
+        self.valence_weight = config.get("valence_weight", 0.1)
+        self.dominance_weight = config.get("dominance_weight", 0.05)
+        self.arousal_penalty = config.get("arousal_penalty", 0.1)
+        self.arousal_threshold = config.get("arousal_threshold", 0.8)
+
     def compute_reward(
         self,
         emotion_values: Dict[str, float],
@@ -149,12 +154,18 @@ class EmotionalRewardShaper(nn.Module):
         self.metrics.adaptation_rate = attention_level
 
     def compute_emotional_reward(self, emotion_values: Dict[str, float], base_reward: float) -> float:
+        """
+        Adjusts the base reward using emotional feedback.
+        :param emotion_values: Dictionary that must include keys 'valence', 'arousal', and 'dominance'
+        :param base_reward: The base reward from the environment.
+        :return: Shaped reward value.
+        """
         valence = emotion_values.get('valence', 0.0)
         arousal = emotion_values.get('arousal', 0.0)
         dominance = emotion_values.get('dominance', 0.0)
 
-        # Example shaping logic
-        shaped = base_reward + 0.1 * valence + 0.05 * dominance
-        if arousal > 0.8:
-            shaped -= 0.1
-        return shaped
+        shaped_reward = base_reward + (self.valence_weight * valence) + (self.dominance_weight * dominance)
+        if arousal > self.arousal_threshold:
+            shaped_reward -= self.arousal_penalty
+
+        return shaped_reward
