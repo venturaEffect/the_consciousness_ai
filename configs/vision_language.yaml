@@ -1,3 +1,5 @@
+# configs/vision_language.yaml
 video_llama3:
-  model_name: "DAMO-NLP-SG/VideoLLaMA3"
-  device: "cuda" # or "cpu" if GPU is not available
+  model_name: "DAMO-NLP-SG/Llama3.3" # updated from Llama2 variant
+  device: "cuda" # or "cpu" as required
+  context_window: 128000 # increased context for Llama 3.3

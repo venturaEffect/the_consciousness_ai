@@ -5,16 +5,17 @@ multimodal_detector:
     batch_size: 1
     frame_resolution: [720, 1280]
 
+  # Updated language module to Llama 3.3 for improved nuance:
   llama3:
-    model_path: "models/llama-3"
+    model_path: "models/llama-3.3" # updated path for Llama 3.3
     max_length: 512
     temperature: 0.7
     top_p: 0.9
 
-  whisper:
-    model: "large-v3"
-    language: "en"
-    task: "transcribe"
+  # Optionally add a multimodal emotion model based on EmoRoBERTa:
+  multimodal_emotion:
+    model_name: "huggingface/EmoRoBERTa-base" # for richer emotion cues
+    fine_tune: true # set to true if custom datasets are used
 
   fusion:
     hidden_size: 512
