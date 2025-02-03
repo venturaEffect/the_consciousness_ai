@@ -87,6 +87,10 @@ consciousness/
 - **Primary:** We currently use Pinecone for managed, scalable vector storage.
 - **Alternatives:** For lower latency or greater infrastructure control, FAISS or Milvus are viable options.
 
+### World Modeling and Reinforcement Learning
+
+We continue to use DreamerV3 for world modeling with emotional context weighting. Benchmarking against alternatives like MuZero or PlaNet is recommended if latency or scalability issues are observed.
+
 ## Technologies
 
 - **Core AI:** LLaMA 3.3, palme (open-source PaLM-E), Whisper v3
