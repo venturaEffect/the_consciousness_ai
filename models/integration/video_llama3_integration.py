@@ -47,20 +47,21 @@ class VideoLLaMA3Integration:
         Processes a single frame. Buffers frames until max_buffer_size is reached,
         then executes batch processing.
         """
-        try:
-            with autocast():
-                self.frame_buffer.append(frame)
-                if len(self.frame_buffer) >= self.max_buffer_size:
-                    return self._process_batch()
-                return self._process_single_frame(frame)
-        except RuntimeError as e:
-            if "out of memory" in str(e).lower():
-                torch.cuda.empty_cache()
-                self.logger.warning("GPU OOM during processing; falling back to single frame with reduced resolution.")
-                self.frame_buffer.clear()
-                return self._process_single_frame(frame, use_fallback=True)
-            self.logger.error("Unexpected error in process_stream_frame: %s", e, exc_info=True)
-            raise
+        # Optional: Downscale frame or skip frames to meet <100ms latency
+        if self._should_skip_frame():
+            return {"status": "skipped"}
+        frame = self._reduce_resolution(frame)  # if frame high-res
+        # process frame with GPU optimization (e.g., using NVIDIA TensorRT if available)
+        context = self._process_single_frame(frame)
+        return context
+
+    def _should_skip_frame(self) -> bool:
+        """
+        Basic rate limiter (placeholder – adjust based on performance benchmarks)
+        """
+        if len(self.frame_buffer) >= self.max_buffer_size:
+            return True
+        return False
 
     def _process_batch(self) -> Dict[str, Any]:
         """

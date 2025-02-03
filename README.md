@@ -182,6 +182,13 @@ while simulation_running:
     consciousness_core.update_state(output)
 ```
 
+## Real-Time Integration with VideoLLaMA3
+
+- **Latency Mitigation:**
+  - Lower frame resolution or implement frame skipping.
+  - Leverage GPU optimizations such as NVIDIA TensorRT.
+  - Monitor total inference latency and aim for below ~100 ms.
+
 ## Installation
 
 ### 1. Clone the Repository
