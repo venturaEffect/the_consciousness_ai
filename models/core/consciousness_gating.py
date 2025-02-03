@@ -124,3 +124,32 @@ class ConsciousnessGate(nn.Module):
             self.state.narrator_confidence = float(narrator_state['confidence'])
         else:
             self.state.narrator_confidence = 0.0
+
+
+class ConsciousnessGating:
+    """
+    Implements an attention control mechanism that decides whether sensory inputs
+    trigger enhanced processing based on a gating threshold.
+    
+    Args:
+        config (dict): Contains configuration parameters.
+    """
+    def __init__(self, config: dict):
+        self.config = config
+        self.gating_threshold = config.get("gating_threshold", 0.5)
+
+    def update_attention(self, sensory_input: list) -> bool:
+        """
+        Computes the attention level from a list of sensory measurements and
+        determines if it meets the threshold.
+
+        Args:
+            sensory_input (list): List of numeric sensory values.
+
+        Returns:
+            bool: True if attention level exceeds the threshold, otherwise False.
+        """
+        if not sensory_input:
+            return False
+        attention = sum(sensory_input) / len(sensory_input)
+        return attention >= self.gating_threshold

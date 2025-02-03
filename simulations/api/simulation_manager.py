@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 import numpy as np
 import torch
+import logging
 
 from models.self_model.reinforcement_core import ReinforcementCore
 from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
@@ -36,6 +37,7 @@ class SimulationManager:
     def __init__(self, config: SimulationConfig):
         self.lock = Lock()
         self.config = config
+        logging.info("Simulation Manager initialized with config: %s", config)
 
         # Core modules.
         self.rl_core = ReinforcementCore(config)
@@ -60,31 +62,27 @@ class SimulationManager:
             )
         return VREnvironment()
 
-    def execute_code(self, script: str):
+    def execute_code(self, code: str) -> dict:
         """
-        Executes the provided Python code within the simulation environment.
-        Useful for debugging or dynamic scripting.
+        Safely executes dynamically generated Python code.
+
+        Args:
+            code (str): Python code to execute.
+
+        Returns:
+            dict: Updated globals after execution.
+
+        Raises:
+            Exception: If code execution fails.
         """
         try:
-            with self.lock:
-                # Save script to a temporary file.
-                with open("temp_script.py", "w") as temp_file:
-                    temp_file.write(script)
-
-                # Execute the script.
-                result = subprocess.run(
-                    ["python", "temp_script.py"], capture_output=True, text=True
-                )
-
-                # Log the result.
-                if result.returncode == 0:
-                    print(f"Script executed successfully: {result.stdout}")
-                else:
-                    print(f"Script execution failed: {result.stderr}")
-
-                return result
+            exec_globals = {}
+            exec(code, exec_globals)
+            logging.info("Code executed successfully.")
+            return exec_globals
         except Exception as e:
-            print(f"Error during script execution: {str(e)}")
+            logging.error("Code execution error: %s", e)
+            raise
 
     def load_interaction_data(self):
         """

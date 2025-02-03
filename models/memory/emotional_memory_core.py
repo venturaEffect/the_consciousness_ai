@@ -60,6 +60,7 @@ class EmotionalMemoryCore(nn.Module):
         self.config = config
         self.capacity = config.get("capacity", 10000)
         self.experiences = []
+        self.attention_threshold = config.get("attention_threshold", 0.5)
 
         # Placeholder references to memory store, gating, predictor, etc.
         # Replace these with actual classes or stubs.
@@ -82,19 +83,18 @@ class EmotionalMemoryCore(nn.Module):
 
         self.metrics = MemoryMetrics()
 
-    def store_experience(
-        self,
-        state: torch.Tensor,
-        emotion: Dict[str, float],
-        reward: float
-    ):
-        # Store emotional experience with metadata
-        self.experiences.append({
-            'state': state,
-            'emotion': emotion,
-            'reward': reward,
-            'timestamp': time.time()
-        })
+    def store_experience(self, experience: dict) -> None:
+        """
+        Stores an experience that meets the attention criteria.
+
+        Args:
+            experience (dict): A dictionary containing:
+                - state: torch.Tensor representing the system state.
+                - emotion: torch.Tensor with emotion values.
+                - attention: float, the attention level.
+                - embedding: torch.Tensor, the emotional embedding.
+        """
+        self.experiences.append(experience)
         if len(self.experiences) > self.capacity:
             self.experiences.pop(0)
 
@@ -113,6 +113,25 @@ class EmotionalMemoryCore(nn.Module):
         """
         import random
         return random.sample(self.experiences, min(batch_size, len(self.experiences)))
+
+    def process_experience(self, state: torch.Tensor, emotion_values: torch.Tensor,
+                           attention_level: float, emotional_embedding: torch.Tensor) -> None:
+        """
+        Processes an incoming experience and stores it if the attention level is sufficient.
+
+        Args:
+            state (torch.Tensor): The current state.
+            emotion_values (torch.Tensor): Measured emotion values.
+            attention_level (float): Computed attention level.
+            emotional_embedding (torch.Tensor): Embedding representing emotional context.
+        """
+        if attention_level >= self.attention_threshold:
+            self.store_experience({
+                "state": state,
+                "emotion": emotion_values,
+                "attention": attention_level,
+                "embedding": emotional_embedding,
+            })
 
     def process_experience(
         self,
