@@ -59,6 +59,8 @@
     contents:
     - path: /examples/emotional_agent_example.py
       type: file
+  - path: /flattened_repo_02_feb_code.txt
+    type: file
   - path: /flattened_repo_02_feb_page.txt
     type: file
   - path: /flattened_repo_23_jan.txt
@@ -299,6 +301,8 @@
       type: file
     - path: /repo_images/NIQM2NDZ._for_github.png
       type: file
+  - path: /repo_structure_02_feb_code.yaml
+    type: file
   - path: /repo_structure_02_feb_page.yaml
     type: file
   - path: /repo_structure_23_jam.yaml
