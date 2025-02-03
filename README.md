@@ -82,6 +82,11 @@ consciousness/
    - Experience weighting (0.1 initial weight)
    - Stability and coherence monitoring
 
+### Memory Indexing
+
+- **Primary:** We currently use Pinecone for managed, scalable vector storage.
+- **Alternatives:** For lower latency or greater infrastructure control, FAISS or Milvus are viable options.
+
 ## Technologies
 
 - **Core AI:** LLaMA 3.3, palme (open-source PaLM-E), Whisper v3
