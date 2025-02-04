@@ -140,3 +140,8 @@ class VideoLLaMA3Integration:
     def __del__(self):
         self.frame_buffer.clear()
         torch.cuda.empty_cache()
+
+# Inside your simulation loop
+frame = unreal_engine_capture()  # Capture frame using Unreal methods
+output = video_llama3_integration.process_stream_frame(frame)
+consciousness_core.update_state(output)

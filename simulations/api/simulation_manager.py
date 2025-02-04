@@ -100,101 +100,52 @@ class SimulationManager:
             print(f"Error loading datasets: {e}")
 
     def run_interaction_episode(self, agent, environment) -> Dict[str, Any]:
-        """
-        Run a single interaction episode with emotional reinforcement learning.
-
-        Args:
-            agent: The RL agent or policy to act in the environment.
-            environment: The VR environment instance.
-
-        Returns:
-            A dictionary containing final stats of the episode.
-        """
-        state = environment.reset()
-        total_reward = 0.0
         episode_data = []
-
-        for step in range(self.config.max_steps):
-            # Get action from agent's policy.
-            action = agent.get_action(state)
-
-            # Environment step.
-            next_state, env_reward, done, info = environment.step(action)
-
-            # Process emotional response.
-            emotion_values = self.emotion_network.process_interaction(
-                state=state,
-                action=action,
-                next_state=next_state,
-                info=info
-            )
-
-            # Generate narrative description.
-            narrative = self.narrative.generate_experience_narrative(
-                state=state,
-                action=action,
-                emotion=emotion_values,
-                include_context=True
-            )
-
-            # Compute emotional reward.
+        state = environment.reset()
+        
+        done = False
+        step = 0
+        while not done:
+            action = agent.select_action(state)
+            next_state, reward, done, info = environment.step(action)
+            
+            # Compute emotional reward
             emotional_reward = self.rl_core.compute_reward(
                 state=state,
-                emotion_values=emotion_values,
-                narrative=narrative
+                emotion_values=info.get('emotional_context'),
+                narrative=agent.current_narrative()
             )
-
-            # Store experience in memory.
+            
+            # Store experience in memory
             self.memory.store_experience({
                 "state": state,
                 "action": action,
                 "reward": emotional_reward,
                 "next_state": next_state,
-                "emotion": emotion_values,
-                "narrative": narrative,
+                "emotion": info.get('emotional_context'),
+                "narrative": agent.current_narrative(),
                 "done": done
             })
-
-            # Update learning systems.
-            update_info = self.rl_core.update(
+            
+            # Update RL core with emotional context
+            self.rl_core.update(
                 state=state,
                 action=action,
                 reward=emotional_reward,
                 next_state=next_state,
                 done=done,
-                emotion_context=emotion_values
+                emotion_context=info.get('emotional_context')
             )
-
-            # Track episode data.
+            
             episode_data.append({
                 "step": step,
-                "emotion": emotion_values,
-                "reward": emotional_reward,
-                "narrative": narrative,
-                "update_info": update_info
+                "emotion": info.get('emotional_context'),
+                "reward": emotional_reward
             })
-
-            total_reward += emotional_reward
             state = next_state
-
-            if done:
-                break
-
-        # Update tracked metrics.
-        self.episode_rewards.append(total_reward)
-        # Avoid slicing with 0 if the episode ended immediately.
-        steps_in_episode = max(step, 0)  
-        if steps_in_episode > 0:
-            recent_emotions = [data["emotion"] for data in episode_data]
-            self.emotion_history.extend(recent_emotions)
-
-        return {
-            "total_reward": total_reward,
-            "steps": step + 1,
-            "episode_data": episode_data,
-            "mean_emotion": self._compute_mean_emotion(step, episode_data),
-            "final_narrative": episode_data[-1]["narrative"] if episode_data else ""
-        }
+            step += 1
+        
+        return {"episode_data": episode_data}
 
     def _compute_mean_emotion(self, step: int, episode_data: List[Dict[str, Any]]) -> Dict[str, float]:
         """

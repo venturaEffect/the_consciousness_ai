@@ -89,3 +89,22 @@ class InteractiveVREnvironment(VREnvironment):
         except Exception as e:
             logging.error(f"Error initializing environment: {e}")
             return False
+
+    def step(self, action: Dict) -> tuple:
+        # Execute action in base environment
+        next_state, reward, done, info = super().step(action)
+        
+        # Get emotional feedback (e.g., via face recognition plugin)
+        if self.face_recognition:
+            facial_emotion = self.face_recognition.detect_emotion()
+            info['facial_emotion'] = facial_emotion
+            
+        # Update emotional context for the agent
+        emotional_context = self.emotion_network.update_context(
+            state=next_state,
+            facial_emotion=info.get('facial_emotion'),
+            action=action
+        )
+        info['emotional_context'] = emotional_context
+        
+        return next_state, reward, done, info
