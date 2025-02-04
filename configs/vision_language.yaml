@@ -1,5 +1,8 @@
 # configs/vision_language.yaml
 video_llama3:
-  model_name: "DAMO-NLP-SG/Llama3.3" # updated from Llama2 variant
-  device: "cuda" # or "cpu" as required
-  context_window: 128000 # increased context for Llama 3.3
+  model_name: "DAMO-NLP-SG/Llama3.3" # Updated from Llama2
+  model_variants:
+    default: "DAMO-NLP-SG/Llama3.3"
+    abliterated: "huihui-ai/Llama-3.3-70B-Instruct-abliterated"
+  device: "cuda"
+  context_window: 128000 # Increased from 4K

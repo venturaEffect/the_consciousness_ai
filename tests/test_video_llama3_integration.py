@@ -20,5 +20,24 @@ class TestVideoLLaMA3Integration(unittest.TestCase):
         # Add test for video processing
         pass
 
+    def test_model_variant_switching(self):
+        """Test enhanced model variant switching"""
+        config = {
+            "model_variants": {
+                "default": "DAMO-NLP-SG/Llama3.3",
+                "abliterated": "huihui-ai/Llama-3.3-70B-Instruct-abliterated"
+            }
+        }
+        
+        integration = VideoLLaMA3Integration(config)
+        self.assertEqual(integration.current_variant, "default")
+        
+        integration.set_model_variant("abliterated")
+        self.assertEqual(integration.current_variant, "abliterated")
+        
+        # Test invalid variant
+        with self.assertRaises(ValueError):
+            integration.set_model_variant("invalid_variant")
+
 if __name__ == '__main__':
     unittest.main()

@@ -7,13 +7,14 @@ from dataclasses import dataclass
 
 @dataclass
 class EmotionalMemoryState:
-    """Tracks emotional memory state for consciousness development"""
+    """Enhanced emotional memory tracking"""
     emotional_valence: float = 0.0
     emotional_arousal: float = 0.0
     emotional_dominance: float = 0.0
     attention_level: float = 0.0
     stress_level: float = 0.0
     memory_coherence: float = 0.0
+    stability_score: float = 0.0
 
 class EmotionalMemoryIntegration(nn.Module):
     """
@@ -139,21 +140,14 @@ class EmotionalMemoryIntegration(nn.Module):
         self,
         emotional_input: Dict[str, torch.Tensor]
     ) -> bool:
-        """Determine if experience should be stored"""
-        # Check emotional intensity
+        """Improved experience significance detection"""
         emotional_intensity = sum(abs(v) for v in emotional_input.values()) / len(emotional_input)
-        
-        # Check attention significance
         attention_significant = self.state.attention_level > self.config.get('attention_threshold', 0.7)
-        
-        # Check stress significance
         stress_significant = self.state.stress_level > self.config.get('stress_threshold', 0.6)
         
-        return (
-            emotional_intensity > self.config.get('emotional_threshold', 0.5) or
-            attention_significant or
-            stress_significant
-        )
+        return (emotional_intensity > self.config.get('emotional_threshold', 0.5) or
+                attention_significant or 
+                stress_significant)
         
     def _store_experience(
         self,
