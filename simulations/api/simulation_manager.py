@@ -14,6 +14,7 @@ from models.memory.memory_core import MemoryCore
 from models.predictive.dreamerv3_wrapper import DreamerV3
 from simulations.enviroments.pavilion_vr_environment import PavilionVREnvironment
 from simulations.enviroments.vr_environment import VREnvironment
+from models.cognitive.chain_of_thought import ChainOfThought
 
 
 @dataclass
@@ -44,6 +45,7 @@ class SimulationManager:
         self.emotion_network = EmotionalGraphNetwork()
         self.narrative = NarrativeEngine()
         self.memory = MemoryCore(capacity=config.memory_capacity)
+        self.chain_processor = ChainOfThought(self.memory)
 
         # Initialize environment (Pavilion or fallback VR).
         self.env = self._initialize_environment()
@@ -145,6 +147,16 @@ class SimulationManager:
             state = next_state
             step += 1
         
+        # After the episode, generate the chain-of-thought narrative and multimodal output.
+        thought_data = self.chain_processor.generate_multimodal_thought()
+        # Update the agent's narrative state with the introspection output.
+        agent.update_narrative(thought_data["chain_text"])
+        # Optionally, you can also store the visual output reference or use it further.
+        episode_data.append({
+            "chain_of_thought": thought_data["chain_text"],
+            "visual_output": thought_data["visual_output"]
+        })
+
         return {"episode_data": episode_data}
 
     def _compute_mean_emotion(self, step: int, episode_data: List[Dict[str, Any]]) -> Dict[str, float]:

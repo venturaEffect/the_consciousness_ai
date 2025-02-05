@@ -2,11 +2,6 @@
     type: file
   - path: /2501.13106v1.txt
     type: file
-  - path: /4676755236bb08cab5f4e54a0475d6fb-3f1f6bd49293ab554dc7fe4a49469fecb220abb1
-    type: directory
-    contents:
-    - path: /4676755236bb08cab5f4e54a0475d6fb-3f1f6bd49293ab554dc7fe4a49469fecb220abb1/grpo_demo.py
-      type: file
   - path: /configs
     type: directory
     contents:
@@ -66,17 +61,13 @@
     contents:
     - path: /examples/emotional_agent_example.py
       type: file
-  - path: /flattened_repo_02_feb_code.txt
-    type: file
-  - path: /flattened_repo_02_feb_page.txt
-    type: file
-  - path: /flattened_repo_23_jan.txt
-    type: file
   - path: /flattened_repo_videollama3.txt
     type: file
   - path: /INVE_MEM_2008_124320.pdf
     type: file
   - path: /INVE_MEM_2008_124320.txt
+    type: file
+  - path: /Kimi_k1.5.pdf
     type: file
   - path: /LICENSE.md
     type: file
@@ -160,6 +151,8 @@
       type: directory
       contents:
       - path: /models/generative/generative_emotional_core.py
+        type: file
+      - path: /models/generative/imagination_generator.py
         type: file
     - path: /models/integration
       type: directory
@@ -313,12 +306,6 @@
       type: file
     - path: /repo_images/NIQM2NDZ._for_github.png
       type: file
-  - path: /repo_structure_02_feb_code.yaml
-    type: file
-  - path: /repo_structure_02_feb_page.yaml
-    type: file
-  - path: /repo_structure_23_jam.yaml
-    type: file
   - path: /repo_structure_videollama3.yaml
     type: file
   - path: /requirements.txt

@@ -1,6 +1,7 @@
 # python: models/cognitive/chain_of_thought.py
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from models.generative.imagination_generator import generate_imagery  # new module
 
 class ChainOfThought:
     def __init__(self, memory, llm_model_name: str = "Qwen/Qwen2.5-1.5B-Instruct", num_recent: int = 10):
@@ -19,11 +20,12 @@ class ChainOfThought:
         ).to("cuda")
         self.system_prompt = (
             "Respond with a clear, structured chain-of-thought narrative. "
-            "Introspect over the recent emotional experiences and identify patterns, strengths, and areas for self-model refinement."
+            "Introspect over the recent emotional experiences and identify patterns, strengths, and areas for self-improvement. "
+            "Also, describe an imagined visual scenario (image or video frame) that illustrates these insights."
         )
         self.chain_format = (
             "<reasoning>\n{reasoning}\n</reasoning>\n"
-            "<answer>\n{answer}\n</answer>\n"
+            "<narrative>\n{answer}\n</narrative>\n"
         )
 
     def aggregate_experiences(self) -> str:
@@ -35,17 +37,17 @@ class ChainOfThought:
             return "No recent experiences available."
         summaries = []
         for i, exp in enumerate(recent_experiences):
-            # Assume each experience contains an 'emotion' dict.
             emotion = exp.get("emotion", {})
             summaries.append(
                 f"Experience {i+1}: V:{emotion.get('valence', 0.0):.1f}, "
-                f"A:{emotion.get('arousal', 0.1):.1f}, D:{emotion.get('dominance', 0.0):.1f}"
+                f"A:{emotion.get('arousal', 0.0):.1f}, D:{emotion.get('dominance', 0.0):.1f}"
             )
         return "\n".join(summaries)
 
     def generate_chain(self) -> str:
         """
         Generates the chain-of-thought narrative by prompting the LLM with aggregated experiences.
+        The output includes a structured reasoning section and a narrative that includes imagined visual details.
         """
         aggregated = self.aggregate_experiences()
         prompt = (
@@ -57,12 +59,25 @@ class ChainOfThought:
         outputs = self.model.generate(**inputs, max_new_tokens=150)
         generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         
-        # If the output already follows our XML format, return it. Otherwise, format it.
-        if "<reasoning>" in generated_text and "<answer>" in generated_text:
-            return generated_text.strip()
+        # Basic parsing: if the output doesn't include our expected tags, wrap the text.
+        if "<reasoning>" in generated_text and "<narrative>" in generated_text:
+            chain_output = generated_text.strip()
         else:
-            # Very basic fallback: split the output into two parts.
             lines = generated_text.strip().splitlines()
             reasoning = lines[0] if lines else "No reasoning provided."
-            answer = lines[-1] if len(lines) > 1 else "No answer provided."
-            return self.chain_format.format(reasoning=reasoning, answer=answer).strip()
+            answer = lines[-1] if len(lines) > 1 else "No narrative provided."
+            chain_output = self.chain_format.format(reasoning=reasoning, answer=answer).strip()
+        return chain_output
+
+    def generate_multimodal_thought(self) -> dict:
+        """
+        Uses the chain-of-thought narrative to generate additional multimodal (image/video) outputs.
+        Returns a dictionary with text, and paths/URLs for generated image or video content.
+        """
+        chain_text = self.generate_chain()
+        # Call the imagination generator module to produce an image or video based on the chain text.
+        visual_output = generate_imagery(chain_text)
+        return {
+            "chain_text": chain_text,
+            "visual_output": visual_output
+        }

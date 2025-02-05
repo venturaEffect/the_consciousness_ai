@@ -15,12 +15,30 @@ Dependencies:
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 class NarrativeEngine:
-    def __init__(self, config: Dict = None):
-        """Initialize narrative generation components"""
-        self.memory_context = []
-        self.llm = LlamaModel(config) if config else None
-        self.memory = EmotionalMemoryCore()
-        self.emotion = EmotionalProcessing()
+    def __init__(self, foundational_model):
+        self.foundational_model = foundational_model
+        self.current_narrative_text = ""
+
+    def update_narrative(self, chain_text: str):
+        """
+        Updates the agent's internal narrative with the latest chain-of-thought.
+        This refreshed narrative will inform future decision-making and emotional reward shaping.
+        """
+        self.current_narrative_text = chain_text
+        print("Updated narrative:", self.current_narrative_text)
+
+    def current_narrative(self) -> str:
+        return self.current_narrative_text
+
+    def generate_self_reflection(self, interaction_log: list) -> str:
+        """
+        Generate a reflective narrative based on past emotional rewards and interactions.
+        """
+        refined_log = "\n".join([str(entry) for entry in interaction_log])
+        prompt = f"Reflect on these interactions:\n{refined_log}"
+        narrative = self.foundational_model.generate(prompt)
+        self.current_narrative_text = narrative
+        return narrative
 
     def generate_narrative(self, input_text: str) -> str:
         """Generate coherent narrative based on input and context"""
