@@ -204,3 +204,38 @@ class EmotionalIntegrator:
         # Store in memory systems
         self.short_term.add(combined)
         self.long_term.store(combined)
+
+class EmotionalMemoryFormation:
+    def __init__(self, memory, emotion_network, attention_threshold=0.7):
+        self.memory = memory
+        self.emotion_network = emotion_network
+        self.attention_threshold = attention_threshold
+
+    def process_experience(self, state: 'torch.Tensor', emotion_values: dict, attention_level: float):
+        # Create emotional embedding
+        emotional_embedding = self.emotion_network.get_embedding(emotion_values)
+
+        # Store experience with attention-based priority
+        if attention_level >= self.attention_threshold:
+            self.memory.store_experience({
+                'state': state,
+                'emotion': emotion_values,
+                'attention': attention_level,
+                'embedding': emotional_embedding
+            })
+
+    def generate_chain_of_thought(self, recent_experiences: list) -> str:
+        """
+        Generate a chain-of-thought narrative by aggregating recent emotional experiences.
+        """
+        # Example: aggregate emotional values from recent experiences
+        summaries = []
+        for exp in recent_experiences:
+            emotion = exp.get('emotion', {})
+            summaries.append("Valence: {:.2f}, Arousal: {:.2f}, Dominance: {:.2f}".format(
+                emotion.get('valence', 0.0),
+                emotion.get('arousal', 0.0),
+                emotion.get('dominance', 0.0)
+            ))
+        chain_narrative = " | ".join(summaries)
+        return f"Chain-of-Thought Summary: {chain_narrative}"

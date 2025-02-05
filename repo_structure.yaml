@@ -2,6 +2,11 @@
     type: file
   - path: /2501.13106v1.txt
     type: file
+  - path: /4676755236bb08cab5f4e54a0475d6fb-3f1f6bd49293ab554dc7fe4a49469fecb220abb1
+    type: directory
+    contents:
+    - path: /4676755236bb08cab5f4e54a0475d6fb-3f1f6bd49293ab554dc7fe4a49469fecb220abb1/grpo_demo.py
+      type: file
   - path: /configs
     type: directory
     contents:
@@ -54,6 +59,8 @@
       type: file
     - path: /docs/roadmap.md
       type: file
+    - path: /docs/simulation_guide.md
+      type: file
   - path: /examples
     type: directory
     contents:
@@ -80,6 +87,11 @@
       type: directory
       contents:
       - path: /models/audio/whisper_processor.py
+        type: file
+    - path: /models/cognitive
+      type: directory
+      contents:
+      - path: /models/cognitive/chain_of_thought.py
         type: file
     - path: /models/controller
       type: directory
