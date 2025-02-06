@@ -15,10 +15,14 @@ Dependencies:
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 class NarrativeEngine:
-    def __init__(self, foundational_model):
+    def __init__(self, foundational_model, memory, emotion, llm):
         self.foundational_model = foundational_model
+        self.memory = memory                     # Injected dependency for memory retrieval
+        self.emotion = emotion                   # Injected dependency for emotion analysis
+        self.llm = llm                           # Injected dependency for language model generation
+        self.memory_context = []                 # To track narrative updates
         self.current_narrative_text = ""
-
+    
     def update_narrative(self, chain_text: str):
         """
         Updates the agent's internal narrative with the latest chain-of-thought.
@@ -40,34 +44,41 @@ class NarrativeEngine:
         self.current_narrative_text = narrative
         return narrative
 
+    def _build_prompt(self, input_text: str, memories: str, emotional_context: str) -> str:
+        """
+        Build a prompt by integrating the input, retrieved memories, and emotional context.
+        """
+        return f"Input: {input_text}\nMemories: {memories}\nEmotional Context: {emotional_context}\nGenerate narrative:"
+
     def generate_narrative(self, input_text: str) -> str:
         """Generate coherent narrative based on input and context"""
         # Retrieve relevant memories
         memories = self.memory.retrieve_relevant(input_text)
-        
         # Analyze emotional context
         emotional_context = self.emotion.analyze(input_text)
-        
-        # Integrate context with LLaMA prompt
-        prompt = self._build_prompt(
-            input_text,
-            memories,
-            emotional_context
-        )
-        
+        # Build integrated prompt
+        prompt = self._build_prompt(input_text, memories, emotional_context)
         # Generate narrative
         response = self.llm.generate(prompt)
-        
         # Update memory context
         self.memory_context.append(response)
-        
         return response
 
 # Example usage
 if __name__ == "__main__":
-    engine = NarrativeEngine()
-    generated_code = engine.generate_narrative(
-        "move an object to a new location",
-        "an object at position (0, 0, 0) must be moved to (100, 200, 50)"
-    )
+    # Mock dependencies for demonstration purposes
+    class MockModel:
+        def generate(self, prompt):
+            return f"Generated narrative based on: {prompt}"
+    class MockMemory:
+        def retrieve_relevant(self, input_text):
+            return "Relevant memory data"
+    class MockEmotion:
+        def analyze(self, input_text):
+            return "Emotional analysis"
+    mock_llm = MockModel()
+    memory = MockMemory()
+    emotion = MockEmotion()
+    engine = NarrativeEngine(foundational_model=mock_llm, memory=memory, emotion=emotion, llm=mock_llm)
+    generated_code = engine.generate_narrative("Move an object to a new location")
     print(generated_code)
