@@ -1,0 +1,25 @@
+pipeline:
+  name: "ACM_Audio2Face"
+  stages:
+    - name: "audio_parser"
+      config:
+        sample_rate: 16000
+
+    - name: "consciousness_processor"
+      config:
+        acm_endpoint: "http://acm-integration:8000/process"
+        emotional_threshold: 0.7
+
+    - name: "face_animation"
+      config:
+        morph_target_mapping: "/app/configs/morph_targets.json"
+        blend_shapes:
+          - "emotion_happy"
+          - "emotion_sad"
+          - "emotion_angry"
+          - "emotion_surprised"
+          - "emotion_neutral"
+
+  output:
+    type: "morph_params"
+    format: "unreal"

@@ -6,15 +6,21 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 import logging
+import asyncio
 
 from models.self_model.reinforcement_core import ReinforcementCore
 from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
 from models.narrative.narrative_engine import NarrativeEngine
 from models.memory.memory_core import MemoryCore
 from models.predictive.dreamerv3_wrapper import DreamerV3
-from simulations.enviroments.pavilion_vr_environment import PavilionVREnvironment
 from simulations.enviroments.vr_environment import VREnvironment
 from models.cognitive.chain_of_thought import ChainOfThought
+from models.ace_core.ace_agent import ACEConsciousAgent
+from models.ace_core.ace_config import ACEConfig
+from models.integration.video_llama3_integration import VideoLLaMA3Integration
+from models.memory.emotional_memory_core import EmotionalMemoryCore
+from models.core.consciousness_core import ConsciousnessCore
+from models.predictive.dreamer_emotional_wrapper import DreamerEmotionalWrapper
 
 
 @dataclass
@@ -25,8 +31,9 @@ class SimulationConfig:
     emotion_threshold: float = 0.6
     memory_capacity: int = 100000
     narrative_max_length: int = 128
-    use_pavilion: bool = True
-    pavilion_config: Optional[Dict] = None
+    # Removed Pavilion-specific flag and config
+    # use_pavilion: bool = True
+    # pavilion_config: Optional[Dict] = None
 
 
 class SimulationManager:
@@ -47,35 +54,25 @@ class SimulationManager:
         self.memory = MemoryCore(capacity=config.memory_capacity)
         self.chain_processor = ChainOfThought(self.memory)
 
-        # Initialize environment (Pavilion or fallback VR).
-        self.env = self._initialize_environment()
+        # Always use standard VR environment.
+        self.env = VREnvironment()
 
         # Tracking metrics.
         self.episode_rewards: List[float] = []
         self.emotion_history: List[Dict[str, float]] = []
         self.current_scenario = None
 
-    def _initialize_environment(self):
-        """Initialize the VR environment with optional Pavilion integration."""
-        if self.config.use_pavilion:
-            return PavilionVREnvironment(
-                config=self.config.pavilion_config,
-                emotion_network=self.emotion_network
-            )
-        return VREnvironment()
+        # ACE components
+        self.ace_config = ACEConfig()
+        self.ace_agent = ACEConsciousAgent(self.ace_config)
+        self.video_llama = VideoLLaMA3Integration()
+        self.consciousness_core = ConsciousnessCore()
+        self.emotional_memory = EmotionalMemoryCore()
+        self.world_model = DreamerEmotionalWrapper()
 
     def execute_code(self, code: str) -> dict:
         """
         Safely executes dynamically generated Python code.
-
-        Args:
-            code (str): Python code to execute.
-
-        Returns:
-            dict: Updated globals after execution.
-
-        Raises:
-            Exception: If code execution fails.
         """
         try:
             exec_globals = {}
@@ -96,8 +93,6 @@ class SimulationManager:
 
             ue_hri_data = pd.read_csv("/data/simulations/ue_hri_data.csv")
             print("UE-HRI data loaded successfully.")
-
-            # Extend or store loaded data as needed for simulation tasks.
         except Exception as e:
             print(f"Error loading datasets: {e}")
 
@@ -147,34 +142,14 @@ class SimulationManager:
             state = next_state
             step += 1
         
-        # After the episode, generate the chain-of-thought narrative and multimodal output.
         thought_data = self.chain_processor.generate_multimodal_thought()
-        # Update the agent's narrative state with the introspection output.
         agent.update_narrative(thought_data["chain_text"])
-        # Optionally, you can also store the visual output reference or use it further.
         episode_data.append({
             "chain_of_thought": thought_data["chain_text"],
             "visual_output": thought_data["visual_output"]
         })
 
         return {"episode_data": episode_data}
-
-    def _compute_mean_emotion(self, step: int, episode_data: List[Dict[str, Any]]) -> Dict[str, float]:
-        """
-        Compute the mean emotion from the last 'step' entries in episode_data.
-        Returns an empty dict if no data is available.
-        """
-        if step <= 0 or not episode_data:
-            return {}
-        emotion_vals = [data["emotion"] for data in episode_data]
-        # Collect keys in the first entry. Assuming consistent keys.
-        keys = emotion_vals[0].keys()
-        # Average each key across all steps.
-        mean_emotion = {
-            k: float(np.mean([entry[k] for entry in emotion_vals]))
-            for k in keys
-        }
-        return mean_emotion
 
     def get_performance_metrics(self) -> Dict[str, Any]:
         """
@@ -184,8 +159,6 @@ class SimulationManager:
         recent_emotions = self.emotion_history[-1000:] if self.emotion_history else []
         emotion_stability = 0.0
         if recent_emotions:
-            # Example: compute variance of a single dimension (e.g., valence).
-            # If your emotion dict has multiple dims, adapt accordingly.
             valences = [em.get("valence", 0.0) for em in recent_emotions]
             emotion_stability = np.std(valences)
 
@@ -208,6 +181,65 @@ class SimulationManager:
             "config": self.config
         }
         torch.save(checkpoint, path)
+
+    async def initialize_simulation(self):
+        """Initialize all components"""
+        await self.ace_agent.initialize()
+        await self.video_llama.initialize()
+        
+    async def simulation_step(self, visual_input, audio_input=None, context=None):
+        """Execute one simulation step with ACM-ACE integration"""
+        llama_perception = await self.video_llama.process_input(
+            visual_input, 
+            audio_input
+        )
+
+        consciousness_state = await self.consciousness_core.process({
+            'perception': llama_perception,
+            'context': context
+        })
+
+        emotional_response = await self.emotional_memory.generate_response(
+            consciousness_state
+        )
+
+        ace_result = await self.ace_agent.process_interaction(
+            visual_input=visual_input,
+            audio_input=audio_input,
+            context={
+                'consciousness_state': consciousness_state,
+                'emotional_response': emotional_response,
+                'llama_perception': llama_perception
+            }
+        )
+
+        await self.emotional_memory.update(
+            consciousness_state,
+            emotional_response,
+            ace_result['animation_data']
+        )
+
+        await self.world_model.update(
+            consciousness_state,
+            emotional_response,
+            ace_result
+        )
+
+        return {
+            'consciousness_state': consciousness_state,
+            'emotional_response': emotional_response,
+            'ace_result': ace_result,
+            'llama_perception': llama_perception
+        }
+
+    def load_character_blueprint(self):
+        """Load ACE-compatible character blueprint"""
+        try:
+            blueprint_path = self.ace_config.get_blueprint_path()
+            return unreal.load_object(None, blueprint_path)
+        except Exception as e:
+            print(f"Failed to load character blueprint: {e}")
+            return None
 
 
 # Example usage

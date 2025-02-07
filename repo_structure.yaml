@@ -2,9 +2,20 @@
     type: file
   - path: /2501.13106v1.txt
     type: file
+  - path: /ace_integration
+    type: directory
+    contents:
+    - path: /ace_integration/a2f_config.yaml
+      type: file
+    - path: /ace_integration/ac_a2f_config.yaml
+      type: file
+    - path: /ace_integration/docker-compose.yml
+      type: file
   - path: /configs
     type: directory
     contents:
+    - path: /configs/ace_integration.yaml
+      type: file
     - path: /configs/consciousness_development.yaml
       type: file
     - path: /configs/consciousness_metrics.yaml
@@ -61,6 +72,8 @@
     contents:
     - path: /examples/emotional_agent_example.py
       type: file
+  - path: /flattened_repo_06_feb_page.txt
+    type: file
   - path: /flattened_repo_videollama3.txt
     type: file
   - path: /INVE_MEM_2008_124320.pdf
@@ -74,6 +87,15 @@
   - path: /models
     type: directory
     contents:
+    - path: /models/ace_core
+      type: directory
+      contents:
+      - path: /models/ace_core/ace_agent.py
+        type: file
+      - path: /models/ace_core/ace_config.py
+        type: file
+      - path: /models/ace_core/unreal_interface.py
+        type: file
     - path: /models/audio
       type: directory
       contents:
@@ -299,6 +321,8 @@
     type: file
   - path: /README.md
     type: file
+  - path: /repomix-output_code_from_theconsciousness_ai_6_feb.md
+    type: file
   - path: /repo_images
     type: directory
     contents:
@@ -306,6 +330,8 @@
       type: file
     - path: /repo_images/NIQM2NDZ._for_github.png
       type: file
+  - path: /repo_structure_06_feb_page.yaml
+    type: file
   - path: /repo_structure_videollama3.yaml
     type: file
   - path: /requirements.txt

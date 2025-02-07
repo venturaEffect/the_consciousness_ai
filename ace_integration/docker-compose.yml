@@ -1,0 +1,65 @@
+version: "3.8"
+
+services:
+  # Audio2Face Controller
+  a2f-controller:
+    image: nvcr.io/nvidia/ace/audio2face:1.0.11
+    container_name: a2f-controller
+    ports:
+      - "52000:52000" # Example: maps container port 52000 to host 52000
+    volumes:
+      - ./a2f_config.yaml:/app/configs/a2f_config.yaml
+    environment:
+      - SERVICE_NAME=a2f-controller
+    networks:
+      - ace_network
+
+  # ACE Core Services
+  ace-controller:
+    image: nvcr.io/nvidia/ace/controller:1.0.11
+    container_name: ace-controller
+    ports:
+      - "50051:50051" # gRPC port
+      - "8080:8080" # HTTP API port
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - ./configs:/app/configs
+    networks:
+      - ace_network
+
+  # Audio2Face Service
+  a2f-service:
+    image: nvcr.io/nvidia/ace/audio2face:1.0.11
+    container_name: a2f-service
+    depends_on:
+      - ace-controller
+    ports:
+      - "52000:52000"
+    environment:
+      - SERVICE_NAME=a2f-service
+    volumes:
+      - ./configs:/app/configs
+    networks:
+      - ace_network
+
+  # ACM Integration Service
+  acm-integration:
+    build:
+      context: .
+      dockerfile: Dockerfile.acm
+    container_name: acm-integration
+    depends_on:
+      - ace-controller
+      - a2f-service
+    ports:
+      - "8000:8000" # REST API port
+    volumes:
+      - ../models:/app/models
+      - ../configs:/app/configs
+    networks:
+      - ace_network
+
+networks:
+  ace_network:
+    driver: bridge

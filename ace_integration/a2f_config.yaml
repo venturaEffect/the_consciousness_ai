@@ -1,0 +1,14 @@
+# ace_integration/a2f_config.yaml
+
+service:
+  name: "audio2face"
+  rpc_port: 52000
+  host: "0.0.0.0"
+
+downstream_service:
+  ip: "a2f-service"
+  port: 52000
+
+acm_integration:
+  enabled: true
+  endpoint: "http://acm-integration:8000"

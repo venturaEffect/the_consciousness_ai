@@ -1,0 +1,26 @@
+# configs/ace_integration.yaml
+
+ace:
+  microservices:
+    audio2face:
+      host: "0.0.0.0"
+      port: 52000
+      config_path: "ace_integration/a2f_config.yaml"
+
+    animation_graph:
+      host: "0.0.0.0"
+      port: 52001
+      config_path: "ace_integration/animation_graph_config.yaml"
+
+  character:
+    blueprint_path: "/Game/Characters/ACE_Character_BP"
+    animation_profile: "default"
+
+  consciousness:
+    attention_threshold: 0.7
+    emotional_coherence: 0.8
+    memory_retention: 0.9
+
+  integration:
+    use_videollama: true
+    enable_consciousness_visualization: true
