@@ -64,3 +64,11 @@ The ACM architecture integrates multiple components to achieve synthetic awarene
    ├── memory_core.py             # Experience storage
    └── emotional_indexing.py      # Emotional context indexing
    ```
+
+4. **Expression System:**
+   ```python
+   models/ace_core/
+   ├── ace_agent.py          # ACE integration agent
+   ├── ace_config.py         # Configuration handler
+   └── animation_graph.py    # Emotion-animation mapping
+   ```

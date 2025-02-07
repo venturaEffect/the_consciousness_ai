@@ -94,6 +94,7 @@ We continue to use DreamerV3 for world modeling with emotional context weighting
 ## Technologies
 
 - **Core AI:** LLaMA 3.3, palme (open-source PaLM-E), Whisper v3
+- **Animation & Expression:** NVIDIA ACE, Audio2Face
 - **Memory Systems:** Pinecone v2, Temporal Graph Neural Networks
 - **Emotion Processing:** GoEmotions, MELD, HEU Emotion
 - **Simulation:** Unreal Engine 5 with real-time physics

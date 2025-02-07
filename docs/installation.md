@@ -41,3 +41,18 @@
    ```bash
    python -m unittest discover tests
    ```
+
+### NVIDIA ACE Setup
+
+1. Install NVIDIA ACE components:
+
+   ```bash
+   docker pull nvcr.io/nvidia/ace/audio2face:1.0.11
+   docker pull nvcr.io/nvidia/ace/controller:1.0.11
+   ```
+
+2. Configure services using docker-compose:
+   ```bash
+   cd ace_integration
+   docker-compose up -d
+   ```
