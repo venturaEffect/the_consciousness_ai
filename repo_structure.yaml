@@ -47,6 +47,8 @@
   - path: /docs
     type: directory
     contents:
+    - path: /docs/ace_integration.md
+      type: file
     - path: /docs/architechture.md
       type: file
     - path: /docs/contributing.md
