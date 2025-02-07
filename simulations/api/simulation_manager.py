@@ -21,6 +21,7 @@ from models.integration.video_llama3_integration import VideoLLaMA3Integration
 from models.memory.emotional_memory_core import EmotionalMemoryCore
 from models.core.consciousness_core import ConsciousnessCore
 from models.predictive.dreamer_emotional_wrapper import DreamerEmotionalWrapper
+from models.memory.attention_schema import AttentionSchema
 
 
 @dataclass
@@ -69,6 +70,7 @@ class SimulationManager:
         self.consciousness_core = ConsciousnessCore()
         self.emotional_memory = EmotionalMemoryCore()
         self.world_model = DreamerEmotionalWrapper()
+        self.attention_schema = AttentionSchema()
 
     def execute_code(self, code: str) -> dict:
         """
@@ -213,6 +215,15 @@ class SimulationManager:
             }
         )
 
+        # Update attention schema with current focus data
+        current_focus = {
+            'visual': visual_input,
+            'audio': audio_input,
+        }
+        self.attention_schema.update(current_focus)
+        cumulative_focus = self.attention_schema.get_overview()
+        self.adjust_self_model(cumulative_focus)
+
         await self.emotional_memory.update(
             consciousness_state,
             emotional_response,
@@ -231,6 +242,14 @@ class SimulationManager:
             'ace_result': ace_result,
             'llama_perception': llama_perception
         }
+    
+    def adjust_self_model(self, cumulative_focus):
+        """
+        Dynamically adjust internal state parameters based on the aggregated focus data.
+        This is a placeholder function intended to integrate meta-awareness into the self-model.
+        """
+        # Example implementation: log the focus data and adjust parameters accordingly.
+        print("Adjusting self-model with focus data:", cumulative_focus)
 
     def load_character_blueprint(self):
         """Load ACE-compatible character blueprint"""

@@ -206,6 +206,8 @@
     - path: /models/memory
       type: directory
       contents:
+      - path: /models/memory/attention_schema.py
+        type: file
       - path: /models/memory/consolidation.py
         type: file
       - path: /models/memory/emotional_context.py
