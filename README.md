@@ -403,6 +403,31 @@ For commercial use, please contact the authors.
 
 This project is licensed under MIT with non-commercial use restrictions. For commercial licensing inquiries, please contact: <a href="mailto:info@theconsciousness.ai">info@theconsciousness.ai</a>
 
-```
+# ACE Integration with ACM
 
-```
+## Overview
+
+The project now integrates NVIDIA's Avatar and Chat Engine (ACE) with our Artificial Consciousness Module (ACM) to enable:
+
+- Realistic avatar animation driven by emotional states
+- Natural conversational interactions
+- Dynamic facial expressions and gestures
+
+## Components
+
+### ACE Integration
+
+- Audio2Face real-time facial animation
+- Emotion-driven animation control
+- Natural language processing for conversations
+
+### ACM Components
+
+- Consciousness Core for high-level cognition
+- Emotional Memory for experience accumulation
+- Attention Schema for meta-awareness
+- World Model for predictive processing
+
+## Configuration
+
+See [`ace_integration/`](ace_integration/) for setup and configuration files.

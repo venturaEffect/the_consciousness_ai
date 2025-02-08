@@ -198,20 +198,11 @@ class SimulationManager:
         
     async def simulation_step(self, visual_input, audio_input=None, context=None):
         """Execute one simulation step with ACM-ACE integration"""
-        current_state = {
-            'visual': visual_input,
-            'audio': audio_input,
-            'context': context
-        }
-        predicted_state = await self.predictive_processor.predict_next_state(current_state)
-        
         llama_perception = await self.video_llama.process_input(
             visual_input=visual_input,
             audio_input=audio_input
         )
-        
-        self.predictive_processor.update_model(predicted_state, llama_perception)
-        
+
         await self.global_workspace.broadcast(
             WorkspaceMessage(
                 source="perception",
@@ -231,7 +222,7 @@ class SimulationManager:
 
         ace_result = await self.ace_agent.process_interaction(
             visual_input=visual_input,
-            audio_input=audio_input,
+            audio_input=audio_input, 
             context={
                 'consciousness_state': consciousness_state,
                 'emotional_response': emotional_response,
@@ -239,14 +230,17 @@ class SimulationManager:
             }
         )
 
-        # Update attention schema with current focus data
         current_focus = {
             'visual': visual_input,
             'audio': audio_input,
+            'consciousness': consciousness_state,
+            'emotion': emotional_response
         }
-        self.attention_schema.update(current_focus)
-        cumulative_focus = self.attention_schema.get_overview()
-        self.adjust_self_model(cumulative_focus)
+        await self.attention_schema.update(current_focus)
+
+        cumulative_focus = await self.attention_schema.get_overview()
+        
+        await self.adjust_self_model(cumulative_focus)
 
         await self.emotional_memory.update(
             consciousness_state,
@@ -255,7 +249,7 @@ class SimulationManager:
         )
 
         await self.world_model.update(
-            consciousness_state,
+            consciousness_state, 
             emotional_response,
             ace_result
         )
@@ -264,7 +258,8 @@ class SimulationManager:
             'consciousness_state': consciousness_state,
             'emotional_response': emotional_response,
             'ace_result': ace_result,
-            'llama_perception': llama_perception
+            'llama_perception': llama_perception,
+            'attention_focus': cumulative_focus
         }
     
     def adjust_self_model(self, cumulative_focus):
