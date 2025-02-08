@@ -1,0 +1,19 @@
+predictive_processing:
+  learning_rate: 0.001
+  prediction_horizon: 5
+  error_threshold: 0.1
+
+global_workspace:
+  broadcast_timeout: 1.0
+  min_priority: 0.5
+  max_processes: 10
+
+narrative_engine:
+  context_window: 100
+  memory_decay: 0.95
+  coherence_threshold: 0.7
+
+ethical_parameters:
+  empathy_weight: 0.8
+  pain_avoidance: 0.9
+  moral_threshold: 0.7

@@ -13,6 +13,8 @@ Dependencies:
 """
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from typing import List, Dict
+import numpy as np
 
 class NarrativeEngine:
     def __init__(self, foundational_model, memory, emotion, llm):
@@ -22,6 +24,8 @@ class NarrativeEngine:
         self.llm = llm                           # Injected dependency for language model generation
         self.memory_context = []                 # To track narrative updates
         self.current_narrative_text = ""
+        self.narrative_history: List[Dict] = []
+        self.current_context = {}
     
     def update_narrative(self, chain_text: str):
         """
@@ -63,6 +67,15 @@ class NarrativeEngine:
         # Update memory context
         self.memory_context.append(response)
         return response
+
+    def integrate_experience(self, experience: Dict):
+        """Integrate new experience into narrative context"""
+        self.narrative_history.append(experience)
+        self.current_context = self._update_context(experience)
+        
+    def _update_context(self, new_experience: Dict) -> Dict:
+        """Update narrative context based on new experience"""
+        return self.current_context
 
 # Example usage
 if __name__ == "__main__":

@@ -22,6 +22,8 @@ from models.memory.emotional_memory_core import EmotionalMemoryCore
 from models.core.consciousness_core import ConsciousnessCore
 from models.predictive.dreamer_emotional_wrapper import DreamerEmotionalWrapper
 from models.memory.attention_schema import AttentionSchema
+from models.perception.predictive_processor import PredictiveProcessor
+from models.core.global_workspace import GlobalWorkspace, WorkspaceMessage
 
 
 @dataclass
@@ -71,6 +73,11 @@ class SimulationManager:
         self.emotional_memory = EmotionalMemoryCore()
         self.world_model = DreamerEmotionalWrapper()
         self.attention_schema = AttentionSchema()
+
+        # New components
+        self.predictive_processor = PredictiveProcessor()
+        self.global_workspace = GlobalWorkspace()
+        self.narrative_engine = NarrativeEngine()
 
     def execute_code(self, code: str) -> dict:
         """
@@ -191,9 +198,26 @@ class SimulationManager:
         
     async def simulation_step(self, visual_input, audio_input=None, context=None):
         """Execute one simulation step with ACM-ACE integration"""
+        current_state = {
+            'visual': visual_input,
+            'audio': audio_input,
+            'context': context
+        }
+        predicted_state = await self.predictive_processor.predict_next_state(current_state)
+        
         llama_perception = await self.video_llama.process_input(
-            visual_input, 
-            audio_input
+            visual_input=visual_input,
+            audio_input=audio_input
+        )
+        
+        self.predictive_processor.update_model(predicted_state, llama_perception)
+        
+        await self.global_workspace.broadcast(
+            WorkspaceMessage(
+                source="perception",
+                content=llama_perception,
+                priority=0.8
+            )
         )
 
         consciousness_state = await self.consciousness_core.process({
