@@ -16,6 +16,8 @@
     contents:
     - path: /configs/ace_integration.yaml
       type: file
+    - path: /configs/consciousness_config.yaml
+      type: file
     - path: /configs/consciousness_development.yaml
       type: file
     - path: /configs/consciousness_metrics.yaml
@@ -123,6 +125,8 @@
       - path: /models/core/gate_fusion.py
         type: file
       - path: /models/core/gating_components.py
+        type: file
+      - path: /models/core/global_workspace.py
         type: file
     - path: /models/development
       type: directory
@@ -252,6 +256,11 @@
       type: directory
       contents:
       - path: /models/narrative/narrative_engine.py
+        type: file
+    - path: /models/perception
+      type: directory
+      contents:
+      - path: /models/perception/predictive_processor.py
         type: file
     - path: /models/predictive
       type: directory
@@ -656,6 +665,8 @@
     - path: /tests/test_memory_indexing.py
       type: file
     - path: /tests/test_narrative_engine.py
+      type: file
+    - path: /tests/test_predictive_processing.py
       type: file
     - path: /tests/test_reinforcement_core.py
       type: file
