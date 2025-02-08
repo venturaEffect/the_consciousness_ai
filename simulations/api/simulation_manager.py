@@ -105,60 +105,68 @@ class SimulationManager:
         except Exception as e:
             print(f"Error loading datasets: {e}")
 
-    def run_interaction_episode(self, agent, environment) -> Dict[str, Any]:
-        episode_data = []
-        state = environment.reset()
-        
-        done = False
-        step = 0
-        while not done:
-            action = agent.select_action(state)
-            next_state, reward, done, info = environment.step(action)
+    async def run_interaction_episode(self, agent, environment) -> Dict[str, Any]:
+        try:
+            episode_data = []
+            state = environment.reset()
+            done = False
+            step = 0
             
-            # Compute emotional reward
-            emotional_reward = self.rl_core.compute_reward(
-                state=state,
-                emotion_values=info.get('emotional_context'),
-                narrative=agent.current_narrative()
-            )
+            while not done:
+                # Process interaction step
+                action = agent.select_action(state)
+                next_state, reward, done, info = environment.step(action)
+                
+                # Ensure emotional context exists
+                emotion_context = info.get('emotional_context', {})
+                if not emotion_context:
+                    logging.warning("Missing emotional context in step %d", step)
+                
+                # Compute reward with safety checks
+                emotional_reward = self.rl_core.compute_reward(
+                    state=state,
+                    emotion_values=emotion_context,
+                    narrative=agent.current_narrative()
+                )
+                
+                # Store experience
+                await self.memory.store_experience({
+                    "state": state,
+                    "action": action,
+                    "reward": emotional_reward,
+                    "next_state": next_state,
+                    "emotion": emotion_context,
+                    "narrative": agent.current_narrative(),
+                    "done": done
+                })
+                
+                # Update episode data
+                episode_data.append({
+                    "step": step,
+                    "emotion": emotion_context,
+                    "reward": emotional_reward
+                })
+                
+                state = next_state
+                step += 1
+                
+            # Generate narrative with error handling
+            try:
+                thought_data = await self.chain_processor.generate_multimodal_thought()
+                agent.update_narrative(thought_data["chain_text"])
+                episode_data.append({
+                    "chain_of_thought": thought_data["chain_text"],
+                    "visual_output": thought_data.get("visual_output")
+                })
+            except Exception as e:
+                logging.error("Narrative generation failed: %s", e)
+                agent.update_narrative("Narrative generation failed; using last known context.")
+                
+            return {"episode_data": episode_data}
             
-            # Store experience in memory
-            self.memory.store_experience({
-                "state": state,
-                "action": action,
-                "reward": emotional_reward,
-                "next_state": next_state,
-                "emotion": info.get('emotional_context'),
-                "narrative": agent.current_narrative(),
-                "done": done
-            })
-            
-            # Update RL core with emotional context
-            self.rl_core.update(
-                state=state,
-                action=action,
-                reward=emotional_reward,
-                next_state=next_state,
-                done=done,
-                emotion_context=info.get('emotional_context')
-            )
-            
-            episode_data.append({
-                "step": step,
-                "emotion": info.get('emotional_context'),
-                "reward": emotional_reward
-            })
-            state = next_state
-            step += 1
-        
-        thought_data = self.chain_processor.generate_multimodal_thought()
-        agent.update_narrative(thought_data["chain_text"])
-        episode_data.append({
-            "chain_of_thought": thought_data["chain_text"],
-            "visual_output": thought_data["visual_output"]
-        })
-
-        return {"episode_data": episode_data}
+        except Exception as e:
+            logging.error("Episode execution failed: %s", e)
+            raise
 
     def get_performance_metrics(self) -> Dict[str, Any]:
         """
