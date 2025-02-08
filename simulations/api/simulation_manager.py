@@ -205,12 +205,13 @@ class SimulationManager:
         await self.video_llama.initialize()
         
     async def simulation_step(self, visual_input, audio_input=None, context=None):
-        """Execute one simulation step with ACM-ACE integration"""
+        # Update ACE and ACM integration
         llama_perception = await self.video_llama.process_input(
             visual_input=visual_input,
             audio_input=audio_input
         )
 
+        # Global workspace broadcast
         await self.global_workspace.broadcast(
             WorkspaceMessage(
                 source="perception",
@@ -219,15 +220,18 @@ class SimulationManager:
             )
         )
 
+        # Process through consciousness core
         consciousness_state = await self.consciousness_core.process({
             'perception': llama_perception,
             'context': context
         })
 
+        # Generate emotional response
         emotional_response = await self.emotional_memory.generate_response(
             consciousness_state
         )
 
+        # Process through ACE
         ace_result = await self.ace_agent.process_interaction(
             visual_input=visual_input,
             audio_input=audio_input, 
@@ -238,6 +242,7 @@ class SimulationManager:
             }
         )
 
+        # Update attention schema
         current_focus = {
             'visual': visual_input,
             'audio': audio_input,
@@ -246,16 +251,20 @@ class SimulationManager:
         }
         await self.attention_schema.update(current_focus)
 
+        # Get cumulative focus overview
         cumulative_focus = await self.attention_schema.get_overview()
         
+        # Update self model
         await self.adjust_self_model(cumulative_focus)
 
+        # Update emotional memory
         await self.emotional_memory.update(
             consciousness_state,
             emotional_response,
             ace_result['animation_data']
         )
 
+        # Update world model
         await self.world_model.update(
             consciousness_state, 
             emotional_response,
