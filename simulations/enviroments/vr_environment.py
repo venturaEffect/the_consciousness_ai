@@ -19,9 +19,10 @@ class VREnvironment:
         self.environment_initialized = False
         self.agent_states = {}
         self.last_update_time = time.time()
+        self.level_name = None
         logging.info("VR Environment Manager initialized.")
 
-    def initialize_environment(self, map_name):
+    async def initialize_environment(self, map_name):
         """
         Load the specified VR environment map in Unreal Engine.
         Args:

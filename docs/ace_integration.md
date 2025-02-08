@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide outlines the integration between ACM and NVIDIA ACE (Avatar and Chat Engine) for enhanced avatar animation and emotional expression.
+The ACM project integrates NVIDIA's Avatar Cloud Engine (ACE) to enable realistic avatar animations driven by the AI's emotional and conscious states.
 
 ## Components
 
