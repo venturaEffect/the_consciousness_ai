@@ -51,7 +51,7 @@
     contents:
     - path: /docs/ace_integration.md
       type: file
-    - path: /docs/architechture.md
+    - path: /docs/architecture.md
       type: file
     - path: /docs/contributing.md
       type: file
@@ -62,6 +62,8 @@
     - path: /docs/integration_videollama_3.py
       type: file
     - path: /docs/interaction_workflow.md
+      type: file
+    - path: /docs/memory_optimization.md
       type: file
     - path: /docs/pipeline.md
       type: file
@@ -234,9 +236,9 @@
         type: file
       - path: /models/memory/optimization_components.py
         type: file
-      - path: /models/memory/optimized_store.py
+      - path: /models/memory/optimized_indexing.py
         type: file
-      - path: /models/memory/optmized_indexing.py
+      - path: /models/memory/optimized_store.py
         type: file
       - path: /models/memory/semantic_components.py
         type: file
@@ -384,12 +386,12 @@
       contents:
       - path: /simulations/api/simulation_manager.py
         type: file
-    - path: /simulations/enviroments
+    - path: /simulations/environments
       type: directory
       contents:
-      - path: /simulations/enviroments/interactive_vr_environment.py
+      - path: /simulations/environments/interactive_vr_environment.py
         type: file
-      - path: /simulations/enviroments/vr_environment.py
+      - path: /simulations/environments/vr_environment.py
         type: file
     - path: /simulations/scenarios
       type: directory
@@ -651,6 +653,8 @@
     - path: /tests/test_memory_core.py
       type: file
     - path: /tests/test_memory_indexing.py
+      type: file
+    - path: /tests/test_memory_optimization.py
       type: file
     - path: /tests/test_narrative_engine.py
       type: file

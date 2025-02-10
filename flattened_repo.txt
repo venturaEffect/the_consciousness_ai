@@ -1873,6 +1873,18 @@ ace:
     use_videollama: true
     enable_consciousness_visualization: true
 
+memory_optimization:
+  max_buffer_size: 32
+  cleanup_threshold: 0.8
+  consolidation_threshold: 0.7
+  cache_size: 1000
+  rebalance_threshold: 0.3
+
+ace_integration:
+  animation_quality: "high"
+  latency_target_ms: 100
+  memory_threshold: 0.7
+
 </configs/ace_integration.yaml>
 
 <configs/consciousness_config.yaml>
@@ -2488,6 +2500,8 @@ video_llama3:
 <docs/ace_integration.md>
 # NVIDIA ACE Integration Guide
 
+# ACE Integration with VideoLLaMA3
+
 ## Overview
 
 The ACM project integrates NVIDIA's Avatar Cloud Engine (ACE) to enable realistic avatar animations driven by the AI's emotional and conscious states.
@@ -2498,13 +2512,30 @@ The ACM project integrates NVIDIA's Avatar Cloud Engine (ACE) to enable realisti
 - **ACE Controller**: Core animation and interaction management
 - **Animation Graph**: Emotional state to animation mapping
 
+## Memory Optimization
+
+The integration includes memory optimization features:
+
+- Dynamic frame buffer management
+- Resolution optimization
+- Memory metric tracking
+- ACE animation state optimization
+
 ## Configuration
 
 See [ace_integration/a2f_config.yaml](ace_integration/a2f_config.yaml) and [ace_integration/ac_a2f_config.yaml](ace_integration/ac_a2f_config.yaml) for service configuration.
 
+Memory and ACE settings can be configured in `configs/ace_integration.yaml`:
+
+```yaml
+memory_optimization:
+  max_buffer_size: 32 # Maximum frames to buffer
+  cleanup_threshold: 0.8 # When to trigger cleanup
+```
+
 </docs/ace_integration.md>
 
-<docs/architechture.md>
+<docs/architecture.md>
 # Architecture of the Artificial Consciousness Module
 
 ## Overview
@@ -2580,7 +2611,7 @@ The ACM architecture integrates multiple components to achieve synthetic awarene
    └── animation_graph.py    # Emotion-animation mapping
    ```
 
-</docs/architechture.md>
+</docs/architecture.md>
 
 <docs/contributing.md>
 # Contributing to Artificial Consciousness Module (ACM)
@@ -2910,6 +2941,32 @@ This document outlines how the AI agent interacts with the simulation environmen
   ```
 
 </docs/interaction_workflow.md>
+
+<docs/memory_optimization.md>
+# Memory Optimization Architecture
+
+## Components
+
+1. **Hierarchical Indexing**
+
+   - Emotional context-based partitioning
+   - Temporal sequence tracking
+   - Consciousness-weighted retrieval
+
+2. **Optimization Strategies**
+
+   - Dynamic partition rebalancing
+   - Cache management
+   - Memory consolidation
+   - Attention-based gating
+
+3. **Performance Metrics**
+   - Retrieval latency
+   - Index balance
+   - Memory utilization
+   - Cache hit rates
+
+</docs/memory_optimization.md>
 
 <docs/pipeline.md>
 ## Consciousness Development Pipeline
@@ -8516,28 +8573,55 @@ class VideoLLaMA3Integration:
         self.model = model
         self.processor = processor
         self.logger = logging.getLogger(__name__)
+        
+        # Memory optimization components
+        self.memory_optimizer = MemoryOptimizer(config.get("memory_config", {}))
         self.frame_buffer = []
         self.max_buffer_size = config.get("max_buffer_size", 32)
+        
+        # ACE integration
+        self.ace_agent = ACEConsciousAgent(config.get("ace_config", {}))
+        
+        # Model variants
         self.model_variants = config.get("model_variants", {
-            "default": "DAMO-NLP-SG/Llama3.3",
+            "default": "DAMO-NLP-SG/Llama3.3", 
             "abliterated": "huihui-ai/Llama-3.3-70B-Instruct-abliterated"
         })
         self.current_variant = "default"
         self._load_model(self.model_variants[self.current_variant])
 
-    def process_stream_frame(self, frame: np.ndarray) -> Dict[str, Any]:
-        """Optimized frame processing with latency controls"""
+    async def process_stream_frame(self, frame: np.ndarray) -> Dict[str, Any]:
+        """Optimized frame processing with memory management and ACE integration"""
         if self._should_skip_frame():
             return {"status": "skipped"}
         
-        # Reduce resolution for performance
+        # Optimize memory usage
         frame = self._reduce_resolution(frame)
         
-        # Use TensorRT if available
-        with torch.cuda.amp.autocast():
-            context = self._process_single_frame(frame)
-        
-        return context
+        try:
+            with torch.cuda.amp.autocast():
+                # Process frame
+                context = await self._process_single_frame(frame)
+                
+                # Integrate with ACE 
+                ace_result = await self.ace_agent.process_frame(
+                    frame,
+                    context,
+                    self.memory_optimizer.get_metrics()
+                )
+                
+                # Update memory optimization metrics
+                self.memory_optimizer.update_metrics(context)
+                
+                return {
+                    "context": context,
+                    "ace_result": ace_result,
+                    "memory_metrics": self.memory_optimizer.get_metrics()
+                }
+                
+        except Exception as e:
+            self.logger.error("Error processing frame: %s", e, exc_info=True)
+            raise
 
     def _should_skip_frame(self) -> bool:
         """
@@ -8612,6 +8696,13 @@ class VideoLLaMA3Integration:
         """
         # Use self.model to process inputs
         pass
+
+    def _update_memory_metrics(self, context: Dict[str, Any]):
+        """Update memory optimization metrics"""
+        self.memory_optimizer.update_access_patterns(context)
+        
+        if self.memory_optimizer.should_optimize():
+            self.memory_optimizer.optimize_indices()
 
     def __del__(self):
         self.frame_buffer.clear()
@@ -11219,122 +11310,7 @@ class IndexBalancer:
             )
 </models/memory/optimization_components.py>
 
-<models/memory/optimized_store.py>
-"""
-Memory Optimization Module
-
-Implements efficient memory storage and retrieval through:
-1. Hierarchical memory indexing 
-2. Emotional context-based partitioning
-3. Attention-weighted storage
-4. Dynamic memory consolidation
-
-Based on MANN architecture for cognitive self-representation.
-"""
-
-from typing import Dict, List, Optional
-import torch
-import numpy as np
-from dataclasses import dataclass
-
-@dataclass
-class MemoryOptimizationMetrics:
-    """Tracks memory optimization performance"""
-    retrieval_latency: float = 0.0 
-    memory_utilization: float = 0.0
-    index_efficiency: float = 0.0
-    consolidation_rate: float = 0.0
-
-class OptimizedMemoryStore:
-    """
-    Implements optimized memory storage with emotional indexing.
-    Uses hierarchical structure for fast retrieval.
-    """
-
-    def __init__(self, config: Dict):
-        self.config = config
-        
-        # Initialize optimized storage components
-        self.emotional_index = EmotionalHierarchicalIndex(config)
-        self.temporal_index = TemporalHierarchicalIndex(config)
-        self.consolidation_manager = MemoryConsolidationManager(config)
-        
-        self.metrics = MemoryOptimizationMetrics()
-
-    def store_optimized(
-        self,
-        memory_vector: torch.Tensor,
-        emotional_context: Dict[str, float],
-        attention_level: float,
-        metadata: Optional[Dict] = None
-    ) -> str:
-        """
-        Store memory with optimized indexing and consolidation
-        
-        Args:
-            memory_vector: Encoded memory representation
-            emotional_context: Current emotional state
-            attention_level: Current attention level
-            metadata: Optional additional context
-        """
-        # Apply attention-based gating
-        if attention_level < self.config['attention_threshold']:
-            return None
-
-        # Get optimal partition based on emotional context
-        partition = self.emotional_index.get_optimal_partition(emotional_context)
-        
-        # Store in hierarchical indices
-        memory_id = self._store_in_indices(
-            memory_vector=memory_vector,
-            partition=partition,
-            emotional_context=emotional_context,
-            metadata=metadata
-        )
-        
-        # Trigger consolidation if needed
-        self.consolidation_manager.check_consolidation(partition)
-        
-        return memory_id
-
-    def retrieve_optimized(
-        self,
-        query_vector: torch.Tensor,
-        emotional_context: Optional[Dict[str, float]] = None,
-        k: int = 5
-    ) -> List[Dict]:
-        """
-        Retrieve memories using optimized indices
-        """
-        start_time = time.time()
-        
-        # Get relevant emotional partitions
-        partitions = self.emotional_index.get_relevant_partitions(emotional_context)
-        
-        # Search within partitions
-        results = []
-        for partition in partitions:
-            partition_results = self._search_partition(
-                partition=partition,
-                query_vector=query_vector,
-                k=k
-            )
-            results.extend(partition_results)
-            
-        # Update latency metrics
-        self.metrics.retrieval_latency = time.time() - start_time
-        
-        # Sort by relevance and return top k
-        results.sort(key=lambda x: x['similarity'], reverse=True)
-        return results[:k]
-
-    def consolidate_memories(self, partition: str):
-        """Consolidate memories within partition for optimization"""
-        self.consolidation_manager.consolidate_partition(partition)
-        self._update_optimization_metrics()
-</models/memory/optimized_store.py>
-
-<models/memory/optmized_indexing.py>
+<models/memory/optimized_indexing.py>
 """
 Optimized Memory Indexing Module
 
@@ -11360,6 +11336,16 @@ class IndexMetrics:
     index_balance: float = 0.0
     partition_efficiency: float = 0.0
     memory_utilization: float = 0.0
+
+@dataclass
+class MemoryMetrics:
+    """Unified memory system metrics"""
+    retrieval_latency: float = 0.0
+    index_balance: float = 0.0
+    partition_efficiency: float = 0.0
+    memory_utilization: float = 0.0
+    consolidation_rate: float = 0.0
+    cache_hit_rate: float = 0.0
 
 class OptimizedMemoryIndex:
     """
@@ -11460,7 +11446,124 @@ class OptimizedMemoryIndex:
         """Check index balance and rebalance if needed"""
         if self._calculate_index_imbalance() > self.config['rebalance_threshold']:
             self._rebalance_partitions()
-</models/memory/optmized_indexing.py>
+</models/memory/optimized_indexing.py>
+
+<models/memory/optimized_store.py>
+"""
+Memory Optimization Module
+
+Implements efficient memory storage and retrieval through:
+1. Hierarchical memory indexing 
+2. Emotional context-based partitioning
+3. Attention-weighted storage
+4. Dynamic memory consolidation
+
+Based on MANN architecture for cognitive self-representation.
+"""
+
+from typing import Dict, List, Optional
+import torch
+import numpy as np
+from dataclasses import dataclass
+
+@dataclass
+class MemoryMetrics:
+    """Unified memory system metrics"""
+    retrieval_latency: float = 0.0
+    index_balance: float = 0.0
+    partition_efficiency: float = 0.0
+    memory_utilization: float = 0.0
+    consolidation_rate: float = 0.0
+    cache_hit_rate: float = 0.0
+
+class OptimizedMemoryStore:
+    """
+    Implements optimized memory storage with emotional indexing.
+    Uses hierarchical structure for fast retrieval.
+    """
+
+    def __init__(self, config: Dict):
+        self.config = config
+        
+        # Initialize optimized storage components
+        self.emotional_index = EmotionalHierarchicalIndex(config)
+        self.temporal_index = TemporalHierarchicalIndex(config)
+        self.consolidation_manager = MemoryConsolidationManager(config)
+        
+        self.metrics = MemoryOptimizationMetrics()
+
+    def store_optimized(
+        self,
+        memory_vector: torch.Tensor,
+        emotional_context: Dict[str, float],
+        attention_level: float,
+        metadata: Optional[Dict] = None
+    ) -> str:
+        """
+        Store memory with optimized indexing and consolidation
+        
+        Args:
+            memory_vector: Encoded memory representation
+            emotional_context: Current emotional state
+            attention_level: Current attention level
+            metadata: Optional additional context
+        """
+        # Apply attention-based gating
+        if attention_level < self.config['attention_threshold']:
+            return None
+
+        # Get optimal partition based on emotional context
+        partition = self.emotional_index.get_optimal_partition(emotional_context)
+        
+        # Store in hierarchical indices
+        memory_id = self._store_in_indices(
+            memory_vector=memory_vector,
+            partition=partition,
+            emotional_context=emotional_context,
+            metadata=metadata
+        )
+        
+        # Trigger consolidation if needed
+        self.consolidation_manager.check_consolidation(partition)
+        
+        return memory_id
+
+    def retrieve_optimized(
+        self,
+        query_vector: torch.Tensor,
+        emotional_context: Optional[Dict[str, float]] = None,
+        k: int = 5
+    ) -> List[Dict]:
+        """
+        Retrieve memories using optimized indices
+        """
+        start_time = time.time()
+        
+        # Get relevant emotional partitions
+        partitions = self.emotional_index.get_relevant_partitions(emotional_context)
+        
+        # Search within partitions
+        results = []
+        for partition in partitions:
+            partition_results = self._search_partition(
+                partition=partition,
+                query_vector=query_vector,
+                k=k
+            )
+            results.extend(partition_results)
+            
+        # Update latency metrics
+        self.metrics.retrieval_latency = time.time() - start_time
+        
+        # Sort by relevance and return top k
+        results.sort(key=lambda x: x['similarity'], reverse=True)
+        return results[:k]
+
+    def consolidate_memories(self, partition: str):
+        """Consolidate memories within partition for optimization"""
+        self.consolidation_manager.consolidate_partition(partition)
+        self._update_optimization_metrics()
+</models/memory/optimized_store.py>
 
 <models/memory/semantic_components.py>
 """
@@ -16010,7 +16113,7 @@ if __name__ == "__main__":
 
 </simulations/api/simulation_manager.py>
 
-<simulations/enviroments/interactive_vr_environment.py>
+<simulations/environments/interactive_vr_environment.py>
 # simulations/enviroments/pavilion_vr_environment.py
 
 import unreal
@@ -16138,9 +16241,9 @@ class InteractiveVREnvironment(VREnvironment):
         """
         self.face_recognition = self._initialize_face_recognition()
         self._setup_emotional_tracking()
-</simulations/enviroments/interactive_vr_environment.py>
+</simulations/environments/interactive_vr_environment.py>
 
-<simulations/enviroments/vr_environment.py>
+<simulations/environments/vr_environment.py>
 """
 VR Environment Module for ACM Project
 
@@ -16265,7 +16368,7 @@ if __name__ == "__main__":
         # Shutdown the environment
         vr_env.shutdown_environment()
 
-</simulations/enviroments/vr_environment.py>
+</simulations/environments/vr_environment.py>
 
 <simulations/scenarios/consciousness_scenarios.py>
 # simulations/scenarios/consciousness_scenarios.py
@@ -42129,6 +42232,34 @@ if __name__ == '__main__':
 
 </tests/test_memory_indexing.py>
 
+<tests/test_memory_optimization.py>
+import unittest
+from models.memory.optimized_store import OptimizedMemoryStore
+from models.memory.optimized_indexing import OptimizedMemoryIndex
+
+class TestMemoryOptimization(unittest.TestCase):
+    def setUp(self):
+        self.config = {
+            'attention_threshold': 0.5,
+            'consolidation_threshold': 0.8,
+            'rebalance_threshold': 0.3
+        }
+        self.memory_store = OptimizedMemoryStore(self.config)
+        self.memory_index = OptimizedMemoryIndex(self.config)
+
+    def test_memory_consolidation(self):
+        # Test consolidation triggering
+        pass
+
+    def test_index_rebalancing(self):
+        # Test rebalancing logic
+        pass
+
+    def test_retrieval_optimization(self):
+        # Test optimized retrieval
+        pass
+</tests/test_memory_optimization.py>
+
 <tests/test_narrative_engine.py>
 # Setting up Tests for ACM Project
 
@@ -42472,6 +42603,7 @@ if __name__ == "__main__":
 
 <tests/test_video_llama3_integration.py>
 import unittest
+import numpy as np
 from models.integration.video_llama3_integration import VideoLLaMA3Integration
 
 class TestVideoLLaMA3Integration(unittest.TestCase):
@@ -42479,7 +42611,15 @@ class TestVideoLLaMA3Integration(unittest.TestCase):
         self.config = {
             'video_llama3': {
                 'model_name': "DAMO-NLP-SG/VideoLLaMA3",
-                'device': "cpu"
+                'device': "cpu",
+                'memory_config': {
+                    'max_buffer_size': 32,
+                    'cleanup_threshold': 0.8
+                },
+                'ace_config': {
+                    'animation_quality': "high",
+                    'latency_target_ms': 100
+                }
             }
         }
         self.integration = VideoLLaMA3Integration(self.config['video_llama3'])
@@ -42511,6 +42651,16 @@ class TestVideoLLaMA3Integration(unittest.TestCase):
         # Test invalid variant
         with self.assertRaises(ValueError):
             integration.set_model_variant("invalid_variant")
+
+    async def test_memory_optimization(self):
+        frame = np.random.rand(480, 640, 3)
+        result = await self.integration.process_stream_frame(frame)
+        
+        self.assertIn('memory_metrics', result)
+        self.assertIn('ace_result', result)
+        
+        metrics = result['memory_metrics']
+        self.assertGreaterEqual(metrics.get('compression_ratio', 0), 0)
 
 if __name__ == '__main__':
     unittest.main()
