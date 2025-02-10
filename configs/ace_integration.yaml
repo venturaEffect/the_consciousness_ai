@@ -24,3 +24,15 @@ ace:
   integration:
     use_videollama: true
     enable_consciousness_visualization: true
+
+memory_optimization:
+  max_buffer_size: 32
+  cleanup_threshold: 0.8
+  consolidation_threshold: 0.7
+  cache_size: 1000
+  rebalance_threshold: 0.3
+
+ace_integration:
+  animation_quality: "high"
+  latency_target_ms: 100
+  memory_threshold: 0.7
