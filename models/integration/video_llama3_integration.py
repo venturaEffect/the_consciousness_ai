@@ -40,28 +40,55 @@ class VideoLLaMA3Integration:
         self.model = model
         self.processor = processor
         self.logger = logging.getLogger(__name__)
+        
+        # Memory optimization components
+        self.memory_optimizer = MemoryOptimizer(config.get("memory_config", {}))
         self.frame_buffer = []
         self.max_buffer_size = config.get("max_buffer_size", 32)
+        
+        # ACE integration
+        self.ace_agent = ACEConsciousAgent(config.get("ace_config", {}))
+        
+        # Model variants
         self.model_variants = config.get("model_variants", {
-            "default": "DAMO-NLP-SG/Llama3.3",
+            "default": "DAMO-NLP-SG/Llama3.3", 
             "abliterated": "huihui-ai/Llama-3.3-70B-Instruct-abliterated"
         })
         self.current_variant = "default"
         self._load_model(self.model_variants[self.current_variant])
 
-    def process_stream_frame(self, frame: np.ndarray) -> Dict[str, Any]:
-        """Optimized frame processing with latency controls"""
+    async def process_stream_frame(self, frame: np.ndarray) -> Dict[str, Any]:
+        """Optimized frame processing with memory management and ACE integration"""
         if self._should_skip_frame():
             return {"status": "skipped"}
         
-        # Reduce resolution for performance
+        # Optimize memory usage
         frame = self._reduce_resolution(frame)
         
-        # Use TensorRT if available
-        with torch.cuda.amp.autocast():
-            context = self._process_single_frame(frame)
-        
-        return context
+        try:
+            with torch.cuda.amp.autocast():
+                # Process frame
+                context = await self._process_single_frame(frame)
+                
+                # Integrate with ACE 
+                ace_result = await self.ace_agent.process_frame(
+                    frame,
+                    context,
+                    self.memory_optimizer.get_metrics()
+                )
+                
+                # Update memory optimization metrics
+                self.memory_optimizer.update_metrics(context)
+                
+                return {
+                    "context": context,
+                    "ace_result": ace_result,
+                    "memory_metrics": self.memory_optimizer.get_metrics()
+                }
+                
+        except Exception as e:
+            self.logger.error("Error processing frame: %s", e, exc_info=True)
+            raise
 
     def _should_skip_frame(self) -> bool:
         """
@@ -136,6 +163,13 @@ class VideoLLaMA3Integration:
         """
         # Use self.model to process inputs
         pass
+
+    def _update_memory_metrics(self, context: Dict[str, Any]):
+        """Update memory optimization metrics"""
+        self.memory_optimizer.update_access_patterns(context)
+        
+        if self.memory_optimizer.should_optimize():
+            self.memory_optimizer.optimize_indices()
 
     def __del__(self):
         self.frame_buffer.clear()

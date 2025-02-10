@@ -16,12 +16,14 @@ import numpy as np
 from dataclasses import dataclass
 
 @dataclass
-class MemoryOptimizationMetrics:
-    """Tracks memory optimization performance"""
-    retrieval_latency: float = 0.0 
+class MemoryMetrics:
+    """Unified memory system metrics"""
+    retrieval_latency: float = 0.0
+    index_balance: float = 0.0
+    partition_efficiency: float = 0.0
     memory_utilization: float = 0.0
-    index_efficiency: float = 0.0
     consolidation_rate: float = 0.0
+    cache_hit_rate: float = 0.0
 
 class OptimizedMemoryStore:
     """
