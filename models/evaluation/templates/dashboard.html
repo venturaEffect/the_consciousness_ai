@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>ACM Consciousness Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <h1>ACM Consciousness Metrics</h1>
+    <canvas id="consciousnessChart" width="1000" height="400"></canvas>
+
+    <script>
+      const ctx = document
+        .getElementById("consciousnessChart")
+        .getContext("2d");
+      const chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: "Consciousness Score",
+              data: [],
+              borderColor: "rgb(255, 99, 132)",
+              fill: false,
+            },
+            {
+              label: "Memory Coherence",
+              data: [],
+              borderColor: "rgb(54, 162, 235)",
+              fill: false,
+            },
+            {
+              label: "Global Workspace",
+              data: [],
+              borderColor: "rgb(255, 205, 86)",
+              fill: false,
+            },
+          ],
+        },
+        options: {
+          animation: false,
+          scales: {
+            x: { display: true, title: { display: true, text: "Time" } },
+            y: {
+              display: true,
+              min: 0,
+              max: 1,
+              title: { display: true, text: "Score" },
+            },
+          },
+        },
+      });
+
+      async function updateChart() {
+        const res = await fetch("/metrics");
+        const data = await res.json();
+        // Clear old data
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+        chart.data.datasets[1].data = [];
+        chart.data.datasets[2].data = [];
+
+        data.forEach((point) => {
+          chart.data.labels.push(
+            new Date(point.timestamp * 1000).toLocaleTimeString()
+          );
+          chart.data.datasets[0].data.push(point.score);
+          chart.data.datasets[1].data.push(point.memory_coherence);
+          chart.data.datasets[2].data.push(point.global_workspace);
+        });
+        chart.update();
+      }
+
+      setInterval(updateChart, 2000); // Refresh every 2 seconds
+    </script>
+  </body>
+</html>

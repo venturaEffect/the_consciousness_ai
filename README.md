@@ -202,6 +202,16 @@ We include a possible way on the project for the ACM of various metrics and moni
 
 Developers can log or plot these scores over time to observe trends and gauge progress in synthetic awareness.
 
+## Visualizing Consciousness Development
+
+To track and display consciousness development metrics in real time, you can run our new [ConsciousnessDashboard](models/evaluation/consciousness_dashboard.py) module. It starts a simple Flask server and displays metrics (e.g., integrated information, PCI, emotional awareness) as a line graph that updates over time. Launch it by running:
+
+```bash
+python models/evaluation/consciousness_dashboard.py
+```
+
+Access the dashboard at [http://localhost:5000](http://localhost:5000) to view a real-time plot of the ACM’s consciousness evolution.
+
 ## Installation
 
 ### 1. Clone the Repository
