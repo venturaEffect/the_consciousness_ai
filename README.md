@@ -190,6 +190,18 @@ while simulation_running:
   - Leverage GPU optimizations such as NVIDIA TensorRT.
   - Monitor total inference latency and aim for below ~100 ms.
 
+## Measuring Consciousness Evolution
+
+We include a possible way on the project for the ACM of various metrics and monitors to gauge consciousness development:
+
+1. [ConsciousnessMonitor](models/evaluation/consciousness_monitor.py)  
+   Uses internal metrics updated at runtime to compute a final consciousness score.
+
+2. [ConsciousnessMetrics](models/evaluation/consciousness_metrics.py)  
+   Provides functions like `evaluate_emotional_awareness`, `evaluate_memory_coherence`, and `evaluate_learning_progress` to assess different dimensions of AI consciousness.
+
+Developers can log or plot these scores over time to observe trends and gauge progress in synthetic awareness.
+
 ## Installation
 
 ### 1. Clone the Repository
