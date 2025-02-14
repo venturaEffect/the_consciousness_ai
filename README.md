@@ -173,6 +173,11 @@ The output can be stored in `EmotionalMemoryCore` or forwarded to `Consciousness
 - Use smaller resolutions or frame skipping for higher FPS.
 - Keep total inference latency under ~100ms for near real-time interaction.
 
+- **Latency Mitigation:**
+  - Lower frame resolution or implement frame skipping.
+  - Leverage GPU optimizations such as NVIDIA TensorRT.
+  - Monitor total inference latency and aim for below ~100 ms.
+
 **Example**
 
 ```python
@@ -182,13 +187,6 @@ while simulation_running:
     output = video_llama3_integration.process_stream_frame(frame)
     consciousness_core.update_state(output)
 ```
-
-## Real-Time Integration with VideoLLaMA3
-
-- **Latency Mitigation:**
-  - Lower frame resolution or implement frame skipping.
-  - Leverage GPU optimizations such as NVIDIA TensorRT.
-  - Monitor total inference latency and aim for below ~100 ms.
 
 ## Measuring Consciousness Evolution
 
