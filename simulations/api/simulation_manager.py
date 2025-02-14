@@ -46,9 +46,11 @@ class SimulationManager:
     through emotional learning.
     """
 
-    def __init__(self, config: SimulationConfig):
-        self.lock = Lock()
+    def __init__(self, acm_system, config):
+        self.acm = acm_system
         self.config = config
+        self.consciousness_monitor = ConsciousnessMonitor(acm_system, config)
+        self.lock = Lock()
         logging.info("Simulation Manager initialized with config: %s", config)
 
         # Core modules.
@@ -308,6 +310,17 @@ class SimulationManager:
         except Exception as e:
             print(f"Failed to load character blueprint: {e}")
             return None
+
+    def run_simulation_step(self):
+        # existing simulation logic
+
+        # Evaluate consciousness metrics
+        metrics = self.consciousness_monitor.update_metrics()
+        self.log_metrics(metrics)
+
+    def log_metrics(self, metrics):
+        # Simple logging
+        print("[ConsciousnessMetrics]", metrics)
 
 
 # Example usage

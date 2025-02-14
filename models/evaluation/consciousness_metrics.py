@@ -185,3 +185,39 @@ class ConsciousnessMetrics:
                 score += metrics[key] * weight
                 
         return score
+
+class IntegratedInformationCalculator:
+    def __init__(self, acm_system):
+        self.acm = acm_system
+
+    def compute_phi(self) -> float:
+        # Placeholder for PyPhi or custom integrated info computation
+        # e.g. extracting a module connectivity graph from self.acm
+        return 3.14
+
+class GlobalWorkspaceTracker:
+    def __init__(self, acm_system):
+        self.acm = acm_system
+        self.ignition_threshold = 0.8
+
+    def check_global_workspace_events(self) -> float:
+        # Count how often modules share data above ignition_threshold
+        return float(self.acm.global_workspace.get_ignition_count())
+
+class PerturbationTester:
+    def __init__(self, acm_system):
+        self.acm = acm_system
+
+    def simulate_and_measure(self) -> float:
+        # Example: memory wipe or random noise injection
+        self.acm.memory_core.force_memory_wipe()
+        score = self.acm.evaluate_recovery()  # Evaluate post-wipe coherence
+        return score
+
+class SelfAwarenessMonitor:
+    def __init__(self, acm_system):
+        self.acm = acm_system
+
+    def evaluate_self_awareness(self) -> float:
+        # E.g. count how often the system corrects its own mistakes
+        return self.acm.self_model.get_self_reflection_score()

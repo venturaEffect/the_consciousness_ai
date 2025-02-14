@@ -13,7 +13,7 @@ Dependencies:
 - models/memory/emotional_memory_core.py for memory validation
 """
 
-from typing import Dict
+from typing import Dict, Any
 import torch
 import numpy as np
 from dataclasses import dataclass
@@ -28,14 +28,20 @@ class ConsciousnessMetrics:
     consciousness_score: float = 0.0
 
 class ConsciousnessMonitor:
-    def __init__(self, config: Dict):
+    def __init__(self, acm_system, config):
         """
         Initialize consciousness monitoring.
         
         Args:
+            acm_system: The ACM system instance.
             config: Dictionary of monitoring-related settings and thresholds.
         """
+        self.acm = acm_system
         self.config = config
+        self.integrated_info_calculator = IntegratedInformationCalculator(self.acm)
+        self.global_workspace_tracker = GlobalWorkspaceTracker(self.acm)
+        self.perturbation_tester = PerturbationTester(self.acm)
+        self.self_awareness_monitor = SelfAwarenessMonitor(self.acm)
         self.metrics = ConsciousnessMetrics()
         self.history = []
 
@@ -125,4 +131,17 @@ class ConsciousnessMonitor:
             'memory_coherence': self.metrics.memory_coherence,
             'behavioral_adaptation': self.metrics.behavioral_adaptation,
             'consciousness_score': self.metrics.consciousness_score
+        }
+
+    def update_metrics(self) -> Dict[str, float]:
+        phi_value = self.integrated_info_calculator.compute_phi()
+        gwt_score = self.global_workspace_tracker.check_global_workspace_events()
+        pci_score = self.perturbation_tester.simulate_and_measure()
+        meta_score = self.self_awareness_monitor.evaluate_self_awareness()
+
+        return {
+            "IntegratedInformation": phi_value,
+            "GlobalWorkspace": gwt_score,
+            "PCI": pci_score,
+            "SelfAwareness": meta_score
         }
