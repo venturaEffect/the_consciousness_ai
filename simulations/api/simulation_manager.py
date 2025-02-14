@@ -24,6 +24,7 @@ from models.predictive.dreamer_emotional_wrapper import DreamerEmotionalWrapper
 from models.memory.attention_schema import AttentionSchema
 from models.perception.predictive_processor import PredictiveProcessor
 from models.core.global_workspace import GlobalWorkspace, WorkspaceMessage
+from models.core.consciousness_gating import ConsciousnessGate, ConsciousnessGating
 
 
 @dataclass
@@ -78,6 +79,18 @@ class SimulationManager:
         self.predictive_processor = PredictiveProcessor()
         self.global_workspace = GlobalWorkspace()
         self.narrative_engine = NarrativeEngine()
+
+        # Instantiate using your configuration
+        gating_config = {
+            'gating': {
+                'attention_threshold': 0.5,
+                'stability_threshold': 0.6,
+                'base_adaptation_rate': 0.01
+            },
+            'hidden_size': 128
+        }
+        self.consciousness_gate = ConsciousnessGate(gating_config)
+        self.global_gating = ConsciousnessGating({'gating_threshold': 0.5})
 
     def execute_code(self, code: str) -> dict:
         """
