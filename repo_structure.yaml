@@ -53,6 +53,8 @@
       type: file
     - path: /docs/architecture.md
       type: file
+    - path: /docs/consciousness_evaluation.md
+      type: file
     - path: /docs/contributing.md
       type: file
     - path: /docs/datasets.md
@@ -165,6 +167,8 @@
     - path: /models/evaluation
       type: directory
       contents:
+      - path: /models/evaluation/consciousness_dashboard.py
+        type: file
       - path: /models/evaluation/consciousness_development.py
         type: file
       - path: /models/evaluation/consciousness_evaluation.py
@@ -187,6 +191,11 @@
         type: file
       - path: /models/evaluation/self_awareness_evaluation.py
         type: file
+      - path: /models/evaluation/templates
+        type: directory
+        contents:
+        - path: /models/evaluation/templates/dashboard.html
+          type: file
     - path: /models/fusion
       type: directory
       contents:

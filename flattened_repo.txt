@@ -2613,6 +2613,30 @@ The ACM architecture integrates multiple components to achieve synthetic awarene
 
 </docs/architecture.md>
 
+<docs/consciousness_evaluation.md>
+# Consciousness Evaluation
+
+This document outlines the metrics and procedures for evaluating consciousness in the ACM:
+
+1. **Integrated Information (Φ)**
+
+   - Capture connectivity between modules and measure information loss upon splitting networks.
+
+2. **Global Workspace Ignition**
+
+   - Track how often broadcast events pass an ignition threshold.
+
+3. **Perturbational Complexity Index (PCI)**
+
+   - Apply external perturbations (memory wipes, random inputs) and measure system recovery time.
+
+4. **Self-Awareness Score**
+   - Query the self-model about internal states, count error corrections, or track introspective queries.
+
+Refer to [models/evaluation/consciousness_monitor.py](../models/evaluation/consciousness_monitor.py) for implementation details.
+
+</docs/consciousness_evaluation.md>
+
 <docs/contributing.md>
 # Contributing to Artificial Consciousness Module (ACM)
 
@@ -48298,6 +48322,7 @@ class GlobalWorkspace:
     def __init__(self):
         self.active_processes: List[str] = []
         self.message_queue = asyncio.Queue()
+        self.ignition_count = 0
         
     async def broadcast(self, message: WorkspaceMessage):
         """Broadcast message to all subscribed processes"""
@@ -48306,6 +48331,15 @@ class GlobalWorkspace:
     async def subscribe(self, process_name: str):
         """Subscribe a process to workspace broadcasts"""
         self.active_processes.append(process_name)
+
+    def broadcast(self, message: str, activation_level: float):
+        # Called by modules that want to broadcast events
+        if activation_level > 0.8:
+            self.ignition_count += 1
+        # Actual broadcast logic here
+
+    def get_ignition_count(self) -> int:
+        return self.ignition_count
 </models/core/global_workspace.py>
 
 <models/development/stage_transitions.py>
@@ -48745,6 +48779,55 @@ class EmotionalGraphNetwork(nn.Module):
         
         return node_embedding, self.state
 </models/emotion/tgnn/emotional_graph.py>
+
+<models/evaluation/consciousness_dashboard.py>
+
+from flask import Flask, render_template, jsonify
+import threading
+import time
+import random  # For demo; replace with your real metrics fetching
+
+app = Flask(__name__)
+consciousness_history = []
+
+def fetch_metrics():
+    """
+    Demo background function that simulates updating
+    consciousness metrics periodically.
+    Replace this with real calls to your ConsciousnessMonitor.
+    """
+    while True:
+        # Example random metrics
+        consciousness_score = random.uniform(0.0, 1.0)
+        memory_coherence = random.uniform(0.0, 1.0)
+        global_workspace = random.uniform(0.0, 1.0)
+        consciousness_history.append({
+            "score": consciousness_score,
+            "memory_coherence": memory_coherence,
+            "global_workspace": global_workspace,
+            "timestamp": time.time()
+        })
+        time.sleep(2)
+
+@app.route("/")
+def index():
+    return render_template("dashboard.html")
+
+@app.route("/metrics")
+def get_metrics():
+    return jsonify(consciousness_history[-50:])  # Last 50 points
+
+def run_dashboard():
+    app.run(host="0.0.0.0", port=5000, debug=False)
+
+if __name__ == "__main__":
+    # Start background thread for data collection
+    metrics_thread = threading.Thread(target=fetch_metrics, daemon=True)
+    metrics_thread.start()
+
+    # Start Flask server
+    run_dashboard()
+</models/evaluation/consciousness_dashboard.py>
 
 <models/evaluation/consciousness_development.py>
 # models/evaluation/consciousness_development.py
@@ -49214,6 +49297,42 @@ class ConsciousnessMetrics:
                 score += metrics[key] * weight
                 
         return score
+
+class IntegratedInformationCalculator:
+    def __init__(self, acm_system):
+        self.acm = acm_system
+
+    def compute_phi(self) -> float:
+        # Placeholder for PyPhi or custom integrated info computation
+        # e.g. extracting a module connectivity graph from self.acm
+        return 3.14
+
+class GlobalWorkspaceTracker:
+    def __init__(self, acm_system):
+        self.acm = acm_system
+        self.ignition_threshold = 0.8
+
+    def check_global_workspace_events(self) -> float:
+        # Count how often modules share data above ignition_threshold
+        return float(self.acm.global_workspace.get_ignition_count())
+
+class PerturbationTester:
+    def __init__(self, acm_system):
+        self.acm = acm_system
+
+    def simulate_and_measure(self) -> float:
+        # Example: memory wipe or random noise injection
+        self.acm.memory_core.force_memory_wipe()
+        score = self.acm.evaluate_recovery()  # Evaluate post-wipe coherence
+        return score
+
+class SelfAwarenessMonitor:
+    def __init__(self, acm_system):
+        self.acm = acm_system
+
+    def evaluate_self_awareness(self) -> float:
+        # E.g. count how often the system corrects its own mistakes
+        return self.acm.self_model.get_self_reflection_score()
 </models/evaluation/consciousness_metrics.py>
 
 <models/evaluation/consciousness_monitor.py>
@@ -49232,7 +49351,7 @@ Dependencies:
 - models/memory/emotional_memory_core.py for memory validation
 """
 
-from typing import Dict
+from typing import Dict, Any
 import torch
 import numpy as np
 from dataclasses import dataclass
@@ -49247,14 +49366,20 @@ class ConsciousnessMetrics:
     consciousness_score: float = 0.0
 
 class ConsciousnessMonitor:
-    def __init__(self, config: Dict):
+    def __init__(self, acm_system, config):
         """
         Initialize consciousness monitoring.
         
         Args:
+            acm_system: The ACM system instance.
             config: Dictionary of monitoring-related settings and thresholds.
         """
+        self.acm = acm_system
         self.config = config
+        self.integrated_info_calculator = IntegratedInformationCalculator(self.acm)
+        self.global_workspace_tracker = GlobalWorkspaceTracker(self.acm)
+        self.perturbation_tester = PerturbationTester(self.acm)
+        self.self_awareness_monitor = SelfAwarenessMonitor(self.acm)
         self.metrics = ConsciousnessMetrics()
         self.history = []
 
@@ -49344,6 +49469,19 @@ class ConsciousnessMonitor:
             'memory_coherence': self.metrics.memory_coherence,
             'behavioral_adaptation': self.metrics.behavioral_adaptation,
             'consciousness_score': self.metrics.consciousness_score
+        }
+
+    def update_metrics(self) -> Dict[str, float]:
+        phi_value = self.integrated_info_calculator.compute_phi()
+        gwt_score = self.global_workspace_tracker.check_global_workspace_events()
+        pci_score = self.perturbation_tester.simulate_and_measure()
+        meta_score = self.self_awareness_monitor.evaluate_self_awareness()
+
+        return {
+            "IntegratedInformation": phi_value,
+            "GlobalWorkspace": gwt_score,
+            "PCI": pci_score,
+            "SelfAwareness": meta_score
         }
 
 </models/evaluation/consciousness_monitor.py>
@@ -50391,6 +50529,88 @@ class SelfAwarenessEvaluator:
                 
         return np.mean(alignment_scores) if alignment_scores else 0.0
 </models/evaluation/self_awareness_evaluation.py>
+
+<models/evaluation/templates/dashboard.html>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>ACM Consciousness Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <h1>ACM Consciousness Metrics</h1>
+    <canvas id="consciousnessChart" width="1000" height="400"></canvas>
+
+    <script>
+      const ctx = document
+        .getElementById("consciousnessChart")
+        .getContext("2d");
+      const chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: "Consciousness Score",
+              data: [],
+              borderColor: "rgb(255, 99, 132)",
+              fill: false,
+            },
+            {
+              label: "Memory Coherence",
+              data: [],
+              borderColor: "rgb(54, 162, 235)",
+              fill: false,
+            },
+            {
+              label: "Global Workspace",
+              data: [],
+              borderColor: "rgb(255, 205, 86)",
+              fill: false,
+            },
+          ],
+        },
+        options: {
+          animation: false,
+          scales: {
+            x: { display: true, title: { display: true, text: "Time" } },
+            y: {
+              display: true,
+              min: 0,
+              max: 1,
+              title: { display: true, text: "Score" },
+            },
+          },
+        },
+      });
+
+      async function updateChart() {
+        const res = await fetch("/metrics");
+        const data = await res.json();
+        // Clear old data
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+        chart.data.datasets[1].data = [];
+        chart.data.datasets[2].data = [];
+
+        data.forEach((point) => {
+          chart.data.labels.push(
+            new Date(point.timestamp * 1000).toLocaleTimeString()
+          );
+          chart.data.datasets[0].data.push(point.score);
+          chart.data.datasets[1].data.push(point.memory_coherence);
+          chart.data.datasets[2].data.push(point.global_workspace);
+        });
+        chart.update();
+      }
+
+      setInterval(updateChart, 2000); // Refresh every 2 seconds
+    </script>
+  </body>
+</html>
+
+</models/evaluation/templates/dashboard.html>
 
 <models/fusion/emotional_memory_fusion.py>
 """
@@ -57925,6 +58145,28 @@ while simulation_running:
   - Leverage GPU optimizations such as NVIDIA TensorRT.
   - Monitor total inference latency and aim for below ~100 ms.
 
+## Measuring Consciousness Evolution
+
+We include a possible way on the project for the ACM of various metrics and monitors to gauge consciousness development:
+
+1. [ConsciousnessMonitor](models/evaluation/consciousness_monitor.py)  
+   Uses internal metrics updated at runtime to compute a final consciousness score.
+
+2. [ConsciousnessMetrics](models/evaluation/consciousness_metrics.py)  
+   Provides functions like `evaluate_emotional_awareness`, `evaluate_memory_coherence`, and `evaluate_learning_progress` to assess different dimensions of AI consciousness.
+
+Developers can log or plot these scores over time to observe trends and gauge progress in synthetic awareness.
+
+## Visualizing Consciousness Development
+
+To track and display consciousness development metrics in real time, you can run our new [ConsciousnessDashboard](models/evaluation/consciousness_dashboard.py) module. It starts a simple Flask server and displays metrics (e.g., integrated information, PCI, emotional awareness) as a line graph that updates over time. Launch it by running:
+
+```bash
+python models/evaluation/consciousness_dashboard.py
+```
+
+Access the dashboard at [http://localhost:5000](http://localhost:5000) to view a real-time plot of the ACM’s consciousness evolution.
+
 ## Installation
 
 ### 1. Clone the Repository
@@ -59202,9 +59444,11 @@ class SimulationManager:
     through emotional learning.
     """
 
-    def __init__(self, config: SimulationConfig):
-        self.lock = Lock()
+    def __init__(self, acm_system, config):
+        self.acm = acm_system
         self.config = config
+        self.consciousness_monitor = ConsciousnessMonitor(acm_system, config)
+        self.lock = Lock()
         logging.info("Simulation Manager initialized with config: %s", config)
 
         # Core modules.
@@ -59464,6 +59708,17 @@ class SimulationManager:
         except Exception as e:
             print(f"Failed to load character blueprint: {e}")
             return None
+
+    def run_simulation_step(self):
+        # existing simulation logic
+
+        # Evaluate consciousness metrics
+        metrics = self.consciousness_monitor.update_metrics()
+        self.log_metrics(metrics)
+
+    def log_metrics(self, metrics):
+        # Simple logging
+        print("[ConsciousnessMetrics]", metrics)
 
 
 # Example usage
