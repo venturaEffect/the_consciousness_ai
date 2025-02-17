@@ -354,7 +354,7 @@ To integrate VideoLLaMA3 into the ACM project, follow these steps:
 
 1. **Clone the VideoLLaMA3 Repository:**
    ```bash
-   git clone https://github.com/DAMO-NLP-SG/VideoLLaMA3.git
+   git clone https://github.com/DAMO-NLP-SG/VideoLLaMA3.git.
    ```
 
 # ACE Integration with ACM
