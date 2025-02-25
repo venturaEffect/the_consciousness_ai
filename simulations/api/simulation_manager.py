@@ -134,13 +134,15 @@ class SimulationManager:
                 
                 # Ensure emotional context exists
                 emotion_context = info.get('emotional_context', {})
-                if not emotion_context:
-                    logging.warning("Missing emotional context in step %d", step)
-                
+                if not emotion_context and hasattr(self, 'emotion_network'):
+                    # Fallback: generate emotional context if missing
+                    emotional_context = self.emotion_network.generate_default_emotions()
+                    logging.warning("Missing emotional context, using default values")
+
                 # Compute reward with safety checks
                 emotional_reward = self.rl_core.compute_reward(
                     state=state,
-                    emotion_values=emotion_context,
+                    emotion_values=emotional_context,
                     narrative=agent.current_narrative()
                 )
                 
