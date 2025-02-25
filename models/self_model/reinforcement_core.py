@@ -249,3 +249,58 @@ class ReinforcementCore:
             'avg_reward': avg_reward,
             'recent_rewards': reward_hist[-10:]
         }
+
+    def update(self, state, action, reward, next_state, done, emotion_context=None):
+        """
+        Update the reinforcement learning core with experience
+        """
+        # Create embeddings for current state
+        state_embedding = self.state_encoder(state)
+        
+        # NEW: Retrieve relevant past experiences based on emotional similarity
+        if self.memory and emotion_context:
+            relevant_memories = self.memory.retrieve_relevant(
+                emotion_context=emotion_context,
+                k=self.config.get('memory_context_size', 5)
+            )
+            
+            # Incorporate memory influence into world model updates
+            memory_embeddings = [self.state_encoder(memory['state']) for memory in relevant_memories]
+            if memory_embeddings:
+                memory_context = torch.mean(torch.stack(memory_embeddings), dim=0)
+                # Include memory context in world model update
+                world_model_info = self.dreamer.update_world_model(
+                    state=state,
+                    action=action,
+                    reward=reward,
+                    next_state=next_state,
+                    done=done,
+                    memory_context=memory_context,
+                    emotion_context=emotion_context
+                )
+            else:
+                world_model_info = self.dreamer.update_world_model(
+                    state=state, action=action, reward=reward, 
+                    next_state=next_state, done=done,
+                    emotion_context=emotion_context
+                )
+        else:
+            world_model_info = self.dreamer.update_world_model(
+                state=state, action=action, reward=reward,
+                next_state=next_state, done=done,
+                emotion_context=emotion_context
+            )
+        
+        # Update policy with integrated emotional information
+        policy_info = self.dreamer.update_actor_critic(
+            state_embedding, 
+            emotion_scale=self.config.get('emotional_scale', 1.0),
+            emotion_values=emotion_context
+        )
+        
+        return {
+            'world_model_loss': world_model_info.get('loss', 0),
+            'policy_loss': policy_info.get('actor_loss', 0),
+            'value_loss': policy_info.get('critic_loss', 0),
+            'adaptation_score': self._calculate_adaptation_score(emotion_context)
+        }

@@ -153,19 +153,35 @@ class EmotionalRewardShaper(nn.Module):
         self.metrics.narrative_alignment = 0.0  # Adjust if you integrate narratives.
         self.metrics.adaptation_rate = attention_level
 
-    def compute_emotional_reward(self, emotion_values: Dict[str, float], base_reward: float) -> float:
+    def compute_emotional_reward(self, emotion_values, base_reward=1.0, context=None):
         """
-        Adjusts the base reward using emotional feedback.
-        :param emotion_values: Dictionary that must include keys 'valence', 'arousal', and 'dominance'
-        :param base_reward: The base reward from the environment.
-        :return: Shaped reward value.
+        Calculate reward based on emotional values with historical context
         """
-        valence = emotion_values.get('valence', 0.0)
-        arousal = emotion_values.get('arousal', 0.0)
-        dominance = emotion_values.get('dominance', 0.0)
-
-        shaped_reward = base_reward + (self.valence_weight * valence) + (self.dominance_weight * dominance)
-        if arousal > self.arousal_threshold:
-            shaped_reward -= self.arousal_penalty
-
-        return shaped_reward
+        # Start with base reward
+        reward = base_reward
+        
+        # Apply core emotional modulation
+        if 'valence' in emotion_values:
+            reward += emotion_values['valence'] * self.config['valence_weight']
+        if 'dominance' in emotion_values:
+            reward += emotion_values['dominance'] * self.config['dominance_weight']
+        
+        # Apply arousal penalty for high stress (if configured)
+        if 'arousal' in emotion_values and self.config.get('arousal_penalty', 0) > 0:
+            if emotion_values['arousal'] > self.config.get('arousal_threshold', 0.7):
+                penalty = (emotion_values['arousal'] - self.config['arousal_threshold']) * self.config['arousal_penalty']
+                reward -= penalty
+                
+        # NEW: Incorporate historical trend analysis 
+        if context and 'emotional_history' in context and len(context['emotional_history']) > 5:
+            recent_emotions = context['emotional_history'][-5:]
+            # Reward improvement in emotional state
+            valence_trend = sum(e.get('valence', 0) for e in recent_emotions) / len(recent_emotions)
+            valence_delta = emotion_values.get('valence', 0) - valence_trend
+            reward += valence_delta * self.config.get('trend_weight', 0.1)
+        
+        # NEW: Apply adaptation bonus when appropriate
+        if context and context.get('adaptation_detected', False):
+            reward += self.config.get('adaptation_bonus', 0.2)
+            
+        return reward

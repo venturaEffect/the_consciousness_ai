@@ -263,3 +263,30 @@ class EmotionalRLEvaluator:
             'exploration_ratio': self.metrics.exploration_ratio,
             'consciousness_alignment': self.metrics.consciousness_alignment
         }
+
+    # NEW: Add this method to EmotionalRLEvaluator
+    def calculate_consciousness_alignment(self, emotion_values: Dict[str, float]) -> float:
+        """
+        Calculate how well the emotional responses align with consciousness development
+        This quantifies if emotional responses are becoming more nuanced over time
+        """
+        # No history to compare against
+        if len(self.history) < 10:
+            return 0.0
+            
+        # Get recent emotion distributions
+        recent_emotions = [h.get('emotion_distribution', {}) for h in self.history[-10:]]
+        
+        # Calculate entropy increase (more diverse emotional responses)
+        initial_entropy = self._calculate_emotion_entropy(recent_emotions[0])
+        current_entropy = self._calculate_emotion_entropy(recent_emotions[-1])
+        
+        # Higher entropy suggests more nuanced emotional understanding
+        entropy_change = current_entropy - initial_entropy
+        
+        # Calculate valence stability (more consistent emotional evaluations)
+        valences = [e.get('valence', 0) for e in recent_emotions if 'valence' in e]
+        valence_stability = 1.0 / (1.0 + np.std(valences)) if valences else 0.0
+        
+        # Combine metrics (higher is better)
+        return 0.5 * (np.clip(entropy_change, 0, 1) + valence_stability)
