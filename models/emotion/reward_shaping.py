@@ -172,7 +172,7 @@ class EmotionalRewardShaper(nn.Module):
                 penalty = (emotion_values['arousal'] - self.config['arousal_threshold']) * self.config['arousal_penalty']
                 reward -= penalty
                 
-        # NEW: Incorporate historical trend analysis 
+        # Incorporate historical trend analysis 
         if context and 'emotional_history' in context and len(context['emotional_history']) > 5:
             recent_emotions = context['emotional_history'][-5:]
             # Reward improvement in emotional state
@@ -180,7 +180,7 @@ class EmotionalRewardShaper(nn.Module):
             valence_delta = emotion_values.get('valence', 0) - valence_trend
             reward += valence_delta * self.config.get('trend_weight', 0.1)
         
-        # NEW: Apply adaptation bonus when appropriate
+        # Apply adaptation bonus when appropriate
         if context and context.get('adaptation_detected', False):
             reward += self.config.get('adaptation_bonus', 0.2)
             
