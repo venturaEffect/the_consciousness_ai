@@ -264,7 +264,6 @@ class EmotionalRLEvaluator:
             'consciousness_alignment': self.metrics.consciousness_alignment
         }
 
-    # NEW: Add this method to EmotionalRLEvaluator
     def calculate_consciousness_alignment(self, emotion_values: Dict[str, float]) -> float:
         """
         Calculate how well the emotional responses align with consciousness development
