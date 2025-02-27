@@ -257,7 +257,7 @@ class ReinforcementCore:
         # Create embeddings for current state
         state_embedding = self.state_encoder(state)
         
-        # NEW: Retrieve relevant past experiences based on emotional similarity
+        # Retrieve relevant past experiences based on emotional similarity
         if self.memory and emotion_context:
             relevant_memories = self.memory.retrieve_relevant(
                 emotion_context=emotion_context,
