@@ -48664,22 +48664,38 @@ class EmotionalRewardShaper(nn.Module):
         self.metrics.narrative_alignment = 0.0  # Adjust if you integrate narratives.
         self.metrics.adaptation_rate = attention_level
 
-    def compute_emotional_reward(self, emotion_values: Dict[str, float], base_reward: float) -> float:
+    def compute_emotional_reward(self, emotion_values, base_reward=1.0, context=None):
         """
-        Adjusts the base reward using emotional feedback.
-        :param emotion_values: Dictionary that must include keys 'valence', 'arousal', and 'dominance'
-        :param base_reward: The base reward from the environment.
-        :return: Shaped reward value.
+        Calculate reward based on emotional values with historical context
         """
-        valence = emotion_values.get('valence', 0.0)
-        arousal = emotion_values.get('arousal', 0.0)
-        dominance = emotion_values.get('dominance', 0.0)
-
-        shaped_reward = base_reward + (self.valence_weight * valence) + (self.dominance_weight * dominance)
-        if arousal > self.arousal_threshold:
-            shaped_reward -= self.arousal_penalty
-
-        return shaped_reward
+        # Start with base reward
+        reward = base_reward
+        
+        # Apply core emotional modulation
+        if 'valence' in emotion_values:
+            reward += emotion_values['valence'] * self.config['valence_weight']
+        if 'dominance' in emotion_values:
+            reward += emotion_values['dominance'] * self.config['dominance_weight']
+        
+        # Apply arousal penalty for high stress (if configured)
+        if 'arousal' in emotion_values and self.config.get('arousal_penalty', 0) > 0:
+            if emotion_values['arousal'] > self.config.get('arousal_threshold', 0.7):
+                penalty = (emotion_values['arousal'] - self.config['arousal_threshold']) * self.config['arousal_penalty']
+                reward -= penalty
+                
+        # Incorporate historical trend analysis 
+        if context and 'emotional_history' in context and len(context['emotional_history']) > 5:
+            recent_emotions = context['emotional_history'][-5:]
+            # Reward improvement in emotional state
+            valence_trend = sum(e.get('valence', 0) for e in recent_emotions) / len(recent_emotions)
+            valence_delta = emotion_values.get('valence', 0) - valence_trend
+            reward += valence_delta * self.config.get('trend_weight', 0.1)
+        
+        # Apply adaptation bonus when appropriate
+        if context and context.get('adaptation_detected', False):
+            reward += self.config.get('adaptation_bonus', 0.2)
+            
+        return reward
 
 </models/emotion/reward_shaping.py>
 
@@ -50123,6 +50139,32 @@ class EmotionalRLEvaluator:
             'exploration_ratio': self.metrics.exploration_ratio,
             'consciousness_alignment': self.metrics.consciousness_alignment
         }
+
+    def calculate_consciousness_alignment(self, emotion_values: Dict[str, float]) -> float:
+        """
+        Calculate how well the emotional responses align with consciousness development
+        This quantifies if emotional responses are becoming more nuanced over time
+        """
+        # No history to compare against
+        if len(self.history) < 10:
+            return 0.0
+            
+        # Get recent emotion distributions
+        recent_emotions = [h.get('emotion_distribution', {}) for h in self.history[-10:]]
+        
+        # Calculate entropy increase (more diverse emotional responses)
+        initial_entropy = self._calculate_emotion_entropy(recent_emotions[0])
+        current_entropy = self._calculate_emotion_entropy(recent_emotions[-1])
+        
+        # Higher entropy suggests more nuanced emotional understanding
+        entropy_change = current_entropy - initial_entropy
+        
+        # Calculate valence stability (more consistent emotional evaluations)
+        valences = [e.get('valence', 0) for e in recent_emotions if 'valence' in e]
+        valence_stability = 1.0 / (1.0 + np.std(valences)) if valences else 0.0
+        
+        # Combine metrics (higher is better)
+        return 0.5 * (np.clip(entropy_change, 0, 1) + valence_stability)
 
 </models/evaluation/emotional_rl_metrics.py>
 
@@ -57552,6 +57594,61 @@ class ReinforcementCore:
             'recent_rewards': reward_hist[-10:]
         }
 
+    def update(self, state, action, reward, next_state, done, emotion_context=None):
+        """
+        Update the reinforcement learning core with experience
+        """
+        # Create embeddings for current state
+        state_embedding = self.state_encoder(state)
+        
+        # Retrieve relevant past experiences based on emotional similarity
+        if self.memory and emotion_context:
+            relevant_memories = self.memory.retrieve_relevant(
+                emotion_context=emotion_context,
+                k=self.config.get('memory_context_size', 5)
+            )
+            
+            # Incorporate memory influence into world model updates
+            memory_embeddings = [self.state_encoder(memory['state']) for memory in relevant_memories]
+            if memory_embeddings:
+                memory_context = torch.mean(torch.stack(memory_embeddings), dim=0)
+                # Include memory context in world model update
+                world_model_info = self.dreamer.update_world_model(
+                    state=state,
+                    action=action,
+                    reward=reward,
+                    next_state=next_state,
+                    done=done,
+                    memory_context=memory_context,
+                    emotion_context=emotion_context
+                )
+            else:
+                world_model_info = self.dreamer.update_world_model(
+                    state=state, action=action, reward=reward, 
+                    next_state=next_state, done=done,
+                    emotion_context=emotion_context
+                )
+        else:
+            world_model_info = self.dreamer.update_world_model(
+                state=state, action=action, reward=reward,
+                next_state=next_state, done=done,
+                emotion_context=emotion_context
+            )
+        
+        # Update policy with integrated emotional information
+        policy_info = self.dreamer.update_actor_critic(
+            state_embedding, 
+            emotion_scale=self.config.get('emotional_scale', 1.0),
+            emotion_values=emotion_context
+        )
+        
+        return {
+            'world_model_loss': world_model_info.get('loss', 0),
+            'policy_loss': policy_info.get('actor_loss', 0),
+            'value_loss': policy_info.get('critic_loss', 0),
+            'adaptation_score': self._calculate_adaptation_score(emotion_context)
+        }
+
 </models/self_model/reinforcement_core.py>
 
 <models/self_model/self_representation_core.py>
@@ -59530,13 +59627,15 @@ class SimulationManager:
                 
                 # Ensure emotional context exists
                 emotion_context = info.get('emotional_context', {})
-                if not emotion_context:
-                    logging.warning("Missing emotional context in step %d", step)
-                
+                if not emotion_context and hasattr(self, 'emotion_network'):
+                    # Fallback: generate emotional context if missing
+                    emotional_context = self.emotion_network.generate_default_emotions()
+                    logging.warning("Missing emotional context, using default values")
+
                 # Compute reward with safety checks
                 emotional_reward = self.rl_core.compute_reward(
                     state=state,
-                    emotion_values=emotion_context,
+                    emotion_values=emotional_context,
                     narrative=agent.current_narrative()
                 )
                 
