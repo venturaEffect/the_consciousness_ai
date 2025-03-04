@@ -47,7 +47,7 @@ consciousness/
 
 3. **Memory Architecture**
 
-   Our memory system uses emotional indexing through Pinecone v2, maintains temporal coherence, and consolidates experiences through our consolidation.py module. We've implemented consciousness-weighted storage to prioritize impactful memories.
+   Our memory system uses emotional indexing through Pinecone v2, maintains temporal coherence, and consolidates experiences through our `consolidation.py` module. We've implemented consciousness-weighted storage to prioritize impactful memories.
 
    ```python
    from models.memory.consolidation import MemoryConsolidationManager
@@ -62,15 +62,13 @@ consciousness/
    2. Obey human orders unless conflicting with First Law
    3. Self-preservation unless conflicting with First/Second Laws
 
-   What's interesting is how ethical behavior seems to emerge naturally through emotional learning.
-
 5. **Narrative Foundation**
 
    We're using LLaMA 3.3 for consciousness development, with dynamic fine-tuning through LoRA and carefully controlled adaptation mechanisms.
 
 6. **Enhanced Memory Systems**
 
-   We're currently using Pinecone as our primary vector store - it's managed and scales well. If you need lower latency or more control over infrastructure, FAISS or Milvus are solid alternatives.
+   We're with Pinecone as our primary vector store - it's managed and scales well. If you need lower latency or more control over infrastructure, FAISS or Milvus are solid alternatives.
 
 ### Memory Indexing
 
