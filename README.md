@@ -98,6 +98,7 @@ All datasets below are free for commercial use and research purposes.
 - **Description**: Large-scale dataset containing 3,670+ hours of first-person video from 74 worldwide locations License: Ego4D License Agreement
 - **Features**: Daily activities, social interactions, episodic memory
 - **Setup**:
+
   ```bash
   pip install ego4d
   ego4d --output_directory="~/ego4d_data" --datasets full_scale annotations --metadata
@@ -131,7 +132,7 @@ All datasets below are free for commercial use and research purposes.
 
 ### Overview
 
-VideoLLaMA3 supports processing live video or frames from simulations in real time. This helps the AI agent interpret its environment dynamically, especially in an Unreal Engine simulation.
+The design incorporates VideoLLaMA3 for processing live video or frames from simulations in real time, enabling AI agents to interpret their environment dynamically, especially in Unreal Engine simulations.
 
 ### Requirements
 
@@ -177,27 +178,25 @@ while simulation_running:
 
 ## Measuring Consciousness Evolution
 
-We include a possible way on the project for the ACM of various metrics and monitors to gauge consciousness development:
+The project includes a framework for analyzing the consciousness development over time:
 
-1. [ConsciousnessMonitor](models/evaluation/consciousness_monitor.py)  
-   Uses internal metrics updated at runtime to compute a final consciousness score.
+1.  ConsciousnessMonitor
+    Designed to track internal metrics at runtime to compute a consciousness score.
 
-2. [ConsciousnessMetrics](models/evaluation/consciousness_metrics.py)  
-   Provides functions like `evaluate_emotional_awareness`, `evaluate_memory_coherence`, and `evaluate_learning_progress` to assess different dimensions of AI consciousness.
+2.  ConsciousnessMetrics
+    Implements functions like `evaluate_emotional_awareness`, `evaluate_memory_coherence`, and `evaluate_learning_progress` to assess different dimensions of AI consciousness.
 
-Developers can log or plot these scores over time to observe trends and gauge progress in synthetic awareness.
+The system architecture allows for logging and plotting these metrics over time to evaluate the development of synthetic awareness.
 
 ## Visualizing Consciousness Development
 
-To track and display consciousness development metrics in real time, you can run our new [ConsciousnessDashboard](models/evaluation/consciousness_dashboard.py) module. It starts a simple Flask server and displays metrics (e.g., integrated information, PCI, emotional awareness) as a line graph that updates over time. Launch it by running:
+The project includes a ConsciousnessDashboard module to track and display consciousness development metrics in real time. This Flask server displays metrics (e.g., integrated information, PCI, emotional awareness) as a line graph that updates over time:
 
 ```bash
 python models/evaluation/consciousness_dashboard.py
 ```
 
-Access the dashboard at [http://localhost:5000](http://localhost:5000) to view a real-time plot of the ACM’s consciousness evolution.
-
-## Installation
+The dashboard will be accessible at [http://localhost:5000](http://localhost:5000) to visualize the ACM's performance metrics.
 
 ### 1. Clone the Repository
 
