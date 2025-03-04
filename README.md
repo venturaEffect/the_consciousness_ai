@@ -25,13 +25,13 @@ consciousness/
 └── core/
     ├── consciousness_gating.py      # Attention control
     └── self_model.py               # Self-representation
+```
 
 ## Core Features
-```
 
 1. **Consciousness Development Through Survival**
 
-   We've found that VR-based survival scenarios effectively trigger attention mechanisms - the same way high-stress situations create lasting memories in humans. Our emotional memory formation happens during these high-intensity moments, allowing for dynamic adaptation via emotional_memory_core.py. Over time, we're seeing hints of self-awareness emerging through problem-solving.
+   VR-based survival scenarios effectively trigger attention mechanisms - similar to how high-stress situations create lasting memories in humans. Our emotional memory formation happens during these high-intensity moments, allowing for dynamic adaptation via `emotional_memory_core.py`. Over time, we're seeing hints of self-awareness emerging through problem-solving.
 
    ```python
    from models.memory.emotional_memory_core import EmotionalMemoryCore
@@ -43,7 +43,7 @@ consciousness/
 
 2. **Emotional Intelligence & Learning**
 
-   We've built advanced emotional processing into models/emotion/emotional_processing.py and integrated DreamerV3 with emotional context weighting. The system learns quickly through meta-learning for emotional adaptation and develops social bonds through multi-agent interactions.
+   We've built advanced emotional processing into `models/emotion/emotional_processing.py` and integrated DreamerV3 with emotional context weighting. The system learns quickly through meta-learning for emotional adaptation and develops social bonds through multi-agent interactions.
 
 3. **Memory Architecture**
 
