@@ -421,19 +421,18 @@ If you use ACM in your research, please cite:
 }
 ```
 
-## Code Usage
-
-When using this code, please include the following:
-
-This project includes code from the Artificial Consciousness Module (ACM)
-Copyright (c) 2024 The Consciousness AI
-https://github.com/venturaEffect/the_consciousness_ai
-
-Licensed under MIT License (non-commercial)
-For commercial use, please contact the authors.
-
 ## License
 
-<img alt="License: MIT NC" src="https://img.shields.io/badge/License-MIT NC-blue.svg">
+<img alt="License: Custom MIT Non-Commercial" src="https://img.shields.io/badge/License-MIT_NC-blue.svg">
 
-This project is licensed under MIT with non-commercial use restrictions. For commercial licensing inquiries, please contact: <a href="mailto:info@theconsciousness.ai">info@theconsciousness.ai</a>
+This project is licensed under a modified MIT License with non-commercial use restrictions.
+
+**Usage Requirements:**
+
+When using this code, you must include the following:
+
+This project includes code from the Artificial Consciousness Module (ACM) Copyright (c) 2024 The Consciousness AI [`https://github.com/venturaEffect/the_consciousness_ai`](https://github.com/venturaEffect/the_consciousness_ai)
+
+Licensed under Modified MIT License (non-commercial)
+
+For commercial licensing inquiries, please contact: <a href="mailto:info@theconsciousness.ai">info@theconsciousness.ai</a>
