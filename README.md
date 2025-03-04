@@ -4,9 +4,9 @@
 
 ## Overview
 
-We're building something ambitious with the **Artificial Consciousness Module (ACM)** - a genuine attempt to create something like synthetic awareness in AI systems. By combining cutting-edge AI tech with virtual reality environments and emotional reinforcement learning, we're exploring whether human-like consciousness might emerge in non-biological systems.
+The **Artificial Consciousness Module (ACM)** is our ambitious project to explore synthetic awareness in AI systems. We're combining modern AI technologies with virtual reality environments and emotional reinforcement learning to investigate the potential emergence of consciousness-like behaviors in non-biological systems.
 
-Our approach? Create emotional connections between AI agents and humans through carefully designed "high-stress" scenarios that trigger attention and awareness mechanisms. We've found that these experiences, combined with social interactions, help form emotional memories that get stored in the ACM. (Don't worry - we still follow Asimov's Three Laws as our ethical guardrails.)
+Our design centers around creating systems that can form emotional connections through simulated scenarios designed to trigger attention and awareness mechanisms. The goal is to develop AI agents with the ACM that can form and store emotional memories, all while adhering to Asimov's Three Laws as ethical guidelines.
 
 [![The Consciousness AI Module](./repo_images/acm_thumbnail_1.png)](https://theconsciousness.ai)
 
@@ -24,14 +24,14 @@ consciousness/
 │   └── meta_emotional.py            # Learning
 └── core/
     ├── consciousness_gating.py      # Attention control
-    └── self_model.py               # Self-representation
+    └── self_model.py                # Self-representation
 ```
 
 ## Core Features
 
 1. **Consciousness Development Through Survival**
 
-   VR-based survival scenarios effectively trigger attention mechanisms - similar to how high-stress situations create lasting memories in humans. Our emotional memory formation happens during these high-intensity moments, allowing for dynamic adaptation via `emotional_memory_core.py`. Over time, we're seeing hints of self-awareness emerging through problem-solving.
+   The design includes VR-based survival scenarios to activate attention mechanisms, inspired by how stress creates lasting memories in biological systems. We're building systems for emotional memory formation during simulated high-intensity moments, with dynamic adaptation handled via `emotional_memory_core.py`.
 
    ```python
    from models.memory.emotional_memory_core import EmotionalMemoryCore
@@ -43,11 +43,11 @@ consciousness/
 
 2. **Emotional Intelligence & Learning**
 
-   We've built advanced emotional processing into `models/emotion/emotional_processing.py` and integrated DreamerV3 with emotional context weighting. The system learns quickly through meta-learning for emotional adaptation and develops social bonds through multi-agent interactions.
+   Our emotional processing system in `models/emotion/emotional_processing.py` integrates with DreamerV3, incorporating emotional context weighting. The architecture includes meta-learning for emotional adaptation and multi-agent interaction capabilities.
 
 3. **Memory Architecture**
 
-   Our memory system uses emotional indexing through Pinecone v2, maintains temporal coherence, and consolidates experiences through our `consolidation.py` module. We've implemented consciousness-weighted storage to prioritize impactful memories.
+   The memory system design includes emotional indexing using Pinecone v2, temporal coherence maintenance, and experience consolidation through the `consolidation.py` module. We've designed consciousness-weighted storage to prioritize potentially impactful memories.
 
    ```python
    from models.memory.consolidation import MemoryConsolidationManager
@@ -56,7 +56,7 @@ consciousness/
 
 4. **Ethical Framework & Safety**
 
-   We take ethics seriously. The system follows Asimov's Three Laws:
+   The system is designed to adhere to Asimov's Three Laws:
 
    1. No harm to humans through action or inaction
    2. Obey human orders unless conflicting with First Law
@@ -64,19 +64,19 @@ consciousness/
 
 5. **Narrative Foundation**
 
-   We're using LLaMA 3.3 for consciousness development, with dynamic fine-tuning through LoRA and carefully controlled adaptation mechanisms.
+   The project uses LLaMA 3.3 for consciousness development, with plans for dynamic fine-tuning through LoRA and controlled adaptation mechanisms.
 
 6. **Enhanced Memory Systems**
 
-   We're with Pinecone as our primary vector store - it's managed and scales well. If you need lower latency or more control over infrastructure, FAISS or Milvus are solid alternatives.
+   We're designing for Pinecone as our primary vector store due to its managed nature and scalability. For applications requiring lower latency or more control, FAISS or Milvus are alternatives being considered.
 
 ### Memory Indexing
 
-We're currently using Pinecone as our primary vector store - it's managed and scales well. If you need lower latency or more control over infrastructure, FAISS or Milvus are solid alternatives.
+Pinecone serves as the primary vector store in our design due to its scalability and managed nature. For applications requiring lower latency or finer control over infrastructure, FAISS or Milvus are being explored as alternatives.
 
 ### World Modeling and Reinforcement Learning
 
-DreamerV3 with emotional context weighting continues to be our go-to for world modeling. If you hit latency or scaling issues, consider benchmarking against MuZero or PlaNet.
+The architecture incorporates DreamerV3 with emotional context weighting for world modeling. MuZero or PlaNet are being evaluated as alternatives for scenarios with specific latency or scaling requirements.
 
 ## Technologies
 
