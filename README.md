@@ -435,4 +435,4 @@ This project includes code from the Artificial Consciousness Module (ACM) Copyri
 
 Licensed under Modified MIT License (non-commercial)
 
-For commercial licensing inquiries, please contact: <a href="mailto:info@theconsciousness.ai">info@theconsciousness.ai</a>.
+For commercial licensing inquiries, please contact: <a href="mailto:info@theconsciousness.ai">info@theconsciousness.ai</a>
