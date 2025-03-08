@@ -61,7 +61,7 @@
       type: file
     - path: /docs/installation.md
       type: file
-    - path: /docs/integration_videollama_3.py
+    - path: /docs/integration_videollama_3.md
       type: file
     - path: /docs/interaction_workflow.md
       type: file

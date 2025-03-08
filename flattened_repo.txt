@@ -2897,7 +2897,7 @@ Thank you for supporting the growth of the ACM!
 
 </docs/installation.md>
 
-<docs/integration_videollama_3.py>
+<docs/integration_videollama_3.md>
 # Integration Guide
 
 ## VideoLLaMA3 Integration
@@ -2911,7 +2911,7 @@ VideoLLaMA3 is a multimodal foundation model for image and video understanding. 
 1. **Clone the VideoLLaMA3 Repository:**
    ```bash
    git clone https://github.com/DAMO-NLP-SG/VideoLLaMA3.git
-</docs/integration_videollama_3.py>
+</docs/integration_videollama_3.md>
 
 <docs/interaction_workflow.md>
 # Interaction Workflow for AI Agent in ACM
@@ -50487,7 +50487,7 @@ and to overall self-awareness evaluation.
 
 import torch
 import numpy as np
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 
 @dataclass
@@ -50499,27 +50499,51 @@ class SelfAwarenessMetrics:
     temporal_coherence: float = 0.0
 
 class SelfAwarenessEvaluator:
-    """
-    Evaluates development of self-awareness across multiple dimensions
+    """Evaluates the development of self-awareness in the ACM
+    
+    Measures:
+    1. Emotional recognition - ability to identify own emotional states
+    2. Behavioral consistency - stability of behavior across similar contexts
+    3. Self-prediction accuracy - ability to predict own future states
+    4. Goal alignment - coherence between stated goals and actions
+    5. Metacognitive accuracy - accuracy of confidence estimations
     """
     
-    def __init__(self, config: Dict):
+    def __init__(self, config):
         self.config = config
-        self.metrics = SelfAwarenessMetrics()
-
-    def evaluate_self_awareness(
-        self,
-        self_model_state: Dict,
-        interaction_history: List[Dict],
-        emotional_context: Dict[str, float]
-    ) -> Dict[str, float]:
-        """
-        Comprehensive self-awareness evaluation
+        
+        # Initialize metrics
+        self.metrics = {
+            "emotional_recognition": 0.0,
+            "behavioral_consistency": 0.0,
+            "self_prediction_accuracy": 0.0,
+            "goal_alignment": 0.0,
+            "metacognitive_accuracy": 0.0,
+            "overall": 0.0
+        }
+        
+        # Weights for overall calculation
+        self.weights = {
+            "emotional_recognition": 0.2,
+            "behavioral_consistency": 0.2,
+            "self_prediction_accuracy": 0.2,
+            "goal_alignment": 0.2,
+            "metacognitive_accuracy": 0.2
+        }
+    
+    def evaluate_self_awareness(self, 
+                              self_model_state: Dict, 
+                              interaction_history: List[Dict],
+                              emotional_context: Dict) -> Dict:
+        """Evaluate self-awareness across multiple dimensions
         
         Args:
-            self_model_state: Current self-representation state
-            interaction_history: Recent interaction records
-            emotional_context: Current emotional state
+            self_model_state: Current self-model state
+            interaction_history: Recent interaction history
+            emotional_context: True emotional context (for comparison)
+            
+        Returns:
+            Dictionary of metrics
         """
         # Evaluate emotional recognition
         emotional_recognition = self._evaluate_emotional_recognition(
@@ -50532,44 +50556,247 @@ class SelfAwarenessEvaluator:
             interaction_history
         )
         
-        # Evaluate social understanding
-        social_understanding = self._evaluate_social_understanding(
+        # Evaluate self-prediction accuracy
+        self_prediction = self._evaluate_self_prediction(
+            self_model_state,
             interaction_history
         )
         
-        # Evaluate temporal coherence
-        temporal_coherence = self._evaluate_temporal_coherence(
+        # Evaluate goal alignment
+        goal_alignment = self._evaluate_goal_alignment(
+            self_model_state,
+            interaction_history
+        )
+        
+        # Evaluate metacognitive accuracy
+        metacognitive_accuracy = self._evaluate_metacognitive_accuracy(
             self_model_state,
             interaction_history
         )
         
         # Update metrics
-        self.metrics.emotional_recognition = emotional_recognition
-        self.metrics.behavioral_consistency = behavioral_consistency
-        self.metrics.social_understanding = social_understanding
-        self.metrics.temporal_coherence = temporal_coherence
+        self.metrics["emotional_recognition"] = emotional_recognition
+        self.metrics["behavioral_consistency"] = behavioral_consistency
+        self.metrics["self_prediction_accuracy"] = self_prediction
+        self.metrics["goal_alignment"] = goal_alignment
+        self.metrics["metacognitive_accuracy"] = metacognitive_accuracy
         
-        return self.get_metrics()
-
-    def _evaluate_emotional_recognition(
-        self,
-        self_model_state: Dict,
-        emotional_context: Dict[str, float]
-    ) -> float:
-        """Evaluate accuracy of emotional state recognition"""
-        if not self_model_state or not emotional_context:
-            return 0.0
+        # Calculate overall score
+        self.metrics["overall"] = sum(
+            score * self.weights[key] 
+            for key, score in self.metrics.items()
+            if key != "overall"
+        )
+        
+        return dict(self.metrics)
+    
+    def _evaluate_emotional_recognition(self, 
+                                      self_model_state: Dict,
+                                      emotional_context: Dict) -> float:
+        """Evaluate emotional recognition
+        
+        Args:
+            self_model_state: Current self-model state
+            emotional_context: True emotional context
             
-        predicted_emotions = self_model_state.get('emotional_state', {})
+        Returns:
+            Score between 0.0-1.0
+        """
+        if not emotional_context or not self_model_state.get("emotional_state"):
+            return 0.5  # Neutral if no data
+            
+        # Compare self-reported emotions with measured emotions
+        reported = self_model_state.get("emotional_state", {})
         
-        # Calculate alignment between predicted and actual emotions
-        alignment_scores = []
-        for emotion, value in emotional_context.items():
-            if emotion in predicted_emotions:
-                alignment = 1 - abs(value - predicted_emotions[emotion])
-                alignment_scores.append(alignment)
+        # Calculate accuracy by emotion
+        accuracies = []
+        for emotion, true_value in emotional_context.items():
+            if emotion in reported:
+                # Calculate similarity (1 - absolute difference)
+                similarity = 1.0 - min(1.0, abs(true_value - reported[emotion]))
+                accuracies.append(similarity)
+            else:
+                # Missing emotion detection
+                accuracies.append(0.0)
                 
-        return np.mean(alignment_scores) if alignment_scores else 0.0
+        # Add penalty for "phantom" emotions in report but not in actual
+        for emotion in reported:
+            if emotion not in emotional_context:
+                accuracies.append(0.0)
+                
+        return np.mean(accuracies) if accuracies else 0.5
+    
+    def _evaluate_behavioral_consistency(self, interaction_history: List[Dict]) -> float:
+        """Evaluate consistency of behavior in similar contexts
+        
+        Args:
+            interaction_history: Recent interaction history
+            
+        Returns:
+            Score between 0.0-1.0
+        """
+        if len(interaction_history) < 5:
+            return 0.5  # Not enough data
+            
+        # Group interactions by context
+        contexts = {}
+        for interaction in interaction_history:
+            context = interaction.get("context_key", "default")
+            if context not in contexts:
+                contexts[context] = []
+            contexts[context].append(interaction)
+            
+        # Calculate consistency within each context
+        consistencies = []
+        for context, interactions in contexts.items():
+            if len(interactions) < 2:
+                continue
+                
+            # Calculate variance of responses in same context
+            responses = [i.get("response_embedding", [0]) for i in interactions]
+            if not all(responses):
+                continue
+                
+            # Convert to numpy arrays for calculation
+            response_arrays = [np.array(r) for r in responses]
+            
+            # Calculate pairwise cosine similarities
+            similarities = []
+            for i in range(len(response_arrays)):
+                for j in range(i+1, len(response_arrays)):
+                    dot = np.dot(response_arrays[i], response_arrays[j])
+                    norm_i = np.linalg.norm(response_arrays[i])
+                    norm_j = np.linalg.norm(response_arrays[j])
+                    
+                    if norm_i > 0 and norm_j > 0:
+                        similarity = dot / (norm_i * norm_j)
+                        similarities.append(similarity)
+            
+            if similarities:
+                consistencies.append(np.mean(similarities))
+                
+        return np.mean(consistencies) if consistencies else 0.5
+    
+    def _evaluate_self_prediction(self, 
+                               self_model_state: Dict,
+                               interaction_history: List[Dict]) -> float:
+        """Evaluate accuracy of self-predictions
+        
+        Args:
+            self_model_state: Current self-model state
+            interaction_history: Recent interaction history
+            
+        Returns:
+            Score between 0.0-1.0
+        """
+        # Look for self-predictions in history
+        predictions = []
+        outcomes = []
+        
+        for i in range(len(interaction_history) - 1):
+            interaction = interaction_history[i]
+            next_interaction = interaction_history[i+1]
+            
+            if "self_prediction" in interaction:
+                predictions.append(interaction["self_prediction"])
+                
+                # Find corresponding actual outcome
+                if "outcome" in next_interaction:
+                    outcomes.append(next_interaction["outcome"])
+                else:
+                    # No matching outcome
+                    outcomes.append(None)
+        
+        # Calculate prediction accuracy
+        accuracies = []
+        for pred, outcome in zip(predictions, outcomes):
+            if outcome is None:
+                continue
+                
+            # Simple match accuracy (can be made more sophisticated)
+            accuracy = 1.0 if pred == outcome else 0.0
+            accuracies.append(accuracy)
+            
+        return np.mean(accuracies) if accuracies else 0.5
+    
+    def _evaluate_goal_alignment(self, 
+                              self_model_state: Dict,
+                              interaction_history: List[Dict]) -> float:
+        """Evaluate alignment between stated goals and actions
+        
+        Args:
+            self_model_state: Current self-model state
+            interaction_history: Recent interaction history
+            
+        Returns:
+            Score between 0.0-1.0
+        """
+        if not self_model_state.get("goals"):
+            return 0.5
+            
+        goals = self_model_state.get("goals", [])
+        
+        # Extract goal names
+        goal_names = []
+        for goal_dict in goals:
+            goal_names.extend(goal_dict.keys())
+            
+        # Count actions that align with goals
+        aligned_actions = 0
+        total_actions = 0
+        
+        for interaction in interaction_history:
+            if "action" not in interaction:
+                continue
+                
+            action = interaction.get("action")
+            action_goal = interaction.get("action_goal")
+            
+            if action_goal in goal_names:
+                aligned_actions += 1
+                
+            total_actions += 1
+            
+        return aligned_actions / total_actions if total_actions > 0 else 0.5
+    
+    def _evaluate_metacognitive_accuracy(self, 
+                                      self_model_state: Dict,
+                                      interaction_history: List[Dict]) -> float:
+        """Evaluate accuracy of confidence estimations
+        
+        Args:
+            self_model_state: Current self-model state
+            interaction_history: Recent interaction history
+            
+        Returns:
+            Score between 0.0-1.0
+        """
+        # Look for confidence estimations in history
+        confidences = []
+        accuracies = []
+        
+        for interaction in interaction_history:
+            if "confidence" in interaction and "accuracy" in interaction:
+                confidences.append(interaction["confidence"])
+                accuracies.append(interaction["accuracy"])
+                
+        if not confidences:
+            return 0.5
+            
+        # Calculate calibration error
+        # Lower error = higher metacognitive accuracy
+        calibration_error = np.mean(np.abs(np.array(confidences) - np.array(accuracies)))
+        
+        # Convert to score (0.0-1.0)
+        return 1.0 - min(1.0, calibration_error)
+    
+    def get_metrics(self) -> Dict:
+        """Get current metrics
+        
+        Returns:
+            Dict of metrics
+        """
+        return dict(self.metrics)
 </models/evaluation/self_awareness_evaluation.py>
 
 <models/evaluation/templates/dashboard.html>
@@ -56876,7 +57103,8 @@ Based on the holonic principles described in the research paper.
 
 import torch
 import torch.nn as nn
-from typing import Dict, Tuple
+import numpy as np
+from typing import Dict, List, Optional, Tuple
 
 class ConsciousnessMetaLearner(nn.Module):
     """
@@ -56887,8 +57115,33 @@ class ConsciousnessMetaLearner(nn.Module):
     """
 
     def __init__(self, config: Dict):
-        super().__init__()
+        super(ConsciousnessMetaLearner, self).__init__()
         self.config = config
+        
+        # Base learning rate
+        self.base_lr = config.get("base_learning_rate", 0.001)
+        self.min_lr = config.get("min_learning_rate", 0.0001)
+        self.max_lr = config.get("max_learning_rate", 0.01)
+        
+        # Metalearning parameters
+        self.adaptation_rate = config.get("adaptation_rate", 0.1)
+        self.emotion_factor = config.get("emotion_factor", 0.2)
+        
+        # Success/failure tracking
+        self.success_history = []
+        self.history_window = config.get("history_window", 50)
+        
+        # Learned emotion weights
+        self.emotion_weights = {
+            "joy": 0.1,
+            "sadness": -0.05,
+            "fear": 0.2,  # Fear increases learning rate - important for survival
+            "surprise": 0.15,
+            "anger": 0.05,
+            "disgust": -0.02,
+            "trust": 0.0,
+            "anticipation": 0.1
+        }
         
         # Learning rate adaptation network
         self.lr_adapter = nn.Sequential(
@@ -56939,6 +57192,102 @@ class ConsciousnessMetaLearner(nn.Module):
         """Update architecture based on performance metrics"""
         # TODO: Implement architecture search
         pass
+
+    def compute_learning_rate(self, 
+                             emotional_state: Dict[str, float],
+                             success_rate: Optional[float] = None,
+                             consciousness_level: float = 0.5) -> float:
+        """Calculate adaptive learning rate based on emotions and performance
+        
+        Args:
+            emotional_state: Current emotional state as dict of values
+            success_rate: Optional success rate from recent interactions
+            consciousness_level: Current consciousness level (0.0-1.0)
+            
+        Returns:
+            Adapted learning rate
+        """
+        # Start with base rate
+        lr = self.base_lr
+        
+        # Adjust based on success rate
+        if success_rate is not None:
+            # Higher success = smaller learning rate (less need to adapt)
+            # Lower success = higher learning rate (need to adapt more)
+            success_factor = 1.0 - (success_rate * 0.8)
+            lr = lr * (0.5 + success_factor)
+        
+        # Adjust based on emotional state
+        emotion_modifier = 1.0
+        if emotional_state:
+            # Calculate weighted sum of emotions
+            emotion_sum = sum(
+                emotional_state.get(emotion, 0) * weight 
+                for emotion, weight in self.emotion_weights.items()
+            )
+            # Convert to multiplicative factor
+            emotion_modifier = 1.0 + (emotion_sum * self.emotion_factor)
+        
+        # Adjust based on consciousness level
+        # Higher consciousness = more focused learning
+        consciousness_modifier = 0.5 + (consciousness_level * 0.5)
+        
+        # Apply modifiers
+        lr = lr * emotion_modifier * consciousness_modifier
+        
+        # Ensure within bounds
+        lr = max(self.min_lr, min(self.max_lr, lr))
+        
+        return lr
+        
+    def update_success_history(self, success: bool):
+        """Update history of successful interactions
+        
+        Args:
+            success: Whether the recent interaction was successful
+        """
+        self.success_history.append(1.0 if success else 0.0)
+        
+        # Keep history within window
+        if len(self.success_history) > self.history_window:
+            self.success_history.pop(0)
+    
+    def get_success_rate(self) -> float:
+        """Calculate success rate from history
+        
+        Returns:
+            Success rate between 0.0-1.0
+        """
+        if not self.success_history:
+            return 0.5
+            
+        return sum(self.success_history) / len(self.success_history)
+        
+    def update_emotion_weights(self, reward: float, emotions: Dict[str, float]):
+        """Update emotion weights based on rewards
+        
+        Args:
+            reward: Reward value from recent experience
+            emotions: Emotions present during experience
+        """
+        if not emotions:
+            return
+            
+        # Update weights based on correlation with rewards
+        for emotion, value in emotions.items():
+            if emotion in self.emotion_weights:
+                # Positive reward strengthens weight in its direction
+                # Negative reward weakens or reverses weight
+                update = self.adaptation_rate * reward * value
+                self.emotion_weights[emotion] += update
+                
+    def get_emotion_weights(self) -> Dict[str, float]:
+        """Get current emotion weights
+        
+        Returns:
+            Dict of emotion weights
+        """
+        return dict(self.emotion_weights)
 </models/self_model/meta_learning.py>
 
 <models/self_model/modular_self_representation.py>
@@ -57666,46 +58015,83 @@ Based on the research paper's MANN architecture and holon concept.
 
 import torch
 import torch.nn as nn
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Tuple
 from dataclasses import dataclass
+import numpy as np
 
 @dataclass 
 class SelfModelState:
-    """Tracks the current state of self-representation"""
-    emotional_state: Dict[str, float] = None
-    behavioral_patterns: Dict[str, float] = None
-    social_context: Dict[str, float] = None
-    belief_system: Dict[str, float] = None
-    temporal_coherence: float = 0.0
+    """Tracks the current state of the self-model"""
+    emotional_state: Dict[str, float]
+    attention_focus: float
+    memory_context: List[Dict]
+    consciousness_level: float
+    confidence: float
+    goals: List[Dict[str, float]]
+    last_update_timestamp: float
 
 class SelfRepresentationCore(nn.Module):
     """
-    Core module for maintaining and updating agent's self-representation
-    through both direct experience and social learning.
+    Core module for self-representation and awareness in ACM
+    
+    This module implements:
+    1. Dynamic self-representation that evolves through experience
+    2. Attention-based update mechanisms
+    3. Confidence-based learning rate adaptation
+    4. Integration with emotional and memory systems
+    5. Temporal coherence maintenance
     """
 
     def __init__(self, config: Dict):
-        super().__init__()
-        
-        # Core state representation networks
-        self.emotional_network = EmotionalStateNetwork(config)
-        self.behavioral_network = BehavioralPatternNetwork(config)
-        self.social_network = SocialContextNetwork(config)
-        self.belief_network = BeliefSystemNetwork(config)
-
-        # Learning components
-        self.meta_learner = MetaLearningModule(config)
-        self.experience_buffer = ExperienceBuffer(config)
-        self.social_buffer = SocialFeedbackBuffer(config)
-
-        self.state = SelfModelState()
+        super(SelfRepresentationCore, self).__init__()
         self.config = config
+        
+        # Core network components
+        self.embedding_dim = config.get("embedding_dim", 256)
+        self.state_encoder = nn.Sequential(
+            nn.Linear(self.embedding_dim, self.embedding_dim * 2),
+            nn.ReLU(),
+            nn.Linear(self.embedding_dim * 2, self.embedding_dim)
+        )
+        
+        # Direct experience learning network
+        self.direct_learner = nn.Sequential(
+            nn.Linear(self.embedding_dim * 2, self.embedding_dim),
+            nn.ReLU(),
+            nn.Linear(self.embedding_dim, self.embedding_dim)
+        )
+        
+        # Social learning network for observational learning
+        self.social_network = nn.Sequential(
+            nn.Linear(self.embedding_dim, self.embedding_dim),
+            nn.Tanh()
+        )
+        
+        # Attention and confidence thresholds
+        self.attention_threshold = config.get("attention_threshold", 0.5)
+        self.update_threshold = config.get("update_threshold", 0.3)
+        
+        # Initialize self-model state
+        self.state = SelfModelState(
+            emotional_state={},
+            attention_focus=0.0,
+            memory_context=[],
+            consciousness_level=0.1,
+            confidence=0.2,
+            goals=[{"survive": 1.0, "learn": 0.8}],
+            last_update_timestamp=0.0
+        )
+        
+        # Experience buffer for temporal coherence
+        self.experience_buffer = []
+        self.buffer_max_size = config.get("buffer_size", 100)
 
     def update_self_model(
         self,
         current_state: Dict[str, torch.Tensor],
         social_feedback: Optional[Dict] = None,
-        attention_level: float = 0.0
+        attention_level: float = 0.0,
+        timestamp: float = None
     ) -> Dict:
         """
         Update self-representation through experience and feedback
@@ -57714,51 +58100,155 @@ class SelfRepresentationCore(nn.Module):
             current_state: Current agent state including perceptions/actions
             social_feedback: Optional feedback from other agents/humans
             attention_level: Current attention/consciousness level
+            timestamp: Current time
         """
-        # Process current emotional and behavioral state
-        emotional_embedding = self.emotional_network(current_state)
-        behavioral_embedding = self.behavioral_network(current_state)
-
-        # Update from social feedback if available
-        if social_feedback:
-            social_embedding = self.social_network(social_feedback)
-            self._integrate_social_feedback(social_embedding)
-
-        # Generate self-model update
-        self_model_update = self.meta_learner.get_update(
-            emotional_state=emotional_embedding,
-            behavioral_state=behavioral_embedding,
-            social_context=social_embedding if social_feedback else None,
-            attention_level=attention_level
+        # Only update if attention exceeds threshold
+        if attention_level < self.attention_threshold:
+            return {"updated": False, "reason": "attention_below_threshold"}
+        
+        # Encode current state
+        feature_embedding = self.state_encoder(
+            torch.tensor(current_state.get("features", [0] * self.embedding_dim), 
+                        dtype=torch.float32)
         )
-
-        # Update state if significant
-        if attention_level > self.config['update_threshold']:
-            self._update_state(self_model_update)
-            self._store_experience(
-                state=current_state,
-                update=self_model_update,
-                social_feedback=social_feedback
+        
+        # Update from direct experience
+        self_model_update = self.direct_learner(
+            torch.cat([
+                feature_embedding, 
+                torch.tensor([self.state.consciousness_level, 
+                            self.state.attention_focus] + 
+                            list(self.state.emotional_state.values()),
+                            dtype=torch.float32)
+            ])
+        )
+        
+        # Integrate social feedback if available
+        if social_feedback:
+            social_embedding = self.social_network(
+                torch.tensor(social_feedback.get("features", [0] * self.embedding_dim),
+                           dtype=torch.float32)
             )
-
+            self._integrate_social_feedback(social_embedding)
+        
+        # Update internal state
+        self._update_internal_state(
+            feature_embedding, 
+            current_state, 
+            attention_level,
+            timestamp
+        )
+        
+        # Add experience to buffer for temporal coherence
+        self._add_to_experience_buffer(current_state, attention_level)
+        
         return {
-            'self_model_state': self.state,
-            'update_info': self_model_update,
-            'coherence': self._calculate_coherence()
+            "updated": True,
+            "attention_level": attention_level,
+            "consciousness_level": self.state.consciousness_level,
+            "confidence": self.state.confidence
         }
 
-    def _integrate_social_feedback(self, social_embedding: torch.Tensor):
-        """Integrate learning from social interactions"""
-        self.social_buffer.add(social_embedding)
-        social_update = self.belief_network.update(social_embedding)
-        self.state.belief_system.update(social_update)
-
-    def _calculate_coherence(self) -> float:
-        """Calculate temporal coherence of self-model"""
-        return self.meta_learner.evaluate_coherence(
-            current_state=self.state,
-            experience_buffer=self.experience_buffer
+    def _update_internal_state(self, 
+                             feature_embedding, 
+                             current_state, 
+                             attention_level,
+                             timestamp=None):
+        """Update internal components of self-model"""
+        # Update emotional state if emotion data is present
+        if "emotion" in current_state:
+            self.state.emotional_state = {
+                **self.state.emotional_state,
+                **current_state["emotion"]
+            }
+            
+        # Update attention focus
+        self.state.attention_focus = (
+            self.state.attention_focus * 0.7 + attention_level * 0.3
         )
+        
+        # Update memory context
+        if "memory_context" in current_state:
+            self.state.memory_context = current_state["memory_context"]
+            
+        # Adjust consciousness level based on attention and temporal coherence
+        coherence = self._calculate_temporal_coherence()
+        self.state.consciousness_level = min(1.0, 
+            self.state.consciousness_level * 0.8 + 
+            (attention_level * 0.1) + 
+            (coherence * 0.1)
+        )
+        
+        # Update confidence based on prediction accuracy
+        if "prediction_error" in current_state:
+            error = current_state["prediction_error"]
+            # Lower error increases confidence
+            confidence_delta = 0.05 * (1.0 - min(1.0, error))
+            self.state.confidence = min(
+                1.0, 
+                max(0.1, self.state.confidence + confidence_delta)
+            )
+            
+        # Update timestamp
+        if timestamp:
+            self.state.last_update_timestamp = timestamp
+
+    def _integrate_social_feedback(self, social_embedding: torch.Tensor):
+        """Integrate feedback from social interaction"""
+        # Convert tensor to list for processing
+        social_data = social_embedding.detach().numpy().tolist()
+        
+        # Social feedback can modify confidence
+        confidence_modifier = np.mean(social_data) if len(social_data) > 0 else 0
+        self.state.confidence = min(
+            1.0, 
+            max(0.1, self.state.confidence + (confidence_modifier * 0.1))
+        )
+
+    def _add_to_experience_buffer(self, state, attention):
+        """Add experience to buffer for temporal coherence"""
+        self.experience_buffer.append({
+            "state": {k: v for k, v in state.items() if k != "features"}, 
+            "attention": attention
+        })
+        
+        # Keep buffer within max size
+        if len(self.experience_buffer) > self.buffer_max_size:
+            self.experience_buffer.pop(0)
+
+    def _calculate_temporal_coherence(self) -> float:
+        """Calculate temporal coherence of recent experiences
+        
+        Returns:
+            Coherence score between 0.0-1.0
+        """
+        if len(self.experience_buffer) < 2:
+            return 0.5
+            
+        # Simple coherence calculation
+        # Higher variance in attention = lower coherence
+        recent_attention = [e["attention"] for e in self.experience_buffer[-5:]]
+        if len(recent_attention) > 1:
+            variance = np.var(recent_attention)
+            coherence = 1.0 - min(1.0, variance * 5)
+            return coherence
+        
+        return 0.5
+
+    def get_current_state(self) -> Dict:
+        """Get current self-model state
+        
+        Returns:
+            Dict representation of current self-model state
+        """
+        return {
+            "emotional_state": self.state.emotional_state,
+            "attention_focus": self.state.attention_focus,
+            "consciousness_level": self.state.consciousness_level,
+            "confidence": self.state.confidence,
+            "goals": self.state.goals,
+            "memories": len(self.state.memory_context)
+        }
 </models/self_model/self_representation_core.py>
 
 <models/speech/whisper/whisper_integration.py>
@@ -58473,22 +58963,68 @@ If you use ACM in your research, please cite:
 }
 ```
 
-## Code Usage
-
-When using this code, please include the following:
-
-This project includes code from the Artificial Consciousness Module (ACM)
-Copyright (c) 2024 The Consciousness AI
-https://github.com/venturaEffect/the_consciousness_ai
-
-Licensed under MIT License (non-commercial)
-For commercial use, please contact the authors.
-
 ## License
 
-<img alt="License: MIT NC" src="https://img.shields.io/badge/License-MIT NC-blue.svg">
+<img alt="License: Custom MIT Non-Commercial" src="https://img.shields.io/badge/License-MIT_NC-blue.svg">
 
-This project is licensed under MIT with non-commercial use restrictions. For commercial licensing inquiries, please contact: <a href="mailto:info@theconsciousness.ai">info@theconsciousness.ai</a>
+This project is licensed under a modified MIT License with non-commercial use restrictions.
+
+**Usage Requirements:**
+
+When using this code, you must include the following:
+
+This project includes code from the Artificial Consciousness Module (ACM) Copyright (c) 2024 The Consciousness AI [`https://github.com/venturaEffect/the_consciousness_ai`](https://github.com/venturaEffect/the_consciousness_ai)
+
+Licensed under Modified MIT License (non-commercial)
+
+For commercial licensing inquiries, please contact: <a href="mailto:info@theconsciousness.ai">info@theconsciousness.ai</a>
+
+## Self-Awareness and Self-Representation
+
+The ACM implements self-awareness and self-representation mechanisms based on several cognitive theories:
+
+### Core Components
+
+1. **Self-Representation Core**  
+   A dynamic model that maintains and updates the system's representation of itself, including emotional states, attention focus, and confidence levels.
+
+2. **Meta-Learning System**  
+   Enables the system to adapt its learning processes based on experience, emotional states, and consciousness development.
+
+3. **Self-Awareness Evaluation**  
+   Tracks development of self-awareness across multiple dimensions, including emotional recognition, behavioral consistency, and metacognitive accuracy.
+
+### Theoretical Foundations
+
+- **Global Workspace Theory**: Implements a central workspace where information becomes globally available to all cognitive processes
+- **Attention Schema Theory**: Maintains dynamic models of the system's own attention processes
+- **Higher-Order Metacognition**: Enables reflection on the system's own knowledge and beliefs
+
+### Usage Example
+
+```python
+# Initialize self-representation core
+from models.self_model.self_representation_core import SelfRepresentationCore
+
+self_model = SelfRepresentationCore(config)
+
+# Update self-model with new experience
+update_result = self_model.update_self_model(
+    current_state=perception_state,
+    attention_level=attention_score,
+    timestamp=current_time
+)
+
+# Evaluate self-awareness development
+from models.evaluation.self_awareness_evaluation import SelfAwarenessEvaluator
+
+evaluator = SelfAwarenessEvaluator(config)
+metrics = evaluator.evaluate_self_awareness(
+    self_model_state=self_model.get_current_state(),
+    interaction_history=recent_interactions,
+    emotional_context=emotional_state
+)
+```
 
 </README.md>
 
