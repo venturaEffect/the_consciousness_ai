@@ -436,3 +436,50 @@ This project includes code from the Artificial Consciousness Module (ACM) Copyri
 Licensed under Modified MIT License (non-commercial)
 
 For commercial licensing inquiries, please contact: <a href="mailto:info@theconsciousness.ai">info@theconsciousness.ai</a>
+
+## Self-Awareness and Self-Representation
+
+The ACM implements self-awareness and self-representation mechanisms based on several cognitive theories:
+
+### Core Components
+
+1. **Self-Representation Core**  
+   A dynamic model that maintains and updates the system's representation of itself, including emotional states, attention focus, and confidence levels.
+
+2. **Meta-Learning System**  
+   Enables the system to adapt its learning processes based on experience, emotional states, and consciousness development.
+
+3. **Self-Awareness Evaluation**  
+   Tracks development of self-awareness across multiple dimensions, including emotional recognition, behavioral consistency, and metacognitive accuracy.
+
+### Theoretical Foundations
+
+- **Global Workspace Theory**: Implements a central workspace where information becomes globally available to all cognitive processes
+- **Attention Schema Theory**: Maintains dynamic models of the system's own attention processes
+- **Higher-Order Metacognition**: Enables reflection on the system's own knowledge and beliefs
+
+### Usage Example
+
+```python
+# Initialize self-representation core
+from models.self_model.self_representation_core import SelfRepresentationCore
+
+self_model = SelfRepresentationCore(config)
+
+# Update self-model with new experience
+update_result = self_model.update_self_model(
+    current_state=perception_state,
+    attention_level=attention_score,
+    timestamp=current_time
+)
+
+# Evaluate self-awareness development
+from models.evaluation.self_awareness_evaluation import SelfAwarenessEvaluator
+
+evaluator = SelfAwarenessEvaluator(config)
+metrics = evaluator.evaluate_self_awareness(
+    self_model_state=self_model.get_current_state(),
+    interaction_history=recent_interactions,
+    emotional_context=emotional_state
+)
+```
