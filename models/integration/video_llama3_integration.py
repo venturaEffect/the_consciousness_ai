@@ -13,125 +13,216 @@ Dependencies:
 - configs/vision_language.yaml for model parameters
 """
 
-from transformers import Blip2ForConditionalGeneration, Blip2Processor
 import torch
-from typing import Dict, Optional, Any, List
+import numpy as np
+import torch.nn as nn
+import cv2
+from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import dataclass
 from models.memory.emotional_memory_core import EmotionalMemoryCore
 from models.core.consciousness_core import VisualProcessor
-import numpy as np
-import cv2
+from transformers import Blip2ForConditionalGeneration, Blip2Processor
 from torch.cuda.amp import autocast
 import logging
 
+@dataclass
+class VideoLLaMA3Config:
+    """Configuration for VideoLLaMA3 integration"""
+    model_path: str
+    model_variant: str = "default"
+    vision_encoder_type: str = "sigLIP"
+    max_frame_count: int = 180
+    frame_sampling_rate: int = 1
+    diff_threshold: float = 0.1  # Threshold for DiffFP
+    use_dynamic_resolution: bool = True
+    use_frame_pruning: bool = True
+    downsampling_factor: int = 2  # Spatial downsampling factor
+    device: str = "cuda" if torch.cuda.is_available() else "cpu"
+
 class VideoLLaMA3Integration:
-    """
-    Integration of VideoLLaMA3 for processing real-time frames.
-    Provides batched processing with error handling and GPU memory management.
-    """
-
-    def __init__(self, config: Dict[str, Any], model: Any, processor: Any):
-        """
-        :param config: Dictionary of configuration parameters.
-        :param model: Pre-loaded VideoLLaMA3 model.
-        :param processor: Pre-loaded processor for model input conversion.
-        """
-        super().__init__()
+    """Enhanced integration of VideoLLaMA3 for ACM"""
+    
+    def __init__(self, config: VideoLLaMA3Config):
         self.config = config
-        self.model = model
-        self.processor = processor
-        self.logger = logging.getLogger(__name__)
+        self.device = torch.device(config.device)
         
-        # Memory optimization components
-        self.memory_optimizer = MemoryOptimizer(config.get("memory_config", {}))
+        # Models
+        self.vision_encoder = None
+        self.projector = None
+        self.llm = None
+        self.video_compressor = None
+        
+        # Utility components
         self.frame_buffer = []
-        self.max_buffer_size = config.get("max_buffer_size", 32)
+        self.tokenizer = None
+        self.memory_optimizer = None
         
-        # ACE integration
-        self.ace_agent = ACEConsciousAgent(config.get("ace_config", {}))
+        # Model variants for different processing needs
+        self.model_variants = {
+            "default": f"{config.model_path}/videollama3-default",
+            "abliterated": f"{config.model_path}/videollama3-abliterated",
+            "streaming": f"{config.model_path}/videollama3-streaming"
+        }
+        self.current_variant = config.model_variant
         
-        # Model variants
-        self.model_variants = config.get("model_variants", {
-            "default": "DAMO-NLP-SG/Llama3.3", 
-            "abliterated": "huihui-ai/Llama-3.3-70B-Instruct-abliterated"
-        })
-        self.current_variant = "default"
-        self._load_model(self.model_variants[self.current_variant])
-
-    async def process_stream_frame(self, frame: np.ndarray) -> Dict[str, Any]:
-        """Optimized frame processing with memory management and ACE integration"""
-        if self._should_skip_frame():
-            return {"status": "skipped"}
+        # Initialize models
+        self._initialize_models()
         
-        # Optimize memory usage
-        frame = self._reduce_resolution(frame)
-        
-        try:
-            with torch.cuda.amp.autocast():
-                # Process frame
-                context = await self._process_single_frame(frame)
-                
-                # Integrate with ACE 
-                ace_result = await self.ace_agent.process_frame(
-                    frame,
-                    context,
-                    self.memory_optimizer.get_metrics()
-                )
-                
-                # Update memory optimization metrics
-                self.memory_optimizer.update_metrics(context)
-                
-                return {
-                    "context": context,
-                    "ace_result": ace_result,
-                    "memory_metrics": self.memory_optimizer.get_metrics()
-                }
-                
-        except Exception as e:
-            self.logger.error("Error processing frame: %s", e, exc_info=True)
-            raise
-
-    def _should_skip_frame(self) -> bool:
-        """
-        Basic rate limiter (placeholder – adjust based on performance benchmarks)
-        """
-        if len(self.frame_buffer) >= self.max_buffer_size:
-            return True
-        return False
-
-    def _process_batch(self) -> Dict[str, Any]:
-        """
-        Process buffered frames as a batch.
-        """
-        try:
-            # Convert buffered frames to torch tensor (assuming proper pre-processing)
-            batch = self.processor(self.frame_buffer, return_tensors="pt").to(self.config.get("device", "cpu"))
-            result = self.model.generate(**batch)
-            self.frame_buffer.clear()
-            return {"batch_result": result}
-        except Exception as e:
-            self.logger.error("Error in batch processing: %s", e, exc_info=True)
-            raise
-
-    def _process_single_frame(self, frame) -> Dict[str, Any]:
-        """
-        Process a single frame using the selected model variant
-        """
+    def _initialize_models(self):
+        """Initialize all required models"""
+        # Load vision encoder, projector, and LLM
         model_path = self.model_variants[self.current_variant]
-        # Use the selected model variant for processing
-        context = self._process_with_model(frame, model_path)
-        return context
-
-    def _process_with_model(self, frame: np.ndarray, model_path: str) -> Dict[str, Any]:
-        """
-        Process a single frame with the specified model path.
-        """
+        
         try:
-            input_tensor = self.processor(frame, return_tensors="pt").to(self.config.get("device", "cpu"))
-            output = self.model.generate(**input_tensor)
-            return {"result": output}
+            # Load SigLIP-based vision encoder with RoPE for dynamic resolution
+            self.vision_encoder = self._load_vision_encoder()
+            
+            # Load projector
+            self.projector = self._load_projector()
+            
+            # Load LLM (Qwen2.5)
+            self.llm = self._load_llm()
+            
+            # Initialize video compressor (Differential Frame Pruner)
+            self.video_compressor = DifferentialFramePruner(
+                threshold=self.config.diff_threshold
+            )
+            
+            # Initialize memory optimizer
+            self.memory_optimizer = VideoMemoryOptimizer()
+            
+            # Load tokenizer
+            self.tokenizer = self._load_tokenizer()
+            
+            print(f"Successfully loaded VideoLLaMA3 ({self.current_variant} variant)")
+            
         except Exception as e:
-            self.logger.error("Error processing single frame: %s", e, exc_info=True)
+            print(f"Error loading VideoLLaMA3 models: {str(e)}")
             raise
+            
+    def process_video(self, video_path: str, query: Optional[str] = None) -> Dict:
+        """Process a video file and generate response to query"""
+        # Extract frames from video using specified sampling rate
+        frames = self._extract_frames(video_path)
+        
+        # Process extracted frames
+        return self.process_frames(frames, query)
+        
+    def process_frames(self, frames: List[np.ndarray], query: Optional[str] = None) -> Dict:
+        """Process a list of video frames"""
+        if not frames:
+            return {"error": "No frames provided"}
+            
+        # Apply Any-resolution Vision Tokenization (AVT)
+        vision_tokens = self._process_frames_with_avt(frames)
+        
+        # Apply Differential Frame Pruner (DiffFP)
+        if self.config.use_frame_pruning:
+            compressed_tokens = self.video_compressor.compress(vision_tokens, frames)
+        else:
+            compressed_tokens = vision_tokens
+            
+        # Project vision tokens to LLM space
+        projected_tokens = self.projector(compressed_tokens)
+        
+        # Generate response to query
+        if query:
+            response = self._generate_response(projected_tokens, query)
+        else:
+            response = self._generate_caption(projected_tokens)
+            
+        # Update memory metrics for optimization
+        context = {
+            "token_count": len(compressed_tokens),
+            "original_token_count": len(vision_tokens),
+            "compression_ratio": len(compressed_tokens) / len(vision_tokens) if len(vision_tokens) > 0 else 1.0,
+            "query_type": "caption" if not query else "qa"
+        }
+        self._update_memory_metrics(context)
+            
+        return {
+            "response": response,
+            "token_count": len(compressed_tokens),
+            "original_token_count": len(vision_tokens),
+            "compression_ratio": len(compressed_tokens) / len(vision_tokens) if len(vision_tokens) > 0 else 1.0
+        }
+        
+    def process_stream_frame(self, frame: np.ndarray) -> Dict:
+        """Process a single frame from a real-time stream"""
+        # Optimize frame resolution
+        if self.config.use_dynamic_resolution:
+            processed_frame = frame  # Dynamic resolution handled by AVT
+        else:
+            processed_frame = self._reduce_resolution(frame)
+            
+        # Add to frame buffer
+        self.frame_buffer.append(processed_frame)
+        
+        # Keep buffer at reasonable size
+        if len(self.frame_buffer) > self.config.max_frame_count:
+            self.frame_buffer.pop(0)
+            
+        # Process recent frames
+        return self.process_frames(self.frame_buffer[-10:])
+        
+    def _process_frames_with_avt(self, frames: List[np.ndarray]) -> torch.Tensor:
+        """Process frames using Any-resolution Vision Tokenization"""
+        vision_tokens = []
+        
+        for frame in frames:
+            # Convert frame to tensor and move to device
+            frame_tensor = self._preprocess_image(frame).to(self.device)
+            
+            # Extract features with dynamic resolution using AVT
+            with torch.no_grad():
+                frame_tokens = self.vision_encoder(frame_tensor)
+                
+            vision_tokens.append(frame_tokens)
+            
+        # Concatenate tokens from all frames
+        return torch.cat(vision_tokens, dim=1)
+        
+    def _preprocess_image(self, image: np.ndarray) -> torch.Tensor:
+        """Preprocess image for vision encoder"""
+        # Convert BGR to RGB
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        
+        # Normalize and convert to tensor
+        image_tensor = torch.from_numpy(image_rgb).permute(2, 0, 1).float()
+        image_tensor = image_tensor / 255.0
+        
+        # Add batch dimension
+        return image_tensor.unsqueeze(0)
+        
+    def _extract_frames(self, video_path: str) -> List[np.ndarray]:
+        """Extract frames from video with specified sampling rate"""
+        frames = []
+        cap = cv2.VideoCapture(video_path)
+        
+        if not cap.isOpened():
+            raise ValueError(f"Could not open video: {video_path}")
+            
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        
+        # Calculate frame indices to sample
+        sample_interval = max(1, int(fps / self.config.frame_sampling_rate))
+        frame_indices = list(range(0, frame_count, sample_interval))
+        
+        # Limit to max frame count
+        frame_indices = frame_indices[:self.config.max_frame_count]
+        
+        for i in range(frame_count):
+            ret, frame = cap.read()
+            
+            if not ret:
+                break
+                
+            if i in frame_indices:
+                frames.append(frame)
+                
+        cap.release()
+        return frames
 
     def _reduce_resolution(self, frame: np.ndarray) -> np.ndarray:
         """Optimize frame resolution"""
@@ -141,28 +232,15 @@ class VideoLLaMA3Integration:
         """
         Switch between model variants
         Args:
-            variant: Either "default" or "abliterated"
+            variant: Either "default", "abliterated", or "streaming"
         """
         if variant not in self.model_variants:
             raise ValueError(f"Invalid variant. Choose from {list(self.model_variants.keys())}")
         
         if variant != self.current_variant:
             self.current_variant = variant
-            self.model = self._load_model(self.model_variants[variant])
-
-    def _load_model(self, model_path: str):
-        """
-        Load the specified model variant
-        """
-        # Model loading logic here
-        pass
-
-    def process_inputs(self, inputs):
-        """
-        Process inputs using current model variant
-        """
-        # Use self.model to process inputs
-        pass
+            # Reload models with new variant
+            self._initialize_models()
 
     def _update_memory_metrics(self, context: Dict[str, Any]):
         """Update memory optimization metrics"""
@@ -172,10 +250,81 @@ class VideoLLaMA3Integration:
             self.memory_optimizer.optimize_indices()
 
     def __del__(self):
+        """Clean up resources"""
         self.frame_buffer.clear()
         torch.cuda.empty_cache()
 
-# Inside your simulation loop
-frame = unreal_engine_capture()  # Capture frame using Unreal methods
-output = video_llama3_integration.process_stream_frame(frame)
-consciousness_core.update_state(output)
+class DifferentialFramePruner:
+    """Implements the Differential Frame Pruner (DiffFP) algorithm"""
+    
+    def __init__(self, threshold: float = 0.1):
+        self.threshold = threshold
+        
+    def compress(
+        self, 
+        vision_tokens: torch.Tensor, 
+        frames: List[np.ndarray]
+    ) -> torch.Tensor:
+        """Compress video tokens by removing redundant frames"""
+        if len(frames) <= 1:
+            return vision_tokens
+            
+        # Calculate differences between consecutive frames
+        frame_diffs = []
+        for i in range(1, len(frames)):
+            # Calculate normalized pixel-space L1 distance
+            diff = np.mean(np.abs(frames[i].astype(float) - frames[i-1].astype(float))) / 255.0
+            frame_diffs.append(diff)
+            
+        # Create mask for frames to keep
+        keep_mask = [True]  # Always keep first frame
+        for diff in frame_diffs:
+            # Keep frame if difference exceeds threshold
+            keep_mask.append(diff > self.threshold)
+            
+        # Map frame mask to token mask
+        # This assumes each frame corresponds to a fixed segment in vision_tokens
+        tokens_per_frame = vision_tokens.shape[1] // len(frames)
+        token_mask = []
+        
+        for keep in keep_mask:
+            token_mask.extend([keep] * tokens_per_frame)
+            
+        # Handle potential length mismatch
+        if len(token_mask) < vision_tokens.shape[1]:
+            token_mask.extend([True] * (vision_tokens.shape[1] - len(token_mask)))
+            
+        # Extract and return only the tokens we want to keep
+        token_indices = [i for i, keep in enumerate(token_mask) if keep]
+        return vision_tokens[:, token_indices, :]
+
+class VideoMemoryOptimizer:
+    """Optimizes memory usage for video processing"""
+    
+    def __init__(self, optimization_interval: int = 100):
+        self.access_patterns = []
+        self.optimization_interval = optimization_interval
+        self.access_count = 0
+        
+    def update_access_patterns(self, context: Dict[str, Any]):
+        """Update access pattern data"""
+        self.access_patterns.append(context)
+        self.access_count += 1
+        
+    def should_optimize(self) -> bool:
+        """Determine if optimization should be performed"""
+        return self.access_count >= self.optimization_interval
+        
+    def optimize_indices(self):
+        """Perform memory optimization"""
+        # Reset counter
+        self.access_count = 0
+        
+        # Analyze patterns and optimize (placeholder implementation)
+        compression_ratios = [p.get("compression_ratio", 1.0) for p in self.access_patterns]
+        avg_compression = sum(compression_ratios) / len(compression_ratios) if compression_ratios else 1.0
+        
+        # Clear old patterns
+        self.access_patterns = []
+        
+        print(f"Memory optimization performed. Average compression ratio: {avg_compression:.2f}")
