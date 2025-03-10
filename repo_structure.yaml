@@ -688,6 +688,8 @@
       type: file
     - path: /tests/test_memory_optimization.py
       type: file
+    - path: /tests/test_metaconsciousness_evaluation.py
+      type: file
     - path: /tests/test_narrative_engine.py
       type: file
     - path: /tests/test_predictive_processing.py
