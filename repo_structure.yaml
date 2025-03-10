@@ -189,6 +189,8 @@
         type: file
       - path: /models/evaluation/memory_metrics.py
         type: file
+      - path: /models/evaluation/metaconsciousness_evaluation.py
+        type: file
       - path: /models/evaluation/self_awareness_evaluation.py
         type: file
       - path: /models/evaluation/templates
