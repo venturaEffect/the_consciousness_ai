@@ -1,7 +1,7 @@
+import time
 import numpy as np
 import torch
 from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
 
 @dataclass
 class MetaconsciousnessMetrics:
@@ -140,7 +140,7 @@ class MetaconsciousnessEvaluator:
         avg_magnitude = sum(update_magnitudes) / len(update_magnitudes)
         
         # Calculate proportion of updates that resolve contradictions
-        contradiction_resolutions = sum(1 for update in belief updates 
+        contradiction_resolutions = sum(1 for update in belief_updates 
                                       if update.get('resolves_contradiction', False))
         resolution_ratio = contradiction_resolutions / len(belief_updates)
         
