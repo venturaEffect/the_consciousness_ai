@@ -12,174 +12,283 @@ Based on the research paper's MANN architecture and holon concept.
 
 import torch
 import torch.nn as nn
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional, List, Tuple, Any
 from dataclasses import dataclass
 import numpy as np
+import time
 
-@dataclass 
-class SelfModelState:
-    """Tracks the current state of the self-model"""
-    emotional_state: Dict[str, float]
-    attention_focus: float
-    memory_context: List[Dict]
-    consciousness_level: float
-    confidence: float
-    goals: List[Dict[str, float]]
-    last_update_timestamp: float
+@dataclass
+class SelfState:
+    """Comprehensive representation of the system's self-model"""
+    # Identity components
+    id: str = "ACM-1"
+    name: str = "Artificial Consciousness Module"
+    
+    # Current state tracking
+    emotional_state: Dict[str, float] = None
+    attention_focus: Dict[str, float] = None
+    confidence_levels: Dict[str, float] = None
+    
+    # Meta-cognitive components
+    knowledge_domains: Dict[str, float] = None  # Domain: confidence level
+    knowledge_boundaries: List[str] = None      # Known knowledge gaps
+    temporal_continuity: float = 0.0
+    
+    # Self-reflection components
+    beliefs: Dict[str, Any] = None
+    intentions: Dict[str, Any] = None
+    learning_recognition: float = 0.0
+    stability: float = 0.0
+    
+    # Metacognitive metrics
+    confidence_calibration: float = 0.0  # How well confidence predicts accuracy
+    
+    def __post_init__(self):
+        """Initialize empty containers"""
+        if self.emotional_state is None:
+            self.emotional_state = {}
+        if self.attention_focus is None:
+            self.attention_focus = {}
+        if self.confidence_levels is None:
+            self.confidence_levels = {}
+        if self.knowledge_domains is None:
+            self.knowledge_domains = {}
+        if self.knowledge_boundaries is None:
+            self.knowledge_boundaries = []
+        if self.beliefs is None:
+            self.beliefs = {}
+        if self.intentions is None:
+            self.intentions = {}
 
 class SelfRepresentationCore:
-    """Enhanced self-representation core with improved integration capabilities"""
+    """
+    Core implementation of the system's representation of itself.
     
-    def __init__(self, config):
+    This is the foundation for self-awareness, integrating:
+    1. Emotional recognition
+    2. Attention tracking
+    3. Confidence calibration
+    4. Epistemological structures (what the system knows about what it knows)
+    5. Temporal self-continuity
+    """
+    
+    def __init__(self, config: Dict):
         self.config = config
-        self.state = SelfModelState(
-            emotional_state={},
-            attention_focus=0.0,
-            memory_context=[],
-            consciousness_level=0.1,
-            temporal_coherence=0.0,  # Added temporal coherence tracking
-            metacognitive_awareness=0.0  # Added metacognitive awareness tracking
-        )
-        # Initialize components
-        self.memory_network = None
-        self.emotion_network = None
-        self.attention_schema = None
-        self.meta_learner = None
-        self._initialize_networks()
-        self.experience_buffer = ExperienceBuffer(max_size=config.get('experience_buffer_size', 1000))
-        
-    def _initialize_networks(self):
-        """Initialize neural networks for self-modeling"""
-        self.memory_network = MemoryNetworkModule(self.config.get('memory_embedding_dim', 256))
-        self.emotion_network = EmotionalNetworkModule(self.config.get('emotional_embedding_dim', 128))
-        self.attention_schema = AttentionSchemaModule(self.config.get('attention_schema_dim', 64))
-        self.meta_learner = MetaLearningModule(self.config)
+        self.state = SelfState()
+        self.state_history = []
+        self.max_history = config.get("max_history", 100)
+        self.direct_learner = DirectExperienceLearner(config.get("learning", {}))
+        self.social_network = SocialLearningNetwork(config.get("social", {}))
+        self.meta_learner = MetaLearningModule(config.get("meta_learning", {}))
         
     def update_self_model(
         self,
-        current_state: Dict,
+        current_state: Dict[str, Any],
         attention_level: float,
         social_feedback: Optional[Dict] = None,
         timestamp: Optional[float] = None
-    ) -> Dict:
-        """Update self-model with new experience and attention information"""
-        # Create embeddings for current state
-        state_embedding = self._create_state_embedding(current_state)
+    ) -> Dict[str, Any]:
+        """
+        Update the self-model based on new experience and feedback
         
-        # Get emotional features
-        emotional_features = self.emotion_network.process(
-            current_state.get("emotional_context", {}),
-            self.state.emotional_state
-        )
-        
-        # Update attention schema with current focus
-        attention_features = self.attention_schema.update(
-            current_state=current_state,
-            attention_level=attention_level
-        )
-        
-        # Integrate with memory context
-        memory_context = self._retrieve_memory_context(
-            state_embedding, 
-            emotional_features,
-            k=self.config.get('memory_context_size', 5)
-        )
-        
-        # Apply meta-learning for adaptive updates
-        meta_update = self.meta_learner.get_update(
-            emotional_state=emotional_features,
-            behavioral_state=state_embedding,
-            social_context=self._process_social_feedback(social_feedback),
-            attention_level=attention_level
-        )
-        
-        # Calculate temporal coherence between current and previous states
-        temporal_coherence = self._calculate_temporal_coherence(
-            current_state=state_embedding,
-            previous_states=self.experience_buffer.get_recent(5)
-        )
-        
-        # Update internal state
-        self._update_internal_state(
-            emotional_features=emotional_features,
-            attention_level=attention_level,
-            memory_context=memory_context,
-            temporal_coherence=temporal_coherence,
-            meta_update=meta_update
-        )
-        
-        # Store experience if attention is above threshold
-        if attention_level > self.config.get('attention_threshold', 0.3):
-            self.experience_buffer.add({
-                'state_embedding': state_embedding,
-                'emotional_features': emotional_features,
-                'attention_level': attention_level,
-                'timestamp': timestamp or time.time()
-            })
+        Args:
+            current_state: Current perception state
+            attention_level: Current attention level (0-1)
+            social_feedback: Optional feedback from social interactions
+            timestamp: Optional timestamp (defaults to current time)
             
-        # Calculate metacognitive awareness
-        metacognitive_awareness = self._calculate_metacognition(
-            state_embedding,
-            meta_update,
-            self.experience_buffer
+        Returns:
+            Dict containing update results
+        """
+        if timestamp is None:
+            timestamp = time.time()
+            
+        # Extract relevant features from current state
+        feature_embedding = self._extract_features(current_state)
+        
+        # Direct experience learning
+        direct_update = self.direct_learner(
+            feature_embedding=feature_embedding,
+            current_state=self.state
         )
         
-        # Update metacognitive awareness in state
-        self.state.metacognitive_awareness = metacognitive_awareness
+        # Social learning (if feedback provided)
+        social_update = {}
+        if social_feedback:
+            social_embedding = self.social_network(social_feedback)
+            social_update = self._integrate_social_feedback(social_embedding)
             
+        # Epistemological update - update what the system knows about what it knows
+        epistemic_update = self._update_epistemic_model(current_state)
+        
+        # Temporal continuity - track changes over time
+        temp_update = self._update_temporal_continuity(timestamp)
+        
+        # Update confidence calibration
+        if 'prediction_outcomes' in current_state:
+            self._update_confidence_calibration(current_state['prediction_outcomes'])
+        
+        # Store history
+        self._store_state_history()
+        
+        # Return update results
         return {
-            'updated_state': self.get_current_state(),
-            'temporal_coherence': temporal_coherence,
-            'metacognitive_awareness': metacognitive_awareness,
-            'attention_level': attention_level,
-            'memory_integration_score': self._evaluate_memory_integration()
+            'direct_update': direct_update,
+            'social_update': social_update,
+            'epistemic_update': epistemic_update,
+            'temporal_update': temp_update,
+            'timestamp': timestamp
         }
     
-    def _calculate_metacognition(
-        self,
-        current_state,
-        meta_update,
-        experience_buffer
-    ) -> float:
-        """Calculate metacognitive awareness based on self-reflection"""
-        # Implement metacognitive calculations based on:
-        # 1. Consistency between predictions and experiences
-        # 2. Self-monitoring of attention processes
-        # 3. Awareness of knowledge gaps
+    def _extract_features(self, current_state: Dict[str, Any]) -> torch.Tensor:
+        """Extract feature embedding from current state"""
+        # Implementation depends on specific feature extraction approach
+        # This could use a neural network encoder, for example
+        pass
         
-        # Placeholder implementation
-        prediction_accuracy = 0.5  # Replace with actual calculation
-        attention_monitoring = 0.7  # Replace with actual calculation
-        knowledge_confidence = 0.6  # Replace with actual calculation
+    def _integrate_social_feedback(self, social_embedding: torch.Tensor) -> Dict:
+        """Integrate feedback from social interactions"""
+        pass
+    
+    def _update_epistemic_model(self, current_state: Dict[str, Any]) -> Dict:
+        """
+        Update the system's model of what it knows.
         
-        return (prediction_accuracy + attention_monitoring + knowledge_confidence) / 3.0
+        This is critical for "knowing that one knows" - metacognitive awareness
+        """
+        # Check for successful predictions to update knowledge confidence
+        if 'prediction_outcomes' in current_state:
+            outcomes = current_state['prediction_outcomes']
+            for domain, result in outcomes.items():
+                # Update confidence in this knowledge domain based on prediction success
+                prev_confidence = self.state.knowledge_domains.get(domain, 0.5)
+                correct = result.get('correct', False)
+                
+                # Increase confidence for correct predictions, decrease for incorrect
+                update_rate = self.config.get("knowledge_update_rate", 0.05)
+                new_confidence = prev_confidence + update_rate if correct else prev_confidence - update_rate
+                self.state.knowledge_domains[domain] = max(0.0, min(1.0, new_confidence))
         
-    def _calculate_temporal_coherence(
-        self,
-        current_state,
-        previous_states
-    ) -> float:
-        """Calculate temporal coherence between current and previous states"""
-        if not previous_states:
+        # Identify knowledge boundaries when uncertain predictions occur
+        if 'uncertain_areas' in current_state:
+            for area in current_state['uncertain_areas']:
+                if area not in self.state.knowledge_boundaries:
+                    self.state.knowledge_boundaries.append(area)
+        
+        return {
+            'domains_updated': list(self.state.knowledge_domains.keys()),
+            'boundaries_identified': self.state.knowledge_boundaries
+        }
+    
+    def _update_temporal_continuity(self, timestamp: float) -> Dict:
+        """Update the system's sense of continuity across time"""
+        # Calculate temporal continuity based on consistency of self-representation
+        if self.state_history:
+            last_state = self.state_history[-1]
+            time_diff = timestamp - last_state.get('timestamp', timestamp)
+            
+            # Calculate state similarity
+            similarity = self._calculate_state_similarity(self.state, last_state.get('state'))
+            
+            # Update continuity score (higher for similar states close in time)
+            prev_continuity = self.state.temporal_continuity
+            decay_rate = self.config.get("continuity_decay_rate", 0.1)
+            time_factor = max(0.0, 1.0 - (time_diff / 3600))  # Normalize to hours
+            
+            new_continuity = prev_continuity * (1.0 - decay_rate) + similarity * time_factor * decay_rate
+            self.state.temporal_continuity = new_continuity
+            
+            return {
+                'previous_continuity': prev_continuity,
+                'new_continuity': new_continuity,
+                'time_difference': time_diff
+            }
+        
+        return {'initialized': True}
+    
+    def _update_confidence_calibration(self, prediction_outcomes: Dict) -> None:
+        """
+        Update how well calibrated the system's confidence is with actual accuracy.
+        
+        This is essential for accurate metacognition.
+        """
+        confidences = []
+        accuracies = []
+        
+        # Collect confidence-accuracy pairs
+        for domain, outcome in prediction_outcomes.items():
+            if 'confidence' in outcome and 'correct' in outcome:
+                confidences.append(outcome['confidence'])
+                accuracies.append(1.0 if outcome['correct'] else 0.0)
+        
+        if confidences:
+            # Calculate calibration (how well confidence predicts accuracy)
+            # Perfect calibration: confidence matches accuracy
+            confidences = np.array(confidences)
+            accuracies = np.array(accuracies)
+            
+            # Calculate calibration error (lower is better)
+            calibration_error = np.mean(np.abs(confidences - accuracies))
+            
+            # Update calibration score (higher is better)
+            self.state.confidence_calibration = 1.0 - calibration_error
+    
+    def _store_state_history(self) -> None:
+        """Store current state in history"""
+        self.state_history.append({
+            'state': self.state,
+            'timestamp': time.time()
+        })
+        
+        # Limit history size
+        if len(self.state_history) > self.max_history:
+            self.state_history = self.state_history[-self.max_history:]
+    
+    def _calculate_state_similarity(self, current_state: SelfState, previous_state: Optional[SelfState]) -> float:
+        """Calculate similarity between current and previous states"""
+        if not previous_state:
             return 0.0
             
-        # Calculate similarity between current state and recent states
-        similarities = []
-        for prev_state in previous_states:
-            if 'state_embedding' in prev_state:
-                sim = cosine_similarity(
-                    current_state.unsqueeze(0),
-                    prev_state['state_embedding'].unsqueeze(0)
-                ).item()
-                similarities.append(sim)
-                
-        return sum(similarities) / len(similarities) if similarities else 0.0
+        # Compare key aspects of state (emotional, attention, beliefs)
+        # Implementation depends on specific comparison metrics
+        # This is a placeholder
+        return 0.8
+    
+    def get_current_state(self) -> Dict[str, Any]:
+        """Get the current self-model state"""
+        return {
+            'id': self.state.id,
+            'name': self.state.name,
+            'emotional_state': self.state.emotional_state,
+            'attention_focus': self.state.attention_focus,
+            'confidence_levels': self.state.confidence_levels,
+            'knowledge_domains': self.state.knowledge_domains,
+            'knowledge_boundaries': self.state.knowledge_boundaries,
+            'temporal_continuity': self.state.temporal_continuity,
+            'beliefs': self.state.beliefs,
+            'intentions': self.state.intentions,
+            'learning_recognition': self.state.learning_recognition,
+            'stability': self.state.stability,
+            'confidence_calibration': self.state.confidence_calibration
+        }
         
-    def _evaluate_memory_integration(self) -> float:
-        """Evaluate how well memories are integrated into the self-model"""
-        # Placeholder implementation
-        # In a complete implementation, this would evaluate:
-        # 1. Coherence of memory retrievals
-        # 2. Relevance to current context
-        # 3. Emotional congruence
-        return 0.75  # Replace with actual calculation
+# Additional components to implement (placeholders)
+class DirectExperienceLearner:
+    def __init__(self, config):
+        self.config = config
+        
+    def __call__(self, feature_embedding, current_state):
+        # Implement direct learning from experience
+        return {}
+
+class SocialLearningNetwork:
+    def __init__(self, config):
+        self.config = config
+        
+    def __call__(self, social_feedback):
+        # Implement learning from social feedback
+        return torch.zeros(128)  # Placeholder embedding
+        
+class MetaLearningModule:
+    def __init__(self, config):
+        self.config = config
