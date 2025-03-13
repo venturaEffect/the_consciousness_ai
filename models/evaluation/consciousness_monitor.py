@@ -17,6 +17,7 @@ from typing import Dict, Any
 import torch
 import numpy as np
 from dataclasses import dataclass
+from models.evaluation.levin_consciousness_metrics import LevinConsciousnessEvaluator, LevinConsciousnessMetrics
 
 @dataclass
 class ConsciousnessMetrics:
@@ -44,12 +45,21 @@ class ConsciousnessMonitor:
         self.self_awareness_monitor = SelfAwarenessMonitor(self.acm)
         self.metrics = ConsciousnessMetrics()
         self.history = []
+        self.levin_evaluator = LevinConsciousnessEvaluator(config)
+        self.levin_metrics_history = []
+        self.state_history = []  # For morphological adaptation tracking
 
     def evaluate_state(
         self,
         current_state: Dict[str, torch.Tensor],
-        emotional_context: Dict[str, float],
-        attention_metrics: Dict[str, float]
+        emotional_context: Dict[str, float] = None,
+        attention_metrics: Dict[str, float] = None,
+        bioelectric_state: Dict[str, Any] = None,
+        holonic_output: Dict[str, Any] = None,
+        actions: list = None,
+        goals: list = None,
+        outcomes: list = None,
+        component_states: Dict[str, Any] = None
     ) -> Dict[str, float]:
         """
         Evaluate the current consciousness state, updating internal metrics.
@@ -58,6 +68,12 @@ class ConsciousnessMonitor:
             current_state: Dictionary holding memory and system state tensors.
             emotional_context: Dictionary of emotional readings (valence, arousal, etc.).
             attention_metrics: Dictionary describing attention levels and stability.
+            bioelectric_state: Dictionary of bioelectric state readings.
+            holonic_output: Dictionary of holonic output readings.
+            actions: List of actions taken.
+            goals: List of goals.
+            outcomes: List of outcomes.
+            component_states: Dictionary of component states.
         
         Returns:
             A dictionary of computed consciousness metrics.
@@ -81,7 +97,33 @@ class ConsciousnessMonitor:
             'consciousness_score': consciousness_score
         })
 
-        return self.get_current_metrics()
+        # Store current state for history
+        self.state_history.append(current_state)
+        if len(self.state_history) > 50:  # Keep last 50 states
+            self.state_history.pop(0)
+        
+        # Evaluate Levin consciousness metrics
+        levin_metrics = self.levin_evaluator.evaluate_levin_consciousness(
+            bioelectric_state or {},
+            holonic_output or {},
+            self.state_history[:-1],  # Past states
+            current_state,
+            actions or [],
+            goals or [],
+            outcomes or [],
+            component_states or {}
+        )
+        
+        # Store metrics history
+        self.levin_metrics_history.append(levin_metrics)
+        if len(self.levin_metrics_history) > 100:  # Keep last 100 records
+            self.levin_metrics_history.pop(0)
+            
+        # Return combined metrics
+        return {
+            **self.get_current_metrics(),  # Existing metrics
+            **levin_metrics    # Levin-inspired metrics
+        }
 
     def _evaluate_emotional_awareness(self, emotional_context: Dict[str, float]) -> float:
         """

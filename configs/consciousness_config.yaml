@@ -17,3 +17,30 @@ ethical_parameters:
   empathy_weight: 0.8
   pain_avoidance: 0.9
   moral_threshold: 0.7
+
+levin_inspired:
+  bioelectric:
+    field_dimension: 128
+    bioelectric_channels: 8
+    signaling_layers: 3
+    gap_junction_heads: 4
+    gap_junction_dropout: 0.1
+
+  holonic:
+    num_holons: 8
+    holon_types:
+      - cognitive
+      - perceptual
+      - memory
+      - emotional
+    goal_dim: 32
+    memory_dim: 64
+    perception_dim: 64
+    integration_heads: 4
+
+  evaluation:
+    bioelectric_complexity_weight: 0.2
+    morphological_adaptation_weight: 0.2
+    collective_intelligence_weight: 0.2
+    goal_directed_behavior_weight: 0.2
+    basal_cognition_weight: 0.2

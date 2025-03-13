@@ -14,7 +14,8 @@ from models.language.llama_3_3 import LlamaForCausalLM
 from models.predictive.attention_mechanism import ConsciousnessAttention
 from models.integration.video_llama3_integration import VideoLLaMA3Integration
 from simulations.enviroments.interactive_vr_environment import InteractiveVREnvironment
-
+from models.self_model.bioelectric_signaling import BioelectricSignalingNetwork
+from models.self_model.holonic_intelligence import HolonicSystem
 
 
 @dataclass
@@ -61,6 +62,18 @@ class ConsciousnessCore:
         # Experience thresholds.
         self.novelty_threshold = self.config.consciousness.memory.novelty_threshold
         self.stability_threshold = self.config.consciousness.memory.stability_threshold
+
+        # Add Levin-inspired components
+        self.bioelectric_network = BioelectricSignalingNetwork(config)
+        self.holonic_system = HolonicSystem(config)
+        
+        # Track bioelectric state
+        self.bioelectric_state = {
+            'memory': None,
+            'attention': None,
+            'narrative': None,
+            'emotional': None
+        }
 
     def process_experience(
         self,
