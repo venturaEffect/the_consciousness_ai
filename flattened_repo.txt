@@ -1908,6 +1908,33 @@ ethical_parameters:
   pain_avoidance: 0.9
   moral_threshold: 0.7
 
+levin_inspired:
+  bioelectric:
+    field_dimension: 128
+    bioelectric_channels: 8
+    signaling_layers: 3
+    gap_junction_heads: 4
+    gap_junction_dropout: 0.1
+
+  holonic:
+    num_holons: 8
+    holon_types:
+      - cognitive
+      - perceptual
+      - memory
+      - emotional
+    goal_dim: 32
+    memory_dim: 64
+    perception_dim: 64
+    integration_heads: 4
+
+  evaluation:
+    bioelectric_complexity_weight: 0.2
+    morphological_adaptation_weight: 0.2
+    collective_intelligence_weight: 0.2
+    goal_directed_behavior_weight: 0.2
+    basal_cognition_weight: 0.2
+
 </configs/consciousness_config.yaml>
 
 <configs/consciousness_development.yaml>
@@ -47649,7 +47676,8 @@ from models.language.llama_3_3 import LlamaForCausalLM
 from models.predictive.attention_mechanism import ConsciousnessAttention
 from models.integration.video_llama3_integration import VideoLLaMA3Integration
 from simulations.enviroments.interactive_vr_environment import InteractiveVREnvironment
-
+from models.self_model.bioelectric_signaling import BioelectricSignalingNetwork
+from models.self_model.holonic_intelligence import HolonicSystem
 
 
 @dataclass
@@ -47696,6 +47724,18 @@ class ConsciousnessCore:
         # Experience thresholds.
         self.novelty_threshold = self.config.consciousness.memory.novelty_threshold
         self.stability_threshold = self.config.consciousness.memory.stability_threshold
+
+        # Add Levin-inspired components
+        self.bioelectric_network = BioelectricSignalingNetwork(config)
+        self.holonic_system = HolonicSystem(config)
+        
+        # Track bioelectric state
+        self.bioelectric_state = {
+            'memory': None,
+            'attention': None,
+            'narrative': None,
+            'emotional': None
+        }
 
     def process_experience(
         self,
@@ -49466,6 +49506,7 @@ from typing import Dict, Any
 import torch
 import numpy as np
 from dataclasses import dataclass
+from models.evaluation.levin_consciousness_metrics import LevinConsciousnessEvaluator, LevinConsciousnessMetrics
 
 @dataclass
 class ConsciousnessMetrics:
@@ -49493,12 +49534,21 @@ class ConsciousnessMonitor:
         self.self_awareness_monitor = SelfAwarenessMonitor(self.acm)
         self.metrics = ConsciousnessMetrics()
         self.history = []
+        self.levin_evaluator = LevinConsciousnessEvaluator(config)
+        self.levin_metrics_history = []
+        self.state_history = []  # For morphological adaptation tracking
 
     def evaluate_state(
         self,
         current_state: Dict[str, torch.Tensor],
-        emotional_context: Dict[str, float],
-        attention_metrics: Dict[str, float]
+        emotional_context: Dict[str, float] = None,
+        attention_metrics: Dict[str, float] = None,
+        bioelectric_state: Dict[str, Any] = None,
+        holonic_output: Dict[str, Any] = None,
+        actions: list = None,
+        goals: list = None,
+        outcomes: list = None,
+        component_states: Dict[str, Any] = None
     ) -> Dict[str, float]:
         """
         Evaluate the current consciousness state, updating internal metrics.
@@ -49507,6 +49557,12 @@ class ConsciousnessMonitor:
             current_state: Dictionary holding memory and system state tensors.
             emotional_context: Dictionary of emotional readings (valence, arousal, etc.).
             attention_metrics: Dictionary describing attention levels and stability.
+            bioelectric_state: Dictionary of bioelectric state readings.
+            holonic_output: Dictionary of holonic output readings.
+            actions: List of actions taken.
+            goals: List of goals.
+            outcomes: List of outcomes.
+            component_states: Dictionary of component states.
         
         Returns:
             A dictionary of computed consciousness metrics.
@@ -49530,7 +49586,33 @@ class ConsciousnessMonitor:
             'consciousness_score': consciousness_score
         })
 
-        return self.get_current_metrics()
+        # Store current state for history
+        self.state_history.append(current_state)
+        if len(self.state_history) > 50:  # Keep last 50 states
+            self.state_history.pop(0)
+        
+        # Evaluate Levin consciousness metrics
+        levin_metrics = self.levin_evaluator.evaluate_levin_consciousness(
+            bioelectric_state or {},
+            holonic_output or {},
+            self.state_history[:-1],  # Past states
+            current_state,
+            actions or [],
+            goals or [],
+            outcomes or [],
+            component_states or {}
+        )
+        
+        # Store metrics history
+        self.levin_metrics_history.append(levin_metrics)
+        if len(self.levin_metrics_history) > 100:  # Keep last 100 records
+            self.levin_metrics_history.pop(0)
+            
+        # Return combined metrics
+        return {
+            **self.get_current_metrics(),  # Existing metrics
+            **levin_metrics    # Levin-inspired metrics
+        }
 
     def _evaluate_emotional_awareness(self, emotional_context: Dict[str, float]) -> float:
         """
@@ -50390,6 +50472,247 @@ class EnhancedConsciousnessEvaluator:
             'consciousness_level': self._calculate_consciousness_level()
         }
 </models/evaluation/enhanced_consciousness_metrics.py>
+
+<models/evaluation/levin_consciousness_metrics.py>
+import torch
+import numpy as np
+from typing import Dict, List, Optional
+from dataclasses import dataclass
+
+@dataclass
+class LevinConsciousnessMetrics:
+    """Metrics based on Michael Levin's principles of consciousness"""
+    bioelectric_complexity: float = 0.0  # Measure of bioelectric field complexity
+    morphological_adaptation: float = 0.0  # Ability to adapt internal representations
+    collective_intelligence: float = 0.0  # Degree of holonic integration
+    goal_directed_behavior: float = 0.0  # Evidence of purposeful behavior
+    basal_cognition: float = 0.0  # Non-neural cognitive processes
+
+    def get_overall_score(self) -> float:
+        """Calculate overall Levin consciousness score"""
+        metrics = [
+            self.bioelectric_complexity,
+            self.morphological_adaptation,
+            self.collective_intelligence,
+            self.goal_directed_behavior,
+            self.basal_cognition
+        ]
+        return sum(metrics) / len(metrics)
+
+class LevinConsciousnessEvaluator:
+    """
+    Evaluates consciousness based on Levin's theories of:
+    1. Bioelectric signaling and field dynamics
+    2. Collective intelligence across scales
+    3. Goal-directed behavior and basal cognition
+    4. Morphological computation
+    """
+    
+    def __init__(self, config: Dict):
+        self.config = config
+        
+    def evaluate_bioelectric_complexity(self, bioelectric_state: Dict[str, torch.Tensor]) -> float:
+        """
+        Evaluate complexity of bioelectric fields
+        Similar to IIT's phi measure but focused on field dynamics
+        """
+        if not bioelectric_state:
+            return 0.0
+            
+        # Calculate field differentials as a measure of complexity
+        field_values = [field for field in bioelectric_state.values() if field is not None]
+        if len(field_values) < 2:
+            return 0.0
+            
+        # Calculate field gradients between components
+        gradients = []
+        for i in range(len(field_values)):
+            for j in range(i + 1, len(field_values)):
+                if field_values[i].shape == field_values[j].shape:
+                    gradient = torch.norm(field_values[i] - field_values[j]).item()
+                    gradients.append(gradient)
+        
+        if not gradients:
+            return 0.0
+            
+        # Calculate mean gradient as complexity measure
+        return sum(gradients) / len(gradients)
+        
+    def evaluate_morphological_adaptation(
+        self, 
+        past_states: List[Dict], 
+        current_state: Dict
+    ) -> float:
+        """
+        Evaluate adaptation of internal representations over time
+        Based on Levin's concept of morphological computation
+        """
+        if not past_states or not current_state:
+            return 0.0
+            
+        # Check for state representation changes
+        changes = []
+        for past_state in past_states[-5:]:  # Look at last 5 states
+            if 'integrated_state' in past_state and 'integrated_state' in current_state:
+                past_integrated = past_state['integrated_state']
+                current_integrated = current_state['integrated_state']
+                
+                if isinstance(past_integrated, torch.Tensor) and isinstance(current_integrated, torch.Tensor):
+                    if past_integrated.shape == current_integrated.shape:
+                        # Calculate cosine similarity as measure of change
+                        similarity = torch.nn.functional.cosine_similarity(
+                            past_integrated.reshape(1, -1), 
+                            current_integrated.reshape(1, -1),
+                            dim=1
+                        ).item()
+                        changes.append(1.0 - similarity)  # Convert to distance
+        
+        if not changes:
+            return 0.0
+            
+        # Average change as adaptation score
+        return sum(changes) / len(changes)
+        
+    def evaluate_collective_intelligence(self, holonic_output: Dict) -> float:
+        """
+        Evaluate degree of integration between holonic components
+        Based on Levin's concept of collective intelligence
+        """
+        if 'attention_weights' not in holonic_output or 'holon_states' not in holonic_output:
+            return 0.0
+            
+        attention_weights = holonic_output['attention_weights']
+        holon_states = holonic_output['holon_states']
+        
+        # Calculate entropy of attention distribution
+        if isinstance(attention_weights, torch.Tensor):
+            # Normalize weights
+            weights_norm = torch.nn.functional.softmax(attention_weights.reshape(-1), dim=0)
+            
+            # Calculate entropy
+            entropy = -torch.sum(weights_norm * torch.log(weights_norm + 1e-10)).item()
+            
+            # Scale to 0-1 range (assume max entropy = log(n))
+            max_entropy = torch.log(torch.tensor(float(weights_norm.numel()))).item()
+            normalized_entropy = entropy / max_entropy if max_entropy > 0 else 0.0
+            
+            # Return 1 - normalized_entropy as measure of integration
+            # (lower entropy = higher integration)
+            return 1.0 - normalized_entropy
+            
+        return 0.0
+        
+    def evaluate_goal_directed_behavior(
+        self,
+        actions: List[Dict],
+        goals: List[Dict],
+        outcomes: List[Dict]
+    ) -> float:
+        """
+        Evaluate evidence of goal-directed behavior
+        Based on Levin's concept of goal-directedness
+        """
+        if not actions or not goals or not outcomes or len(actions) != len(goals) != len(outcomes):
+            return 0.0
+            
+        # Calculate alignment between goals and outcomes
+        alignments = []
+        for goal, outcome in zip(goals, outcomes):
+            if 'embedding' in goal and 'embedding' in outcome:
+                goal_embed = goal['embedding']
+                outcome_embed = outcome['embedding']
+                
+                if isinstance(goal_embed, torch.Tensor) and isinstance(outcome_embed, torch.Tensor):
+                    if goal_embed.shape == outcome_embed.shape:
+                        # Calculate cosine similarity as measure of alignment
+                        similarity = torch.nn.functional.cosine_similarity(
+                            goal_embed.reshape(1, -1),
+                            outcome_embed.reshape(1, -1),
+                            dim=1
+                        ).item()
+                        alignments.append(similarity)
+        
+        if not alignments:
+            return 0.0
+            
+        # Average alignment as goal-directedness score
+        return sum(alignments) / len(alignments)
+        
+    def evaluate_basal_cognition(self, component_states: Dict[str, torch.Tensor]) -> float:
+        """
+        Evaluate non-neural cognitive processes
+        Based on Levin's concept of basal cognition
+        """
+        if not component_states:
+            return 0.0
+            
+        # Look for patterns in component activities
+        component_values = [state.mean().item() for state in component_states.values() 
+                           if isinstance(state, torch.Tensor)]
+        
+        if not component_values:
+            return 0.0
+            
+        # Calculate coefficient of variation as measure of basal activity
+        mean = np.mean(component_values)
+        std = np.std(component_values)
+        
+        if mean == 0:
+            return 0.0
+            
+        cv = std / mean
+        
+        # Normalize to 0-1 range (assuming cv range of 0-2)
+        normalized_cv = min(cv / 2.0, 1.0)
+        
+        return normalized_cv
+        
+    def evaluate_levin_consciousness(
+        self,
+        bioelectric_state: Dict[str, torch.Tensor],
+        holonic_output: Dict,
+        past_states: List[Dict],
+        current_state: Dict,
+        actions: List[Dict] = None,
+        goals: List[Dict] = None,
+        outcomes: List[Dict] = None,
+        component_states: Dict[str, torch.Tensor] = None
+    ) -> Dict[str, float]:
+        """
+        Evaluate consciousness metrics based on Levin's principles
+        """
+        # Set default values for optional parameters
+        actions = actions or []
+        goals = goals or []
+        outcomes = outcomes or []
+        component_states = component_states or {}
+        
+        # Calculate individual metrics
+        bioelectric_complexity = self.evaluate_bioelectric_complexity(bioelectric_state)
+        morphological_adaptation = self.evaluate_morphological_adaptation(past_states, current_state)
+        collective_intelligence = self.evaluate_collective_intelligence(holonic_output)
+        goal_directed_behavior = self.evaluate_goal_directed_behavior(actions, goals, outcomes)
+        basal_cognition = self.evaluate_basal_cognition(component_states)
+        
+        # Create metrics object
+        metrics = LevinConsciousnessMetrics(
+            bioelectric_complexity=bioelectric_complexity,
+            morphological_adaptation=morphological_adaptation,
+            collective_intelligence=collective_intelligence,
+            goal_directed_behavior=goal_directed_behavior,
+            basal_cognition=basal_cognition
+        )
+        
+        # Return as dictionary with overall score
+        return {
+            'bioelectric_complexity': bioelectric_complexity,
+            'morphological_adaptation': morphological_adaptation,
+            'collective_intelligence': collective_intelligence,
+            'goal_directed_behavior': goal_directed_behavior,
+            'basal_cognition': basal_cognition,
+            'overall_levin_score': metrics.get_overall_score()
+        }
+</models/evaluation/levin_consciousness_metrics.py>
 
 <models/evaluation/memory_evaluation.py>
 """
@@ -57247,6 +57570,65 @@ class SelfRepresentationCore(nn.Module):
 
 </models/self_model/belief_system.py>
 
+<models/self_model/bioelectric_signaling.py>
+import torch
+import torch.nn as nn
+from typing import Dict, List, Optional, Tuple
+
+class BioelectricSignalingNetwork(nn.Module):
+    """
+    Implements Levin's concept of bioelectric signaling for regulating
+    information flow between cognitive components.
+    
+    This module creates a dynamic signaling network that:
+    1. Establishes voltage-like gradients between memory and attention systems
+    2. Facilitates pattern recognition through field dynamics
+    3. Self-organizes into functional cognitive units
+    """
+    
+    def __init__(self, config: Dict):
+        super().__init__()
+        self.field_dim = config.get('field_dimension', 128)
+        self.num_channels = config.get('bioelectric_channels', 8)
+        
+        # Bioelectric field projectors
+        self.field_projector = nn.Linear(config['hidden_size'], self.field_dim * self.num_channels)
+        
+        # Signaling network
+        self.signaling_layers = nn.ModuleList([
+            nn.Linear(self.field_dim, self.field_dim) 
+            for _ in range(config.get('signaling_layers', 3))
+        ])
+        
+        # Gap junction simulation (information transfer between components)
+        self.gap_junction = nn.MultiheadAttention(
+            embed_dim=self.field_dim,
+            num_heads=config.get('gap_junction_heads', 4),
+            dropout=config.get('gap_junction_dropout', 0.1)
+        )
+    
+    def forward(self, component_states: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+        """Process states through bioelectric signaling network"""
+        # Project component states to bioelectric fields
+        fields = {}
+        for component, state in component_states.items():
+            fields[component] = self.field_projector(state).view(-1, self.num_channels, self.field_dim)
+        
+        # Simulate bioelectric diffusion and gap junction signaling
+        updated_fields = {}
+        for component, field in fields.items():
+            # Apply signaling transforms
+            for layer in self.signaling_layers:
+                field = torch.relu(layer(field))
+            
+            # Simulate gap junctions with other components
+            other_fields = torch.stack([f for c, f in fields.items() if c != component])
+            field_attended, _ = self.gap_junction(field, other_fields, other_fields)
+            updated_fields[component] = field_attended
+            
+        return updated_fields
+</models/self_model/bioelectric_signaling.py>
+
 <models/self_model/emotion_context_tracker.py>
 class EmotionContextTracker:
     """
@@ -57312,6 +57694,133 @@ class EmotionContextTracker:
         return float(emotion_values.get('valence', 0.0))
 
 </models/self_model/emotion_context_tracker.py>
+
+<models/self_model/holonic_intelligence.py>
+import torch
+import torch.nn as nn
+from typing import Dict, List, Any
+from models.self_model.bioelectric_signaling import BioelectricSignalingNetwork
+
+class HolonUnit(nn.Module):
+    """
+    Implements Levin's concept of holons - entities that are both autonomous
+    and part of a larger collective intelligence.
+    
+    Each holon:
+    1. Maintains its own state representation
+    2. Processes information autonomously
+    3. Communicates with other holons through bioelectric signaling
+    4. Participates in collective decision-making
+    """
+    def __init__(self, config: Dict, id: int):
+        super().__init__()
+        self.id = id
+        self.hidden_size = config['hidden_size']
+        self.holon_type = config.get('holon_type', 'cognitive')
+        
+        # Holonic state representation
+        self.state_network = nn.Sequential(
+            nn.Linear(self.hidden_size, self.hidden_size),
+            nn.LayerNorm(self.hidden_size),
+            nn.GELU(),
+            nn.Linear(self.hidden_size, self.hidden_size)
+        )
+        
+        # Feature networks based on holon type
+        self.feature_networks = nn.ModuleDict({
+            'goal_directed': nn.Linear(self.hidden_size, config.get('goal_dim', 32)),
+            'memory': nn.Linear(self.hidden_size, config.get('memory_dim', 64)),
+            'perception': nn.Linear(self.hidden_size, config.get('perception_dim', 64))
+        })
+        
+        # Communication channel
+        self.communication_channel = nn.Linear(self.hidden_size, self.hidden_size)
+    
+    def process(self, input_state: torch.Tensor) -> Dict[str, torch.Tensor]:
+        # Generate holonic state
+        holon_state = self.state_network(input_state)
+        
+        # Process through feature networks
+        features = {
+            name: network(holon_state) 
+            for name, network in self.feature_networks.items()
+        }
+        
+        # Generate communication output
+        comm_output = self.communication_channel(holon_state)
+        
+        return {
+            'state': holon_state,
+            'features': features,
+            'communication': comm_output
+        }
+
+class HolonicSystem(nn.Module):
+    """
+    A system of interacting holons that collectively form higher-level cognition.
+    
+    Implements Levin's principles of:
+    1. Collective intelligence through multi-scale organization
+    2. Self-organization through bioelectric signaling
+    3. Autonomous yet interconnected cognitive units
+    """
+    def __init__(self, config: Dict):
+        super().__init__()
+        self.num_holons = config.get('num_holons', 8)
+        
+        # Create a collection of holons
+        self.holons = nn.ModuleList([
+            HolonUnit(config, i) for i in range(self.num_holons)
+        ])
+        
+        # Bioelectric signaling between holons
+        self.signaling = BioelectricSignalingNetwork(config)
+        
+        # Holonic integration network
+        self.integration_network = nn.MultiheadAttention(
+            embed_dim=config['hidden_size'],
+            num_heads=config.get('integration_heads', 4)
+        )
+    
+    def forward(self, input_states: torch.Tensor) -> Dict[str, Any]:
+        # Process inputs through individual holons
+        holon_outputs = [holon.process(input_states) for holon in self.holons]
+        
+        # Extract holon states and communications
+        holon_states = torch.stack([output['state'] for output in holon_outputs])
+        communications = torch.stack([output['communication'] for output in holon_outputs])
+        
+        # Enable bioelectric signaling between holons
+        component_states = {f"holon_{i}": holon_outputs[i]['state'] for i in range(self.num_holons)}
+        updated_fields = self.signaling(component_states)
+        
+        # Integrate information through holonic attention
+        integrated_state, attention_weights = self.integration_network(
+            holon_states, holon_states, communications
+        )
+        
+        # Collect all features across holons
+        all_features = {}
+        for i, output in enumerate(holon_outputs):
+            for feature_name, feature_value in output['features'].items():
+                if feature_name not in all_features:
+                    all_features[feature_name] = []
+                all_features[feature_name].append(feature_value)
+        
+        # Average features across holons
+        integrated_features = {
+            name: torch.mean(torch.stack(values), dim=0)
+            for name, values in all_features.items()
+        }
+        
+        return {
+            'integrated_state': integrated_state,
+            'holon_states': holon_states,
+            'attention_weights': attention_weights,
+            'integrated_features': integrated_features,
+            'bioelectric_fields': updated_fields
+        }
+</models/self_model/holonic_intelligence.py>
 
 <models/self_model/intention_tracker.py>
 """
@@ -86695,6 +87204,140 @@ class TestEthicalDilemmas(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 </tests/test_ethical_dilemmas.py>
+
+<tests/test_levin_consciousness_metrics.py>
+import unittest
+import torch
+import sys
+import os
+from typing import Dict, List
+import numpy as np
+
+# Ensure modules can be imported
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from models.evaluation.levin_consciousness_metrics import LevinConsciousnessEvaluator, LevinConsciousnessMetrics
+
+class TestLevinConsciousnessMetrics(unittest.TestCase):
+    """Tests for the Levin-inspired consciousness evaluation metrics"""
+    
+    def setUp(self):
+        """Set up test environment"""
+        self.config = {
+            "bioelectric": {
+                "field_dimension": 32,
+                "bioelectric_channels": 4
+            },
+            "holonic": {
+                "num_holons": 4,
+                "integration_heads": 2
+            }
+        }
+        self.evaluator = LevinConsciousnessEvaluator(self.config)
+        
+    def test_bioelectric_complexity_evaluation(self):
+        """Test evaluation of bioelectric field complexity"""
+        # Create mock bioelectric state
+        bioelectric_state = {
+            'memory': torch.randn(4, 32),
+            'attention': torch.randn(4, 32),
+            'narrative': torch.randn(4, 32)
+        }
+        
+        # Test the function
+        result = self.evaluator.evaluate_bioelectric_complexity(bioelectric_state)
+        self.assertIsInstance(result, float)
+        self.assertGreaterEqual(result, 0.0)
+        
+    def test_empty_bioelectric_state(self):
+        """Test handling of empty bioelectric state"""
+        result = self.evaluator.evaluate_bioelectric_complexity({})
+        self.assertEqual(result, 0.0)
+        
+    def test_collective_intelligence_evaluation(self):
+        """Test evaluation of collective intelligence through holonic integration"""
+        # Create mock holonic output
+        holonic_output = {
+            'attention_weights': torch.softmax(torch.randn(4, 4), dim=1),
+            'holon_states': torch.randn(4, 128)
+        }
+        
+        # Test the function
+        result = self.evaluator.evaluate_collective_intelligence(holonic_output)
+        self.assertIsInstance(result, float)
+        self.assertGreaterEqual(result, 0.0)
+        self.assertLessEqual(result, 1.0)
+        
+    def test_full_levin_consciousness_evaluation(self):
+        """Test the full Levin consciousness evaluation process with mock data"""
+        # Create mock data for evaluation
+        bioelectric_state = {
+            'memory': torch.randn(4, 32),
+            'attention': torch.randn(4, 32)
+        }
+        
+        holonic_output = {
+            'attention_weights': torch.softmax(torch.randn(4, 4), dim=1),
+            'holon_states': torch.randn(4, 128),
+            'integrated_state': torch.randn(1, 128)
+        }
+        
+        past_states = [
+            {'integrated_state': torch.randn(1, 128)} for _ in range(5)
+        ]
+        
+        current_state = {
+            'integrated_state': torch.randn(1, 128)
+        }
+        
+        actions = [
+            {'embedding': torch.randn(64)} for _ in range(3)
+        ]
+        
+        goals = [
+            {'embedding': torch.randn(64)} for _ in range(3)
+        ]
+        
+        outcomes = [
+            {'embedding': torch.randn(64)} for _ in range(3)
+        ]
+        
+        component_states = {
+            'memory': torch.randn(32),
+            'attention': torch.randn(32)
+        }
+        
+        # Run evaluation
+        results = self.evaluator.evaluate_levin_consciousness(
+            bioelectric_state,
+            holonic_output,
+            past_states,
+            current_state,
+            actions,
+            goals,
+            outcomes,
+            component_states
+        )
+        
+        # Check that all expected metrics are present
+        expected_keys = [
+            'bioelectric_complexity', 
+            'morphological_adaptation',
+            'collective_intelligence', 
+            'goal_directed_behavior',
+            'basal_cognition',
+            'overall_levin_score'
+        ]
+        
+        for key in expected_keys:
+            self.assertIn(key, results)
+            self.assertIsInstance(results[key], float)
+            self.assertGreaterEqual(results[key], 0.0)
+            self.assertLessEqual(results[key], 1.0)
+
+if __name__ == '__main__':
+    unittest.main()
+</tests/test_levin_consciousness_metrics.py>
 
 <tests/test_memory_core.py>
 """

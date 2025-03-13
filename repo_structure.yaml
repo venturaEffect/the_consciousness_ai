@@ -185,6 +185,8 @@
         type: file
       - path: /models/evaluation/enhanced_consciousness_metrics.py
         type: file
+      - path: /models/evaluation/levin_consciousness_metrics.py
+        type: file
       - path: /models/evaluation/memory_evaluation.py
         type: file
       - path: /models/evaluation/memory_metrics.py
@@ -304,7 +306,11 @@
       contents:
       - path: /models/self_model/belief_system.py
         type: file
+      - path: /models/self_model/bioelectric_signaling.py
+        type: file
       - path: /models/self_model/emotion_context_tracker.py
+        type: file
+      - path: /models/self_model/holonic_intelligence.py
         type: file
       - path: /models/self_model/intention_tracker.py
         type: file
@@ -681,6 +687,8 @@
     - path: /tests/test_emotion_classifier.py
       type: file
     - path: /tests/test_ethical_dilemmas.py
+      type: file
+    - path: /tests/test_levin_consciousness_metrics.py
       type: file
     - path: /tests/test_memory_core.py
       type: file
