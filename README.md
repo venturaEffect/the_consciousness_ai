@@ -89,44 +89,95 @@ The architecture incorporates DreamerV3 with emotional context weighting for wor
 
 ## Available Datasets for Training
 
-### First-Person Interaction Datasets
+The ACM leverages a variety of datasets for training its components. Below are some key examples. Please refer to `docs/datasets.md` for a comprehensive list, licensing details, and setup instructions.
 
-All datasets below are free for commercial use and research purposes.
+### First-Person Interaction & Simulation Datasets
+
+These datasets provide rich visual and interaction data, often from an egocentric perspective, suitable for training agents in simulated or real-world scenarios.
 
 #### 1. Ego4D Dataset
 
-- **Description**: Large-scale dataset containing 3,670+ hours of first-person video from 74 worldwide locations License: Ego4D License Agreement
-- **Features**: Daily activities, social interactions, episodic memory
-- **Setup**:
-
+- **Description**: Large-scale dataset containing 3,670+ hours of first-person video from 74 worldwide locations.
+- **Features**: Daily activities, social interactions, episodic memory. Crucial for understanding human behavior from a first-person view.
+- **License**: Ego4D License Agreement (Requires application).
+- **Access**: Use the `ego4d` CLI tool.
   ```bash
   pip install ego4d
   ego4d --output_directory="~/ego4d_data" --datasets full_scale annotations --metadata
   ```
 
-#### 2. EPIC-KITCHENS Dataset
+#### 2. Charades-Ego Dataset
 
-- **Description**: First-person videos in kitchen environments
-- **Features**: Object interactions, daily activities, annotated actions
-- **Access**: [EPIC-KITCHENS Portal](https://epic-kitchens.github.io/)
-
-#### 3. Charades-Ego Dataset
-
-- **Description**: 68,000+ video clips of daily activities
-- **Features**: Object/people interactions, paired third/first person views
+- **Description**: 68,000+ video clips of daily activities, often with paired third/first person views.
+- **Features**: Object/people interactions, action recognition. Useful for learning common human actions.
+- **License**: Check website for terms (likely research-focused).
 - **Access**: [Charades-Ego Dataset](https://allenai.org/plato/charades/)
 
-#### 4. GTEA Gaze+ Dataset
+#### 3. GTEA Gaze+ Dataset
 
-- **Description**: First-person videos with gaze tracking
-- **Features**: Object manipulation, attention mapping, interaction patterns
+- **Description**: First-person videos with gaze tracking during cooking activities.
+- **Features**: Object manipulation, attention mapping, fine-grained action understanding. Useful for linking gaze/attention to actions.
+- **License**: Check website for terms.
 - **Access**: [GTEA Gaze+ Portal](http://cbs.ic.gatech.edu/fpv/)
+
+#### 4. AI Habitat Datasets (Gibson, Matterport3D)
+
+- **Description**: Photorealistic 3D scans of real-world indoor environments for use with the AI Habitat simulator.
+- **Features**: Realistic navigation, physics-based interaction, visual understanding in 3D.
+- **License**: Various (often research-focused).
+- **Access**: [AI Habitat Datasets](https://aihabitat.org/datasets/)
+
+#### 5. VirtualHome
+
+- **Description**: Simulates daily activities in household environments with action scripts.
+- **Features**: Task planning, complex object interactions, understanding household routines.
+- **License**: MIT License.
+- **Access**: [VirtualHome Project](http://virtual-home.org/)
+
+### Emotion Recognition & Social Interaction Datasets
+
+These datasets are vital for training the emotional intelligence components of the ACM.
+
+#### 6. GoEmotions
+
+- **Description**: Large-scale text dataset for fine-grained emotion classification.
+- **Features**: Text-based emotion analysis.
+- **License**: Apache 2.0.
+- **Access**: [GoEmotions GitHub](https://github.com/google-research/google-research/tree/master/goemotions)
+
+#### 7. MELD (Multimodal EmotionLines Dataset)
+
+- **Description**: Multimodal (audio, visual, text) dialogues annotated for emotions.
+- **Features**: Emotion in conversational context.
+- **License**: Check website for terms.
+- **Access**: [MELD Dataset GitHub](https://github.com/declare-lab/MELD)
+
+#### 8. RAMAS (Real-world Affective Measurement...)
+
+- **Description**: Multimodal recordings (video, audio, physiology) of natural small group social interactions.
+- **Features**: Group dynamics, empathy, social signal processing.
+- **License**: Requires application/agreement.
+- **Access**: [RAMAS Project](https://ramas-project.github.io/)
+
+#### 9. MSP-IMPROV
+
+- **Description**: Multimodal dataset of acted dyadic emotional interactions.
+- **Features**: Dyadic interaction analysis, emotion expression.
+- **License**: Check website for terms.
+- **Access**: [MSP-IMPROV Dataset](https://ecs.utdallas.edu/research/researchlabs/msp-lab/MSP-Improv.html)
+
+#### 10. IEMOCAP
+
+- **Description**: Widely used multimodal dataset of dyadic emotional interactions.
+- **Features**: Benchmark for multimodal emotion recognition.
+- **License**: Requires license agreement.
+- **Access**: [IEMOCAP Dataset](https://sail.usc.edu/iemocap/)
 
 ### Dataset Usage
 
 - Detailed setup instructions in `docs/datasets.md`
 - Data preprocessing guidelines in `docs/preprocessing.md`
-- Example notebooks in `notebooks/dataset_examples/`
+- Example notebooks potentially in `notebooks/dataset_examples/` (if created)
 
 ## Real-Time Integration with VideoLLaMA3
 
@@ -387,7 +438,7 @@ To integrate VideoLLaMA3 into the ACM project, follow these steps:
 
 1. **Clone the VideoLLaMA3 Repository:**
    ```bash
-   git clone https://github.com/DAMO-NLP-SG/VideoLLaMA3.git
+   git clone https://github.com/DAMO-NLP-SG/VideoLlaMA3.git
    ```
 
 # ACE Integration with ACM
