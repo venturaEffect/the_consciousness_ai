@@ -1,6 +1,7 @@
 # models/evaluation/consciousness_metrics.py
 
 import numpy as np
+import time
 # Assume access to system state and potentially simulation control
 
 class IntegratedInformationCalculator:
