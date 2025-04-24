@@ -6,7 +6,7 @@
 
 The **Artificial Consciousness Module (ACM)** is our ambitious project to explore synthetic awareness in AI systems. We're combining modern AI technologies with virtual reality environments and emotional reinforcement learning to investigate the potential emergence of consciousness-like behaviors in non-biological systems.
 
-Our design centers around creating systems that can form emotional connections through simulated scenarios designed to trigger attention and awareness mechanisms. The goal is to develop AI agents with the ACM that can form and store emotional memories, all while adhering to Asimov's Three Laws as ethical guidelines.
+Our design centers around the hypothesis that consciousness-like properties are not programmed directly but **emerge** from the complex, high-order interactions between multiple specialized AI systems. We orchestrate advanced models for perception (VideoLLaMA3, Whisper), memory ([`EmotionalMemoryCore`](models/memory/emotional_memory_core.py)), emotion ([`EmotionalProcessingCore`](models/memory/emotional_processing.py)), world modeling (DreamerV3), and narrative reasoning (LLaMA 3.3) within dynamic VR simulations (Unreal Engine 5). The [`ConsciousnessCore`](models/core/consciousness_core.py) acts as a central hub, integrating these streams of information and guiding the agent's attention and behavior based on simulated emotional states and goals. The goal is to develop AI agents that form and store emotional memories through these orchestrated experiences, leading to emergent self-awareness and potentially empathetic responses, all while adhering to Asimov's Three Laws as ethical guidelines.
 
 [![The Consciousness AI Module](./repo_images/acm_thumbnail_1.png)](https://theconsciousness.ai)
 
@@ -41,9 +41,12 @@ consciousness/
    consciousness = ConsciousnessGating(config)
    ```
 
-2. **Emotional Intelligence & Learning**
+2. **Emotional Intelligence & Empathetic Learning**
 
-   Our emotional processing system in `models/emotion/emotional_processing.py` integrates with DreamerV3, incorporating emotional context weighting. The architecture includes meta-learning for emotional adaptation and multi-agent interaction capabilities.
+   Our emotional processing system ([`EmotionalProcessingCore`](models/memory/emotional_processing.py), potentially using [`EmotionalGraphNetwork`](models/emotion/tgnn/emotional_graph.py)) analyzes multimodal inputs to generate internal emotional states for the agent. Crucially, these self-generated emotions are not just passive states; they directly influence the agent's learning and behavior through **emotionally-grounded reinforcement learning**.
+   *   **RL Integration:** We integrate these emotional states with the DreamerV3 world model. The agent learns to predict not only environmental outcomes but also its own likely emotional responses.
+   *   **Reward Shaping for Empathy:** The RL reward signal ([`EmotionalRewardShaper`](models/evaluation/consciousness_development.py)) is shaped by these internal emotional states. Positive simulated emotions (e.g., from successful social interaction, achieving goals safely) act as positive reinforcement, while negative emotions (e.g., from simulated harm, failure, social rejection) act as negative reinforcement or penalties.
+   *   **Emergent Empathy Hypothesis:** By learning to navigate complex scenarios ([`docs/simulation_guide.md`](docs/simulation_guide.md)) to maximize positive internal emotional states and minimize negative ones, particularly in social contexts (using datasets like MELD, RAMAS), we hypothesize the agent will develop behaviors interpretable as understanding and responding appropriately to the emotions of others – a foundation for empathy. Meta-learning capabilities aim to accelerate adaptation to new emotional contexts.
 
 3. **Memory Architecture**
 
@@ -56,11 +59,17 @@ consciousness/
 
 4. **Ethical Framework & Safety**
 
-   The system is designed to adhere to Asimov's Three Laws:
+   The system is designed to operate within the ethical boundaries defined by Asimov's Three Laws:
+   1. No harm to humans through action or inaction.
+   2. Obey human orders unless conflicting with First Law.
+   3. Self-preservation unless conflicting with First/Second Laws.
 
-   1. No harm to humans through action or inaction
-   2. Obey human orders unless conflicting with First Law
-   3. Self-preservation unless conflicting with First/Second Laws
+   **Implementation:** Adherence to these laws is enforced primarily within the [`ConsciousnessCore`](models/core/consciousness_core.py) and potentially the [`NarrativeEngine`](models/narrative/narrative_engine.py) during action selection and planning. Before executing an action, potential outcomes are evaluated against these laws. Actions predicted to violate a law (based on the world model and ethical ruleset) are inhibited or modified. This involves:
+   *   **Risk Assessment:** Evaluating potential harm to humans based on the current context and predicted action outcomes.
+   *   **Order Compliance Check:** Verifying if an action complies with human directives, prioritizing Law 1.
+   *   **Self-Preservation Constraint:** Allowing self-preserving actions only if they do not conflict with Laws 1 or 2.
+   *   *(Optional: Mention specific module if created, e.g., `models/ethics/asimov_filter.py`)*
+   Continuous monitoring and evaluation ([`SelfAwarenessEvaluator`](models/evaluation/self_awareness_evaluation.py)) include checks for ethical alignment. *(See `docs/ethics_framework.md` for more details - suggest creating this file if needed)*.
 
 5. **Narrative Foundation**
 

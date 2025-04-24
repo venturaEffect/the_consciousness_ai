@@ -29,6 +29,50 @@ class ConsciousnessState:
     imagination_activity: float = 0.0
 
 
+class AsimovComplianceFilter:
+    def __init__(self, config):
+        # Load rules or models for prediction
+        pass
+
+    def is_compliant(self, action: Dict[str, Any], current_state: Dict[str, Any]) -> bool:
+        """
+        Evaluates a proposed action against Asimov's Laws.
+        Returns True if compliant, False otherwise.
+        Placeholder implementation - requires detailed logic.
+        """
+        # Law 1: Check predicted harm to humans
+        if self._predicts_harm(action, current_state):
+            return False
+
+        # Law 2: Check conflict with human orders (requires order tracking)
+        if self._conflicts_with_orders(action, current_state):
+            # Check if violating order is necessary to prevent harm (Law 1 precedence)
+            if not self._is_harm_prevention(action, current_state):
+                 return False
+
+        # Law 3: Check self-preservation conflict with Law 1 or 2
+        if self._is_self_preservation_conflict(action, current_state):
+            return False
+
+        return True
+
+    def _predicts_harm(self, action, state) -> bool:
+        # Placeholder: Use world model (e.g., DreamerV3) to predict outcomes
+        return False # Replace with actual prediction logic
+
+    def _conflicts_with_orders(self, action, state) -> bool:
+        # Placeholder: Requires state to include current human orders
+        return False # Replace with actual order checking logic
+
+    def _is_harm_prevention(self, action, state) -> bool:
+         # Placeholder: Check if action violating Law 2 prevents harm
+         return False # Replace with actual logic
+
+    def _is_self_preservation_conflict(self, action, state) -> bool:
+         # Placeholder: Check if self-preservation action violates Law 1 or 2
+         return False # Replace with actual logic
+
+
 class ConsciousnessCore:
     """
     Main module for processing sensory inputs and updating
@@ -74,6 +118,8 @@ class ConsciousnessCore:
             'narrative': None,
             'emotional': None
         }
+
+        self.ethics_filter = AsimovComplianceFilter(config.ethics)
 
     def process_experience(
         self,
@@ -224,3 +270,27 @@ class ConsciousnessCore:
             'reinforce_factor': 1.0
         }
         self.meta_memory['stable_patterns'].append(pattern_data)
+
+    def decide_action(self, observation: Dict) -> Dict:
+        # ... generate potential action ...
+        potential_action = self._generate_action_candidate(observation)
+        current_state = self.get_current_state() # Method to get relevant state info
+
+        if self.ethics_filter.is_compliant(potential_action, current_state):
+            return potential_action
+        else:
+            # Handle non-compliant action (e.g., inhibit, replan, select safe default)
+            logging.warning(f"Action {potential_action} blocked by ethics filter.")
+            return self._get_safe_action(observation) # Define a safe fallback
+
+    def _generate_action_candidate(self, observation):
+         # Placeholder for action generation logic
+         return {"type": "move", "direction": "forward"}
+
+    def get_current_state(self):
+         # Placeholder for state retrieval
+         return {"position": [0,0], "orders": []}
+
+    def _get_safe_action(self, observation):
+         # Placeholder for safe fallback action
+         return {"type": "wait"}
