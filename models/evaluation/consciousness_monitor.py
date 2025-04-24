@@ -18,172 +18,94 @@ import torch
 import numpy as np
 from dataclasses import dataclass
 from models.evaluation.levin_consciousness_metrics import LevinConsciousnessEvaluator, LevinConsciousnessMetrics
-
-@dataclass
-class ConsciousnessMetrics:
-    """Tracks consciousness development metrics."""
-    emotional_awareness: float = 0.0
-    attention_stability: float = 0.0
-    memory_coherence: float = 0.0
-    behavioral_adaptation: float = 0.0
-    consciousness_score: float = 0.0
+import time
+from collections import deque
+# Import specific metric calculators
+from .consciousness_metrics import (
+    IntegratedInformationCalculator,
+    GlobalWorkspaceTracker,
+    PerturbationTester,
+    SelfAwarenessMonitor
+)
 
 class ConsciousnessMonitor:
-    def __init__(self, acm_system, config):
-        """
-        Initialize consciousness monitoring.
-        
-        Args:
-            acm_system: The ACM system instance.
-            config: Dictionary of monitoring-related settings and thresholds.
-        """
-        self.acm = acm_system
+    """
+    Continuously monitors the ACM's state and calculates various theoretical
+    and practical metrics related to consciousness and self-awareness.
+    Provides data for the evaluation dashboard.
+    """
+    def __init__(self, consciousness_core, memory_system, config):
+        self.core = consciousness_core
+        self.memory = memory_system
         self.config = config
-        self.integrated_info_calculator = IntegratedInformationCalculator(self.acm)
-        self.global_workspace_tracker = GlobalWorkspaceTracker(self.acm)
-        self.perturbation_tester = PerturbationTester(self.acm)
-        self.self_awareness_monitor = SelfAwarenessMonitor(self.acm)
-        self.metrics = ConsciousnessMetrics()
-        self.history = []
-        self.levin_evaluator = LevinConsciousnessEvaluator(config)
-        self.levin_metrics_history = []
-        self.state_history = []  # For morphological adaptation tracking
+        self.update_interval = config.get('monitor_update_interval', 1.0) # seconds
 
-    def evaluate_state(
-        self,
-        current_state: Dict[str, torch.Tensor],
-        emotional_context: Dict[str, float] = None,
-        attention_metrics: Dict[str, float] = None,
-        bioelectric_state: Dict[str, Any] = None,
-        holonic_output: Dict[str, Any] = None,
-        actions: list = None,
-        goals: list = None,
-        outcomes: list = None,
-        component_states: Dict[str, Any] = None
-    ) -> Dict[str, float]:
+        # Initialize metric calculators
+        # Note: These calculators often compute *approximations* of theoretical metrics.
+        self.phi_calculator = IntegratedInformationCalculator(config.phi)
+        self.gwt_tracker = GlobalWorkspaceTracker(config.gwt)
+        self.pci_tester = PerturbationTester(config.pci, self.core) # Needs access to core for perturbation
+        self.self_awareness_monitor = SelfAwarenessMonitor(config.self_awareness, self.core, self.memory)
+
+        self.metric_history = deque(maxlen=config.get('history_length', 1000))
+        self.last_update_time = 0
+
+    def update(self, current_timestamp):
         """
-        Evaluate the current consciousness state, updating internal metrics.
-        
-        Args:
-            current_state: Dictionary holding memory and system state tensors.
-            emotional_context: Dictionary of emotional readings (valence, arousal, etc.).
-            attention_metrics: Dictionary describing attention levels and stability.
-            bioelectric_state: Dictionary of bioelectric state readings.
-            holonic_output: Dictionary of holonic output readings.
-            actions: List of actions taken.
-            goals: List of goals.
-            outcomes: List of outcomes.
-            component_states: Dictionary of component states.
-        
-        Returns:
-            A dictionary of computed consciousness metrics.
+        Periodically calculates and stores consciousness metrics.
         """
-        emotional_awareness = self._evaluate_emotional_awareness(emotional_context)
-        attention_stability = self._evaluate_attention_stability(attention_metrics)
-        memory_coherence = self._evaluate_memory_coherence(current_state)
+        if current_timestamp - self.last_update_time < self.update_interval:
+            return
 
-        self.metrics.emotional_awareness = emotional_awareness
-        self.metrics.attention_stability = attention_stability
-        self.metrics.memory_coherence = memory_coherence
+        current_state = self.core.get_current_state() # Assumes core has method to expose state
+        recent_activity = self.core.get_recent_activity_log() # Assumes core logs activity
 
-        consciousness_score = self._calculate_consciousness_score()
-        self.metrics.consciousness_score = consciousness_score
+        # --- Calculate Metrics (using approximations) ---
 
-        # Record metrics history for trend analysis.
-        self.history.append({
-            'emotional_awareness': emotional_awareness,
-            'attention_stability': attention_stability,
-            'memory_coherence': memory_coherence,
-            'consciousness_score': consciousness_score
-        })
+        # Phi (Integrated Information) Approximation:
+        # Practical calculation might involve analyzing connectivity and activity correlation
+        # between core modules (perception, memory, emotion, core) based on current_state.
+        phi_approx = self.phi_calculator.calculate_phi_approximation(current_state, recent_activity)
 
-        # Store current state for history
-        self.state_history.append(current_state)
-        if len(self.state_history) > 50:  # Keep last 50 states
-            self.state_history.pop(0)
-        
-        # Evaluate Levin consciousness metrics
-        levin_metrics = self.levin_evaluator.evaluate_levin_consciousness(
-            bioelectric_state or {},
-            holonic_output or {},
-            self.state_history[:-1],  # Past states
-            current_state,
-            actions or [],
-            goals or [],
-            outcomes or [],
-            component_states or {}
-        )
-        
-        # Store metrics history
-        self.levin_metrics_history.append(levin_metrics)
-        if len(self.levin_metrics_history) > 100:  # Keep last 100 records
-            self.levin_metrics_history.pop(0)
-            
-        # Return combined metrics
-        return {
-            **self.get_current_metrics(),  # Existing metrics
-            **levin_metrics    # Levin-inspired metrics
+        # GWT Ignition Event Detection:
+        # Detects potential "ignition" events based on widespread, high-amplitude activation
+        # within the ConsciousnessCore or specific sub-modules, exceeding a threshold.
+        ignition_detected, ignition_details = self.gwt_tracker.detect_ignition(current_state, recent_activity)
+
+        # PCI (Perturbation Complexity Index) Approximation:
+        # Periodically applies a small internal perturbation (via PerturbationTester)
+        # and measures the complexity/spread of the resulting state changes.
+        pci_approx = self.pci_tester.calculate_pci_approximation(current_state)
+
+        # Self-Awareness Score:
+        # Assesses self-modeling accuracy, goal alignment, and potentially metacognitive reports.
+        self_awareness_scores = self.self_awareness_monitor.evaluate_self_awareness(current_state)
+
+        # --- Store Metrics ---
+        metrics_snapshot = {
+            "timestamp": current_timestamp,
+            "phi_approx": phi_approx,
+            "gwt_ignition": ignition_detected,
+            "gwt_details": ignition_details,
+            "pci_approx": pci_approx,
+            "self_awareness": self_awareness_scores,
+            # Add other relevant state variables
+            "emotional_valence": current_state.get('emotional_state', {}).get('valence'),
         }
+        self.metric_history.append(metrics_snapshot)
+        self.last_update_time = current_timestamp
 
-    def _evaluate_emotional_awareness(self, emotional_context: Dict[str, float]) -> float:
-        """
-        Evaluate how well the system understands and integrates emotional inputs.
-        Placeholder logic; refine per your architecture.
-        """
-        valence = emotional_context.get('valence', 0.5)
-        arousal = emotional_context.get('arousal', 0.5)
-        # Simple average as a placeholder.
-        return (valence + arousal) / 2.0
+        # Optionally log or send to dashboard
+        # self.send_to_dashboard(metrics_snapshot)
 
-    def _evaluate_attention_stability(self, attention_metrics: Dict[str, float]) -> float:
-        """
-        Evaluate attention stability from attention_metrics.
-        Placeholder logic; refine per your architecture.
-        """
-        focus = attention_metrics.get('focus', 0.5)
-        fluctuation = attention_metrics.get('fluctuation', 0.5)
-        # Higher focus + lower fluctuation → higher stability.
-        return max(0.0, focus - 0.5 * fluctuation)
+    def get_latest_metrics(self):
+        """Returns the most recent metrics snapshot."""
+        if self.metric_history:
+            return self.metric_history[-1]
+        return None
 
-    def _evaluate_memory_coherence(self, current_state: Dict[str, torch.Tensor]) -> float:
-        """
-        Evaluate how coherent current memories are.
-        Placeholder logic; refine per your architecture.
-        """
-        memory_tensor = current_state.get('memory', torch.zeros(1))
-        # Simple approach: measure standard deviation or L2-norm as a stand-in for 'coherence'.
-        return float(1.0 / (1.0 + torch.std(memory_tensor).item()))
+    def get_metric_history(self):
+        """Returns the recent history of metrics."""
+        return list(self.metric_history)
 
-    def _calculate_consciousness_score(self) -> float:
-        """
-        Compute an overall consciousness score from the partial metrics.
-        Placeholder weighting; adjust as per config thresholds.
-        """
-        ea = self.metrics.emotional_awareness
-        as_ = self.metrics.attention_stability
-        mc = self.metrics.memory_coherence
-        # Basic average.
-        return (ea + as_ + mc) / 3.0
-
-    def get_current_metrics(self) -> Dict[str, float]:
-        """Return the current consciousness metrics as a dictionary."""
-        return {
-            'emotional_awareness': self.metrics.emotional_awareness,
-            'attention_stability': self.metrics.attention_stability,
-            'memory_coherence': self.metrics.memory_coherence,
-            'behavioral_adaptation': self.metrics.behavioral_adaptation,
-            'consciousness_score': self.metrics.consciousness_score
-        }
-
-    def update_metrics(self) -> Dict[str, float]:
-        phi_value = self.integrated_info_calculator.compute_phi()
-        gwt_score = self.global_workspace_tracker.check_global_workspace_events()
-        pci_score = self.perturbation_tester.simulate_and_measure()
-        meta_score = self.self_awareness_monitor.evaluate_self_awareness()
-
-        return {
-            "IntegratedInformation": phi_value,
-            "GlobalWorkspace": gwt_score,
-            "PCI": pci_score,
-            "SelfAwareness": meta_score
-        }
+    # ... other methods like send_to_dashboard ...

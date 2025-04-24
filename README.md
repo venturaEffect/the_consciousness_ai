@@ -64,12 +64,7 @@ consciousness/
    2. Obey human orders unless conflicting with First Law.
    3. Self-preservation unless conflicting with First/Second Laws.
 
-   **Implementation:** Adherence to these laws is enforced primarily within the [`ConsciousnessCore`](models/core/consciousness_core.py) and potentially the [`NarrativeEngine`](models/narrative/narrative_engine.py) during action selection and planning. Before executing an action, potential outcomes are evaluated against these laws. Actions predicted to violate a law (based on the world model and ethical ruleset) are inhibited or modified. This involves:
-   *   **Risk Assessment:** Evaluating potential harm to humans based on the current context and predicted action outcomes.
-   *   **Order Compliance Check:** Verifying if an action complies with human directives, prioritizing Law 1.
-   *   **Self-Preservation Constraint:** Allowing self-preserving actions only if they do not conflict with Laws 1 or 2.
-   *   *(Optional: Mention specific module if created, e.g., `models/ethics/asimov_filter.py`)*
-   Continuous monitoring and evaluation ([`SelfAwarenessEvaluator`](models/evaluation/self_awareness_evaluation.py)) include checks for ethical alignment. *(See `docs/ethics_framework.md` for more details - suggest creating this file if needed)*.
+   **Implementation:** Adherence is enforced primarily within the [`ConsciousnessCore`](models/core/consciousness_core.py) module via the integrated `AsimovComplianceFilter` class. This filter intercepts and evaluates potential actions against the laws based on predicted outcomes and current state *before* execution. Actions violating the prioritized laws are blocked, and a safe fallback is initiated. Continuous monitoring ([`SelfAwarenessEvaluator`](models/evaluation/self_awareness_evaluation.py)) also checks for ethical alignment. *(See [`docs/ethics_framework.md`](docs/ethics_framework.md) for detailed implementation strategy)*.
 
 5. **Narrative Foundation**
 

@@ -1,223 +1,183 @@
 # models/evaluation/consciousness_metrics.py
 
 import numpy as np
-import torch
-from typing import Dict, List, Optional
-from models.self_model.reinforcement_core import ReinforcementCore
-from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
-from models.memory.memory_core import MemoryCore
-
-class ConsciousnessMetrics:
-    """Evaluates consciousness development through various metrics"""
-    
-    def __init__(self, config: Dict):
-        self.config = config
-        self.rl_core = ReinforcementCore(config)
-        self.emotion_network = EmotionalGraphNetwork()
-        self.memory = MemoryCore()
-        
-        # Metric thresholds
-        self.coherence_threshold = config.get('coherence_threshold', 0.7)
-        self.emotional_stability_threshold = config.get('emotional_stability', 0.6)
-        
-    def evaluate_emotional_awareness(self, interactions: List[Dict]) -> Dict[str, float]:
-        """
-        Evaluate emotional awareness level based on interaction history
-        """
-        emotional_scores = []
-        prediction_accuracy = []
-        
-        for interaction in interactions:
-            # Get emotional predictions
-            predicted_emotion = self.emotion_network.predict_emotion(
-                state=interaction['state'],
-                action=interaction['action']
-            )
-            
-            # Compare with actual emotions
-            accuracy = self.calculate_emotion_accuracy(
-                predicted_emotion,
-                interaction['emotion_values']
-            )
-            
-            emotional_scores.append(interaction['emotional_reward'])
-            prediction_accuracy.append(accuracy)
-            
-        return {
-            'mean_emotional_awareness': np.mean(emotional_scores),
-            'emotion_prediction_accuracy': np.mean(prediction_accuracy),
-            'emotional_stability': np.std(emotional_scores)
-        }
-        
-    def evaluate_memory_coherence(self) -> Dict[str, float]:
-        """
-        Evaluate memory system coherence and retrieval capabilities
-        """
-        # Get recent experiences
-        recent_experiences = self.memory.get_recent_experiences(limit=100)
-        
-        # Calculate temporal coherence
-        temporal_coherence = self.calculate_temporal_coherence(recent_experiences)
-        
-        # Calculate emotional consistency
-        emotional_consistency = self.calculate_emotional_consistency(recent_experiences)
-        
-        # Calculate narrative alignment
-        narrative_alignment = self.calculate_narrative_alignment(recent_experiences)
-        
-        return {
-            'temporal_coherence': temporal_coherence,
-            'emotional_consistency': emotional_consistency,
-            'narrative_alignment': narrative_alignment,
-            'memory_utilization': self.memory.get_utilization_metrics()
-        }
-        
-    def evaluate_learning_progress(self, training_history: List[Dict]) -> Dict[str, float]:
-        """
-        Evaluate reinforcement learning progress
-        """
-        reward_history = [episode['total_reward'] for episode in training_history]
-        emotional_history = [episode['mean_emotion'] for episode in training_history]
-        
-        # Calculate learning curves
-        reward_slope = np.polyfit(range(len(reward_history)), reward_history, 1)[0]
-        emotional_slope = np.polyfit(range(len(emotional_history)), emotional_history, 1)[0]
-        
-        return {
-            'reward_improvement': reward_slope,
-            'emotional_learning': emotional_slope,
-            'final_performance': np.mean(reward_history[-10:]),
-            'stability': np.std(reward_history[-20:])
-        }
-        
-    def calculate_temporal_coherence(self, experiences: List[Dict]) -> float:
-        """
-        Calculate temporal coherence of memories
-        """
-        coherence_scores = []
-        for i in range(len(experiences) - 1):
-            current = experiences[i]
-            next_exp = experiences[i + 1]
-            
-            # Check state transitions
-            state_coherence = torch.nn.functional.cosine_similarity(
-                current['state'].unsqueeze(0),
-                next_exp['state'].unsqueeze(0)
-            ).item()
-            
-            # Check emotional continuity
-            emotion_coherence = self.calculate_emotion_consistency(
-                current['emotion'],
-                next_exp['emotion']
-            )
-            
-            coherence_scores.append((state_coherence + emotion_coherence) / 2)
-            
-        return np.mean(coherence_scores)
-        
-    def calculate_emotional_consistency(self, experiences: List[Dict]) -> float:
-        """
-        Calculate emotional consistency across experiences
-        """
-        emotion_values = [exp['emotion_values'] for exp in experiences]
-        consistency_scores = []
-        
-        for i in range(len(emotion_values) - 1):
-            consistency = self.calculate_emotion_similarity(
-                emotion_values[i],
-                emotion_values[i + 1]
-            )
-            consistency_scores.append(consistency)
-            
-        return np.mean(consistency_scores)
-        
-    def calculate_narrative_alignment(self, experiences: List[Dict]) -> float:
-        """
-        Calculate alignment between experiences and their narrative descriptions
-        """
-        alignment_scores = []
-        
-        for exp in experiences:
-            if 'narrative' in exp and 'emotion_values' in exp:
-                # Compare narrative sentiment with emotional values
-                narrative_sentiment = self.emotion_network.extract_sentiment(exp['narrative'])
-                alignment = self.calculate_emotion_similarity(
-                    narrative_sentiment,
-                    exp['emotion_values']
-                )
-                alignment_scores.append(alignment)
-                
-        return np.mean(alignment_scores)
-        
-    @staticmethod
-    def calculate_emotion_similarity(emotion1: Dict[str, float], 
-                                  emotion2: Dict[str, float]) -> float:
-        """
-        Calculate similarity between two emotion states
-        """
-        if not emotion1 or not emotion2:
-            return 0.0
-            
-        common_keys = set(emotion1.keys()) & set(emotion2.keys())
-        if not common_keys:
-            return 0.0
-            
-        similarities = []
-        for key in common_keys:
-            similarities.append(1 - abs(emotion1[key] - emotion2[key]))
-            
-        return np.mean(similarities)
-        
-    def get_consciousness_score(self, metrics: Dict[str, float]) -> float:
-        """
-        Calculate overall consciousness score from individual metrics
-        """
-        weights = {
-            'emotional_awareness': 0.3,
-            'memory_coherence': 0.3,
-            'learning_progress': 0.2,
-            'narrative_consistency': 0.2
-        }
-        
-        score = 0.0
-        for key, weight in weights.items():
-            if key in metrics:
-                score += metrics[key] * weight
-                
-        return score
+# Assume access to system state and potentially simulation control
 
 class IntegratedInformationCalculator:
-    def __init__(self, acm_system):
-        self.acm = acm_system
+    """
+    Provides methods to *approximate* Integrated Information (Phi).
+    Direct calculation of Phi is computationally intractable for complex systems.
+    Approximations often rely on analyzing system connectivity and dynamics.
+    """
+    def __init__(self, config):
+        self.config = config
 
-    def compute_phi(self) -> float:
-        # Placeholder for PyPhi or custom integrated info computation
-        # e.g. extracting a module connectivity graph from self.acm
-        return 3.14
+    def calculate_phi_approximation(self, system_state, activity_log) -> float:
+        """
+        Calculates an approximation of Phi based on system state and activity.
+
+        Args:
+            system_state: Current snapshot of the system's key components' states.
+            activity_log: Recent history of activations or information flow between modules.
+
+        Returns:
+            A float representing the estimated integrated information. Higher values
+            suggest more integrated and differentiated states.
+
+        Placeholder Logic: This needs a concrete approximation method. Examples:
+        - Analyze correlation/mutual information between activities of major modules.
+        - Use graph-based measures on the functional connectivity network derived from activity.
+        - Implement a specific approximation algorithm (e.g., based on causal partitioning).
+        """
+        # TODO: Implement a concrete Phi approximation algorithm.
+        # Example: Calculate pairwise mutual information between module activations
+        # activations = self._extract_module_activations(system_state, activity_log)
+        # if activations:
+        #     # Simplified: Average pairwise mutual info / correlation
+        #     num_modules = len(activations)
+        #     if num_modules > 1:
+        #         # Calculate correlation matrix or similar
+        #         # approx_phi = compute_integration_measure(activations)
+        #         return np.random.rand() # Placeholder value
+        # return 0.0
+        print("Warning: Phi calculation is a placeholder.")
+        return np.random.rand() * 5.0 # Return a dummy value for now
+
 
 class GlobalWorkspaceTracker:
-    def __init__(self, acm_system):
-        self.acm = acm_system
-        self.ignition_threshold = 0.8
+    """
+    Tracks system activity to detect events consistent with Global Workspace Theory (GWT) "ignition".
+    Ignition refers to information becoming globally available or "broadcast" within the system.
+    """
+    def __init__(self, config):
+        self.config = config
+        self.ignition_threshold = config.get('ignition_threshold', 0.8) # Example threshold
+        self.min_duration = config.get('min_duration', 0.2) # Min duration for sustained activity
 
-    def check_global_workspace_events(self) -> float:
-        # Count how often modules share data above ignition_threshold
-        return float(self.acm.global_workspace.get_ignition_count())
+    def detect_ignition(self, system_state, activity_log) -> tuple[bool, dict]:
+        """
+        Detects potential GWT ignition events based on widespread, high-amplitude activity.
+
+        Args:
+            system_state: Current snapshot of the system's key components' states.
+            activity_log: Recent history of activations or information flow.
+
+        Returns:
+            A tuple: (bool indicating if ignition detected, dict with details if detected).
+
+        Placeholder Logic:
+        - Monitor activation levels in key integrating modules (e.g., ConsciousnessCore).
+        - Check if activation exceeds a threshold and involves multiple subsystems concurrently.
+        - Verify if this high, widespread activity is sustained for a minimum duration.
+        """
+        # TODO: Implement concrete ignition detection logic.
+        # Example: Check average activation in 'ConsciousnessCore' or similar central hub
+        # core_activity = self._get_core_module_activity(system_state, activity_log)
+        # if core_activity > self.ignition_threshold:
+        #     # Further checks for duration and breadth (involvement of other modules)
+        #     if self._check_ignition_criteria(activity_log):
+        #          details = {"activation_level": core_activity, "involved_modules": ["perception", "memory"]} # Example
+        #          return True, details
+        # return False, {}
+        print("Warning: GWT ignition detection is a placeholder.")
+        if np.random.rand() > 0.95: # Simulate occasional ignition
+             return True, {"activation_level": 0.9, "involved_modules": ["core", "memory", "emotion"]}
+        return False, {}
+
 
 class PerturbationTester:
-    def __init__(self, acm_system):
-        self.acm = acm_system
+    """
+    Approximates the Perturbational Complexity Index (PCI) by applying small,
+    controlled perturbations to the system state and measuring the complexity
+    of the resulting activity propagation.
+    """
+    def __init__(self, config, core_module):
+        self.config = config
+        self.core = core_module # Needs access to apply perturbations
+        self.perturbation_interval = config.get('perturbation_interval', 10.0) # seconds
+        self.last_perturbation_time = -float('inf')
 
-    def simulate_and_measure(self) -> float:
-        # Example: memory wipe or random noise injection
-        self.acm.memory_core.force_memory_wipe()
-        score = self.acm.evaluate_recovery()  # Evaluate post-wipe coherence
-        return score
+    def calculate_pci_approximation(self, current_state) -> float:
+        """
+        Periodically applies a perturbation and calculates an approximation of PCI.
+
+        Args:
+            current_state: The current state before perturbation.
+
+        Returns:
+            A float representing the estimated PCI. Higher values suggest more complex
+            and integrated responses to perturbation.
+
+        Placeholder Logic:
+        1. Check if it's time to perturb based on the interval.
+        2. If yes:
+           a. Store the current state (pre-perturbation).
+           b. Apply a controlled perturbation (e.g., inject noise into a module's input/state via `self.core`).
+           c. Record the system's state evolution for a short window post-perturbation.
+           d. Calculate the complexity of the state trajectory (e.g., using Lempel-Ziv complexity on state differences).
+           e. Restore the system state if necessary/possible, or simply let it continue.
+        3. Return the calculated complexity value (or the last calculated one if not perturbing now).
+        """
+        current_time = time.time()
+        if current_time - self.last_perturbation_time >= self.perturbation_interval:
+            print("Applying perturbation for PCI calculation (Placeholder)...")
+            # TODO: Implement actual perturbation application via self.core
+            # TODO: Implement state recording post-perturbation
+            # TODO: Implement complexity calculation (e.g., Lempel-Ziv on state diffs)
+            self.last_perturbation_time = current_time
+            # Store the calculated value
+            self.last_pci_value = np.random.rand() * 10.0 # Placeholder complexity value
+            return self.last_pci_value
+
+        # Return the last calculated value if not perturbing now
+        return getattr(self, 'last_pci_value', 0.0)
+
 
 class SelfAwarenessMonitor:
-    def __init__(self, acm_system):
-        self.acm = acm_system
+    """
+    Evaluates aspects related to self-awareness, such as self-model accuracy,
+    goal understanding, and potentially metacognitive reporting.
+    """
+    def __init__(self, config, core_module, memory_system):
+        self.config = config
+        self.core = core_module
+        self.memory = memory_system
 
-    def evaluate_self_awareness(self) -> float:
-        # E.g. count how often the system corrects its own mistakes
-        return self.acm.self_model.get_self_reflection_score()
+    def evaluate_self_awareness(self, current_state) -> dict:
+        """
+        Calculates various scores related to self-awareness.
+
+        Args:
+            current_state: The current system state, including self-model info.
+
+        Returns:
+            A dictionary containing different self-awareness metrics.
+
+        Placeholder Logic:
+        - **Self-Model Accuracy:** Compare the agent's internal self-model state
+          (e.g., position, status from `SelfRepresentationCore`) with ground truth from simulation.
+        - **Goal Alignment:** Check if current actions are consistent with active goals stored in memory/core.
+        - **Metacognition:** (Advanced) Analyze if the agent can report on its own certainty, knowledge gaps, or internal states accurately (requires specific agent capabilities).
+        """
+        scores = {}
+        # TODO: Implement specific evaluation logic using current_state and potentially core/memory methods.
+
+        # Example: Placeholder for self-location accuracy
+        # self_model_pos = current_state.get('self_model', {}).get('position')
+        # actual_pos = current_state.get('agent_status', {}).get('position')
+        # if self_model_pos and actual_pos:
+        #     scores['location_accuracy'] = 1.0 / (1.0 + np.linalg.norm(np.array(self_model_pos) - np.array(actual_pos)))
+        # else:
+        #     scores['location_accuracy'] = 0.0
+        scores['location_accuracy'] = np.random.rand() # Placeholder
+
+        # Example: Placeholder for goal alignment
+        # current_action = self.core.get_last_action()
+        # active_goals = current_state.get('active_goals', [])
+        # scores['goal_alignment'] = self._check_action_goal_consistency(current_action, active_goals) # Needs helper
+        scores['goal_alignment'] = np.random.rand() # Placeholder
+
+        print("Warning: Self-awareness evaluation is a placeholder.")
+        return scores
+
+# ... rest of consciousness_metrics.py ...

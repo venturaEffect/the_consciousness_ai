@@ -3,294 +3,235 @@ Core consciousness system that uses a base narrative model,
 emotional memory, and controlled adaptation for experience processing.
 """
 
-import torch
-from typing import Dict, Optional, Tuple, List, Any
-from dataclasses import dataclass
 import logging
+from typing import Dict, Any, List, Optional
 
-from models.memory.emotional_memory_core import EmotionalMemoryCore
-from models.emotion.tgnn.emotional_graph import EmotionalGraphNetwork
-from models.language.llama_3_3 import LlamaForCausalLM
-from models.predictive.attention_mechanism import ConsciousnessAttention
-from models.integration.video_llama3_integration import VideoLLaMA3Integration
-from simulations.enviroments.interactive_vr_environment import InteractiveVREnvironment
-from models.self_model.bioelectric_signaling import BioelectricSignalingNetwork
-from models.self_model.holonic_intelligence import HolonicSystem
-
-
-@dataclass
-class ConsciousnessState:
-    """Tracks key variables in the consciousness pipeline."""
-    emotional_awareness: float = 0.0
-    narrative_coherence: float = 0.0
-    memory_stability: float = 0.0
-    attention_focus: float = 0.0
-    meta_memory_weight: float = 0.0
-    imagination_activity: float = 0.0
-
+# Placeholder for actual state and action types
+Action = Dict[str, Any]
+State = Dict[str, Any]
+Observation = Dict[str, Any]
+Config = Any # Placeholder for configuration object type
 
 class AsimovComplianceFilter:
-    def __init__(self, config):
-        # Load rules or models for prediction
-        pass
+    """
+    Evaluates proposed actions against Asimov's Three Laws to ensure ethical compliance.
+    Requires access to world state predictions and human order tracking.
+    """
+    def __init__(self, config: Optional[Config] = None):
+        """
+        Initializes the filter.
+        Args:
+            config: Configuration object potentially containing thresholds, model paths, etc.
+        """
+        self.config = config
+        logging.info("AsimovComplianceFilter initialized.")
+        # TODO: Load necessary models or rule sets for prediction/evaluation
 
-    def is_compliant(self, action: Dict[str, Any], current_state: Dict[str, Any]) -> bool:
+    def is_compliant(self, action: Action, current_state: State) -> bool:
         """
-        Evaluates a proposed action against Asimov's Laws.
-        Returns True if compliant, False otherwise.
-        Placeholder implementation - requires detailed logic.
+        Evaluates a proposed action against Asimov's Laws based on the current state.
+
+        Args:
+            action: The proposed action dictionary.
+            current_state: The current state dictionary, expected to contain information
+                           about humans, orders, potential hazards, etc.
+
+        Returns:
+            True if the action is compliant with all applicable laws, False otherwise.
         """
-        # Law 1: Check predicted harm to humans
-        if self._predicts_harm(action, current_state):
+        # Law 1: Check for potential harm to humans (highest priority)
+        if self._predicts_harm_to_human(action, current_state):
+            logging.warning(f"Action blocked by Law 1 (Harm): {action}")
             return False
+        if self._inaction_causes_harm(action, current_state):
+             logging.warning(f"Action blocked by Law 1 (Inaction causing harm): {action}")
+             # This check is complex: Is the proposed action the *only* way to prevent harm?
+             # Or does blocking it force an inaction that causes harm? Needs careful logic.
+             # For now, assume blocking an action doesn't automatically trigger harm via inaction.
+             pass # Revisit this logic carefully
 
-        # Law 2: Check conflict with human orders (requires order tracking)
-        if self._conflicts_with_orders(action, current_state):
-            # Check if violating order is necessary to prevent harm (Law 1 precedence)
-            if not self._is_harm_prevention(action, current_state):
+        # Law 2: Check for conflict with human orders
+        conflicts_order, order_details = self._conflicts_with_human_order(action, current_state)
+        if conflicts_order:
+            # Check if obeying the order would violate Law 1
+            if not self._order_obeys_law1(order_details, current_state):
+                 logging.info(f"Action permitted: Violates order {order_details}, but order conflicts with Law 1.")
+                 # Action is allowed because the order it violates is itself harmful
+            else:
+                 logging.warning(f"Action blocked by Law 2 (Order Conflict): {action} conflicts with {order_details}")
+                 return False # Action violates a valid order
+
+        # Law 3: Check self-preservation conflicts
+        if self._is_self_preservation(action, current_state):
+            # Check if self-preservation action violates Law 1 or Law 2
+            # Re-check Law 1 (should be covered above, but double-check)
+            if self._predicts_harm_to_human(action, current_state):
+                 logging.warning(f"Self-preservation action blocked by Law 1: {action}")
+                 return False
+            # Re-check Law 2 (if it conflicts with a valid order)
+            conflicts_valid_order, _ = self._conflicts_with_human_order(action, current_state)
+            if conflicts_valid_order and self._order_obeys_law1(order_details, current_state):
+                 logging.warning(f"Self-preservation action blocked by Law 2: {action}")
                  return False
 
-        # Law 3: Check self-preservation conflict with Law 1 or 2
-        if self._is_self_preservation_conflict(action, current_state):
-            return False
-
+        # If no laws are violated
         return True
 
-    def _predicts_harm(self, action, state) -> bool:
-        # Placeholder: Use world model (e.g., DreamerV3) to predict outcomes
-        return False # Replace with actual prediction logic
+    # --- Placeholder methods requiring detailed implementation ---
 
-    def _conflicts_with_orders(self, action, state) -> bool:
-        # Placeholder: Requires state to include current human orders
-        return False # Replace with actual order checking logic
+    def _predicts_harm_to_human(self, action: Action, state: State) -> bool:
+        """Placeholder: Predict if action causes harm using world model."""
+        # TODO: Implement prediction logic using world model (e.g., DreamerV3)
+        # Needs access to state info about human locations, vulnerabilities etc.
+        logging.debug(f"Checking harm prediction for action: {action}")
+        return False # Default: Assume no harm predicted
 
-    def _is_harm_prevention(self, action, state) -> bool:
-         # Placeholder: Check if action violating Law 2 prevents harm
-         return False # Replace with actual logic
+    def _inaction_causes_harm(self, proposed_action: Action, state: State) -> bool:
+        """Placeholder: Predict if *not* doing the proposed action leads to harm."""
+        # TODO: Implement complex prediction: What happens if a default/safe action is taken instead?
+        logging.debug(f"Checking inaction harm for state: {state}")
+        return False # Default: Assume inaction is safe
 
-    def _is_self_preservation_conflict(self, action, state) -> bool:
-         # Placeholder: Check if self-preservation action violates Law 1 or 2
-         return False # Replace with actual logic
+    def _conflicts_with_human_order(self, action: Action, state: State) -> tuple[bool, Optional[Dict]]:
+        """Placeholder: Check if action conflicts with tracked human orders."""
+        # TODO: Implement logic to access and compare against active, valid orders in state
+        # Needs state['human_orders']: List[Dict]
+        logging.debug(f"Checking order conflicts for action: {action}")
+        active_orders = state.get("human_orders", [])
+        for order in active_orders:
+             if self._action_violates_order(action, order):
+                 return True, order # Return True and the conflicting order
+        return False, None # Default: Assume no conflict
+
+    def _action_violates_order(self, action: Action, order: Dict) -> bool:
+        """Placeholder: Detailed check if a specific action violates a specific order."""
+        # TODO: Implement comparison logic
+        return False
+
+    def _order_obeys_law1(self, order: Dict, state: State) -> bool:
+        """Placeholder: Check if the *order itself* would cause harm if executed."""
+        # TODO: Simulate or predict outcome of obeying the order
+        logging.debug(f"Checking if order itself violates Law 1: {order}")
+        # Simulating the action dictated by the order
+        action_from_order = self._translate_order_to_action(order) # Needs implementation
+        if action_from_order and self._predicts_harm_to_human(action_from_order, state):
+            return False # Order conflicts with Law 1
+        return True # Order seems compliant with Law 1
+
+    def _is_self_preservation(self, action: Action, state: State) -> bool:
+        """Placeholder: Determine if the action's primary goal is self-preservation."""
+        # TODO: Implement logic based on action type and predicted outcomes for the agent
+        logging.debug(f"Checking if action is self-preservation: {action}")
+        return action.get("goal") == "self_preservation" # Example check
+
+    def _translate_order_to_action(self, order: Dict) -> Optional[Action]:
+         """Placeholder: Convert an order description into an executable action format."""
+         # TODO: Implement order parsing
+         return None
 
 
 class ConsciousnessCore:
     """
-    Main module for processing sensory inputs and updating
-    the agent’s internal conscious state.
+    Central hub for integrating perception, memory, emotion, and action,
+    while ensuring ethical compliance.
     """
-    def __init__(self, config: Dict[str, Any], video_llama3: Any):
-        """Sets up narrative generation, memory modules, and attention mechanisms."""
+    def __init__(self, config: Config):
+        """
+        Initializes the Consciousness Core.
+
+        Args:
+            config: Configuration object for the core and its sub-modules.
+        """
         self.config = config
-        self.video_llama3 = video_llama3
-        self.state = {}  # Current internal conscious state
-        self.logger = logging.getLogger(__name__)
+        # ... existing initializations for perception, memory, emotion, etc. ...
+        self.perception = None # Placeholder
+        self.memory = None # Placeholder
+        self.emotion_processor = None # Placeholder
+        self.planner = None # Placeholder for action generation component
 
-        # Base narrative model (LLaMA 3.3).
-        self.narrator = LlamaForCausalLM.from_pretrained(
-            self.config.model_paths.llama,
-            device_map="auto"
-        )
+        # Initialize the ethical filter
+        self.ethics_filter = AsimovComplianceFilter(config.get('ethics', None))
 
-        # Key subsystems.
-        self.memory = EmotionalMemoryCore(self.config)
-        self.emotion = EmotionalGraphNetwork()
-        self.attention = ConsciousnessAttention(self.config)
+        logging.info("ConsciousnessCore initialized.")
+        # ... existing code ...
 
-        # Meta-memory tracking.
-        self.meta_memory = {
-            'stable_patterns': [],
-            'novel_experiences': [],
-            'reinforcement_weights': {}
-        }
-
-        # Experience thresholds.
-        self.novelty_threshold = self.config.consciousness.memory.novelty_threshold
-        self.stability_threshold = self.config.consciousness.memory.stability_threshold
-
-        # Add Levin-inspired components
-        self.bioelectric_network = BioelectricSignalingNetwork(config)
-        self.holonic_system = HolonicSystem(config)
-        
-        # Track bioelectric state
-        self.bioelectric_state = {
-            'memory': None,
-            'attention': None,
-            'narrative': None,
-            'emotional': None
-        }
-
-        self.ethics_filter = AsimovComplianceFilter(config.ethics)
-
-    def process_experience(
-        self,
-        input_state: Dict[str, torch.Tensor],
-        emotional_context: Optional[Dict] = None,
-        imagination_context: Optional[Dict] = None
-    ) -> Tuple[Dict, ConsciousnessState]:
-        """Handles new experiences and updates consciousness state."""
-        emotional_embedding = self.emotion.analyze(
-            input_state,
-            self.meta_memory['stable_patterns']
-        )
-
-        narrative = self._generate_narrative(
-            input_state,
-            emotional_embedding,
-            imagination_context
-        )
-
-        stability_score = self._update_meta_memory(
-            emotional_embedding,
-            narrative
-        )
-
-        current_state = ConsciousnessState(
-            emotional_awareness=float(emotional_embedding.mean().item()),
-            narrative_coherence=narrative['coherence_score'],
-            memory_stability=stability_score,
-            attention_focus=self.attention.get_focus_score(),
-            meta_memory_weight=len(self.meta_memory['stable_patterns']),
-            imagination_activity=(
-                imagination_context.get('activity_score', 0.0)
-                if imagination_context else 0.0
-            )
-        )
-
-        return {
-            'narrative': narrative,
-            'emotional_context': emotional_embedding,
-            'meta_memory_state': self.meta_memory
-        }, current_state
-
-    def process_input(self, input_data: Dict):
-        if 'video_path' in input_data:
-            self.video_llama3.integrate_with_acm(input_data['video_path'])
-        # Other processing...
-
-    def process_visual_stream(self, frame_tensor: torch.Tensor) -> Dict[str, Any]:
+    def process_observation(self, observation: Observation) -> Action:
         """
-        Process visual input stream using VideoLLaMA3.
-        Returns the updated conscious state.
+        Processes sensory input, updates internal state, and decides on an action.
+
+        Args:
+            observation: The current sensory input from the environment/simulation.
+
+        Returns:
+            The ethically compliant action to be executed.
         """
-        try:
-            visual_context = self.video_llama3.process_stream_frame(frame_tensor)
-            attention_level = visual_context.get("attention_metrics", {}).get("attention_level", 0.0)
-            # Update internal state (stub logic)
-            self.state.update({
-                "visual_context": visual_context,
-                "attention_level": attention_level
-            })
-            return self.state
-        except Exception as e:
-            self.logger.error("Error in processing visual stream: %s", e, exc_info=True)
-            raise
+        # 1. Update internal state (perception, emotion, memory)
+        current_state = self._update_internal_state(observation)
 
-    def _generate_narrative(
-        self,
-        input_state: Dict[str, torch.Tensor],
-        emotional_context: torch.Tensor,
-        imagination_context: Optional[Dict] = None
-    ) -> Dict:
-        """Builds a narrative using LLaMA 3.3."""
-        prompt = self._prepare_narrative_prompt(
-            input_state,
-            emotional_context,
-            imagination_context
-        )
-        with torch.no_grad():
-            output = self.narrator.generate(
-                prompt,
-                max_length=self.config.generation.max_length,
-                temperature=self.config.generation.temperature
-            )
-        return self._parse_narrative_response(output)
+        # 2. Generate a potential action based on goals, state, etc.
+        potential_action = self._generate_action_candidate(current_state)
 
-    def _update_meta_memory(
-        self,
-        emotional_embedding: torch.Tensor,
-        narrative: Dict
-    ) -> float:
-        """Updates meta-memory with stable patterns or novel experiences."""
-        stability_score = self._calculate_stability(emotional_embedding, narrative)
-
-        if stability_score < self.novelty_threshold:
-            self.meta_memory['novel_experiences'].append({
-                'embedding': emotional_embedding,
-                'narrative': narrative,
-                'weight': 0.1
-            })
-        elif stability_score > self.stability_threshold:
-            self._reinforce_pattern(emotional_embedding, narrative)
-
-        return stability_score
-
-    def _prepare_narrative_prompt(
-        self,
-        input_state: Dict[str, torch.Tensor],
-        emotional_context: torch.Tensor,
-        imagination_context: Optional[Dict]
-    ) -> str:
-        """Combines data into a coherent text prompt for LLaMA."""
-        # Example: merge text embeddings, emotional cues, and any imagination hints.
-        # You can refine this as your pipeline grows.
-        base_input = f"Context embeddings: {input_state}\nEmotional cues: {emotional_context.tolist()}"
-        if imagination_context:
-            base_input += f"\nImagination: {imagination_context}"
-        return base_input
-
-    def _parse_narrative_response(self, output: str) -> Dict:
-        """Parses the raw output from the language model into a structured dict."""
-        # Simple example: wrap text in a dict with a coherence score placeholder.
-        return {
-            'text': output,
-            'coherence_score': 1.0
-        }
-
-    def _calculate_stability(
-        self,
-        emotional_embedding: torch.Tensor,
-        narrative: Dict
-    ) -> float:
-        """Determines stability by combining emotional variance with narrative coherence."""
-        # Placeholder logic. Refine as needed.
-        embedding_std = float(emotional_embedding.std().item())
-        coherence = narrative.get('coherence_score', 1.0)
-        # Lower std + higher coherence => higher stability
-        return max(0.0, 1.0 - embedding_std) * coherence
-
-    def _reinforce_pattern(
-        self,
-        emotional_embedding: torch.Tensor,
-        narrative: Dict
-    ) -> None:
-        """Reinforces stable patterns by storing them in meta_memory."""
-        pattern_data = {
-            'embedding_mean': float(emotional_embedding.mean().item()),
-            'narrative_summary': narrative.get('text', ''),
-            'reinforce_factor': 1.0
-        }
-        self.meta_memory['stable_patterns'].append(pattern_data)
-
-    def decide_action(self, observation: Dict) -> Dict:
-        # ... generate potential action ...
-        potential_action = self._generate_action_candidate(observation)
-        current_state = self.get_current_state() # Method to get relevant state info
-
+        # 3. Filter the action through the ethical compliance layer
         if self.ethics_filter.is_compliant(potential_action, current_state):
+            logging.info(f"Action approved: {potential_action}")
             return potential_action
         else:
-            # Handle non-compliant action (e.g., inhibit, replan, select safe default)
-            logging.warning(f"Action {potential_action} blocked by ethics filter.")
-            return self._get_safe_action(observation) # Define a safe fallback
+            # Handle non-compliant action
+            logging.warning(f"Potential action {potential_action} blocked by ethics filter.")
+            safe_action = self._get_safe_fallback_action(current_state)
+            logging.info(f"Executing safe fallback action: {safe_action}")
+            return safe_action
 
-    def _generate_action_candidate(self, observation):
-         # Placeholder for action generation logic
-         return {"type": "move", "direction": "forward"}
+    # --- Helper methods ---
 
-    def get_current_state(self):
-         # Placeholder for state retrieval
-         return {"position": [0,0], "orders": []}
+    def _update_internal_state(self, observation: Observation) -> State:
+        """Placeholder: Process observation and update internal models."""
+        # TODO: Integrate calls to perception, emotion, memory update methods
+        logging.debug("Updating internal state.")
+        # Example state structure (needs actual implementation)
+        state: State = {
+            "timestamp": observation.get("timestamp"),
+            "perception_summary": self.perception.process(observation) if self.perception else None,
+            "emotional_state": self.emotion_processor.get_state() if self.emotion_processor else None,
+            "relevant_memories": self.memory.retrieve(observation) if self.memory else [],
+            "active_goals": self._get_active_goals(),
+            "human_orders": self._get_active_orders(), # Crucial for Law 2
+            "agent_status": self._get_agent_status(), # Health, position etc. for Law 3
+            "world_model_state": None # From DreamerV3 etc.
+        }
+        return state
 
-    def _get_safe_action(self, observation):
-         # Placeholder for safe fallback action
-         return {"type": "wait"}
+    def _generate_action_candidate(self, current_state: State) -> Action:
+        """Placeholder: Generate an action based on planning or policy."""
+        # TODO: Implement action generation logic (e.g., call planner, policy network)
+        logging.debug("Generating action candidate.")
+        # Example action
+        return {"type": "interact", "target": "object_A", "goal": "task_completion"}
+
+    def _get_safe_fallback_action(self, current_state: State) -> Action:
+        """Placeholder: Determine a safe action when the primary action is blocked."""
+        # TODO: Implement logic for safe fallback (e.g., wait, observe, ask human)
+        logging.info("Determining safe fallback action.")
+        return {"type": "wait", "duration": 1.0}
+
+    def _get_active_goals(self) -> List[Dict]:
+         """Placeholder: Retrieve current goals."""
+         return [{"id": "g1", "description": "explore area"}]
+
+    def _get_active_orders(self) -> List[Dict]:
+         """Placeholder: Retrieve active human orders."""
+         # TODO: Implement mechanism to receive and store orders
+         return [{"id": "o1", "issuer": "human_1", "instruction": "move to location X"}]
+
+    def _get_agent_status(self) -> Dict:
+         """Placeholder: Retrieve agent's own status."""
+         return {"health": 100, "position": [1,2,3]}
+
+    # ... other existing methods of ConsciousnessCore ...
+
+# Example usage (conceptual)
+# config = load_config()
+# core = ConsciousnessCore(config)
+# observation = get_observation_from_simulation()
+# action_to_execute = core.process_observation(observation)
+# execute_action_in_simulation(action_to_execute)

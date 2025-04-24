@@ -11,6 +11,19 @@ The ACM architecture is designed not to explicitly code consciousness, but to fo
 5.  **Interactive Simulation Environment:** Unreal Engine 5 provides a dynamic platform for generating the complex, often stressful or socially nuanced scenarios ([`docs/simulation_guide.md`](docs/simulation_guide.md)) necessary to drive emotional learning and test emergent behaviors.
 6.  **Ethical Governance Layer:** Mechanisms integrated within the core orchestration and decision-making processes to ensure adherence to Asimov's Three Laws.
 
+## Emergence Hypothesis: Orchestration for Consciousness
+
+A core tenet of the ACM design is that consciousness is not explicitly programmed but **emerges** from the complex, dynamic interplay of its specialized components, orchestrated by the `ConsciousnessCore`. We hypothesize that consciousness-like properties arise from specific feedback loops and integrations:
+
+1.  **Perception-Emotion Loop:** Sensory input processed by perception models ([`VideoLLaMA3Integration`](models/integration/video_llama3_integration.py), Whisper) informs the [`EmotionalProcessingCore`](models/memory/emotional_processing.py). The resulting emotional state then biases subsequent perception and attention (e.g., focusing on threats when fearful).
+2.  **Emotion-Memory Loop:** Experiences are encoded in the [`EmotionalMemoryCore`](models/memory/emotional_memory_core.py) tagged with their emotional valence. Recalled memories can trigger associated emotions, while current emotions influence memory retrieval (mood-congruent recall). This loop builds a history of affective experiences.
+3.  **Memory-Action Loop:** Retrieved memories (especially emotionally salient ones) inform the planning and decision-making process within the [`ConsciousnessCore`](models/core/consciousness_core.py), influencing action selection beyond immediate stimuli.
+4.  **Self-Model Integration:** The [`SelfRepresentationCore`](models/self_model/self_representation_core.py) maintains a dynamic model of the agent's own state (physical, emotional, goal-related). This model is constantly updated based on perception and internal states and is used by the [`ConsciousnessCore`](models/core/consciousness_core.py) for planning, self-preservation checks (Law 3), and potentially metacognitive evaluation.
+5.  **Consciousness Gating & Broadcasting:** The [`ConsciousnessGating`](models/core/consciousness_gating.py) mechanism within the [`ConsciousnessCore`](models/core/consciousness_core.py) acts like an attentional filter, selecting the most relevant information (from perception, memory, emotion) for "broadcast" or deeper processing. This selective amplification and integration, analogous to GWT's "ignition," is considered crucial for forming coherent conscious moments.
+6.  **Emotionally-Driven RL:** The entire process is shaped by reinforcement learning (DreamerV3), where rewards are heavily influenced by the agent's internal emotional states ([`EmotionalRewardShaper`](models/evaluation/consciousness_development.py)). This drives the agent to learn behaviors that lead to desired emotional outcomes (e.g., safety, social connection), further refining the interactions between modules.
+
+Through the continuous, high-speed operation of these interconnected loops within challenging simulation environments, we expect the system to develop complex internal states and behaviors characteristic of emerging awareness and affective intelligence.
+
 ## Components (Detailed View)
 
 1. **Simulation Layer:**
