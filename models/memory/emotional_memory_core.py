@@ -14,9 +14,14 @@ import pickle # Using pickle for simplicity, consider safer alternatives (JSON l
 from typing import Dict, Any, List, Tuple, Optional
 from collections import deque
 from .memory_interface import MemoryInterface, QueryContext, RetrievedMemory, MemoryData
-
 import numpy as np
-from sentence_transformers import SentenceTransformer, util # Import the library
+try:
+    from sentence_transformers import SentenceTransformer, util  # Import the library
+except ImportError:
+    logging.error("Could not import sentence_transformers. Make sure it's installed in your environment")
+    # These will be referenced later, so define placeholders
+    SentenceTransformer = None
+    util = None
 
 # --- Embedding Model Initialization ---
 # Load a pre-trained model. Choose one appropriate for your needs.
