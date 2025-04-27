@@ -17,7 +17,7 @@ from ..predictive.world_model_interface import WorldModelInterface, Action, Stat
 # Replace 'ConcretePerceptionClass' with the actual class name if you have one
 # from ..perception.concrete_perception import ConcretePerceptionClass
 from ..memory.emotional_memory_core import EmotionalMemoryCore
-# Corrected path: Assuming EmotionalProcessingCore is in the 'emotion' directory
+# Import from emotion module
 from ..emotion.emotional_processing import EmotionalProcessingCore
 from ..self_model.self_representation_core import SelfRepresentationCore
 from ..predictive.dreamer_emotional_wrapper import DreamerEmotionalWrapper
