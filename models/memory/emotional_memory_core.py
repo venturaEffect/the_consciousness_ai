@@ -15,32 +15,56 @@ from typing import Dict, Any, List, Tuple, Optional
 from collections import deque
 from .memory_interface import MemoryInterface, QueryContext, RetrievedMemory, MemoryData
 
-# Placeholder for a vector embedding function/model
-# In reality, this would likely be a class instance or function call
-# E.g., from sentence_transformers import SentenceTransformer
-# embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+import numpy as np
+from sentence_transformers import SentenceTransformer, util # Import the library
+
+# --- Embedding Model Initialization ---
+# Load a pre-trained model. Choose one appropriate for your needs.
+# 'all-MiniLM-L6-v2' is small and fast.
+# Consider models like 'paraphrase-mpnet-base-v2' for potentially better quality.
+# This should ideally be configurable or loaded based on config.
+try:
+    # Make this model loading potentially configurable via the main config dict
+    embedding_model_name = 'all-MiniLM-L6-v2'
+    embedding_model = SentenceTransformer(embedding_model_name)
+    logging.info(f"SentenceTransformer model '{embedding_model_name}' loaded.")
+    # Get embedding dimension dynamically
+    EMBEDDING_DIM = embedding_model.get_sentence_embedding_dimension()
+    logging.info(f"Embedding dimension: {EMBEDDING_DIM}")
+except Exception as e:
+    logging.error(f"Failed to load SentenceTransformer model: {e}. Embeddings will not work.", exc_info=True)
+    embedding_model = None
+    EMBEDDING_DIM = 0
+
+# --- Embedding and Similarity Functions ---
 def get_embedding(text: str) -> Optional[List[float]]:
-    """Placeholder function to generate text embeddings."""
-    if not text:
+    """Generates text embeddings using the loaded SentenceTransformer model."""
+    if not text or embedding_model is None:
         return None
-    # Replace with actual embedding generation
-    logging.debug("Generating placeholder embedding.")
-    # Simple example: return fixed-size list based on text length
-    size = 384 # Example dimension
-    embedding = [(hash(text) + i) % 100 / 100.0 for i in range(size)]
-    return embedding
+    try:
+        # The model returns a numpy array, convert to list for consistency/serialization if needed
+        embedding = embedding_model.encode(text, convert_to_numpy=True)
+        return embedding.tolist() # Convert numpy array to list
+    except Exception as e:
+        logging.error(f"Error generating embedding for text '{text[:50]}...': {e}", exc_info=True)
+        return None
 
 def cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
-    """Placeholder for cosine similarity calculation."""
-    if not vec1 or not vec2 or len(vec1) != len(vec2):
+    """Calculates cosine similarity using sentence-transformers util."""
+    if not vec1 or not vec2 or embedding_model is None:
         return 0.0
-    # Simplified dot product / magnitude calculation
-    dot_product = sum(v1 * v2 for v1, v2 in zip(vec1, vec2))
-    mag1 = sum(v**2 for v in vec1) ** 0.5
-    mag2 = sum(v**2 for v in vec2) ** 0.5
-    if mag1 == 0 or mag2 == 0:
+    try:
+        # Convert lists back to tensors/numpy arrays if needed by util.cos_sim
+        # util.cos_sim expects PyTorch tensors by default
+        import torch # Ensure torch is imported
+        tensor1 = torch.tensor(vec1).unsqueeze(0) # Add batch dimension
+        tensor2 = torch.tensor(vec2).unsqueeze(0) # Add batch dimension
+        similarity_tensor = util.cos_sim(tensor1, tensor2)
+        return similarity_tensor.item() # Extract the scalar value
+    except Exception as e:
+        logging.error(f"Error calculating cosine similarity: {e}", exc_info=True)
         return 0.0
-    return dot_product / (mag1 * mag2)
+
 
 class EmotionalMemoryCore(MemoryInterface):
     """
@@ -105,89 +129,78 @@ class EmotionalMemoryCore(MemoryInterface):
              return
 
         # --- Enrich data for storage ---
-        # Ensure essential RL fields exist (even if None)
-        data.setdefault('state_summary', None) # Text summary of the state/perception
+        data.setdefault('state_summary', None)
         data.setdefault('action', None)
-        data.setdefault('reward', None) # Combined reward (env + emotional)
+        data.setdefault('reward', None)
         data.setdefault('next_state_summary', None)
         data.setdefault('emotional_state', None)
-        data.setdefault('active_goal', None) # Store goal context if available
-        data.setdefault('active_lora_id', None) # Store which model adaptation was used
+        data.setdefault('active_goal', None)
+        data.setdefault('active_lora_id', None)
 
-        # Generate and store embeddings (example for state summary)
-        # TODO: Decide which fields need embeddings (perception, goal description, etc.)
-        state_text = data.get('state_summary', '')
-        data['state_embedding'] = get_embedding(state_text) if state_text else None
+        # Generate and store embeddings if model is available
+        if embedding_model:
+            state_text = data.get('state_summary', '')
+            data['state_embedding'] = get_embedding(state_text) # Already returns list or None
+        else:
+            data['state_embedding'] = None # Ensure field exists even if model failed
 
-        logging.debug(f"Storing memory at timestamp {timestamp} with keys: {list(data.keys())}")
+        logging.debug(f"Storing memory at timestamp {timestamp} with embedding: {'Yes' if data['state_embedding'] else 'No'}")
         self.memory_storage.append((timestamp, data))
-
-        # Optional: Trigger periodic saving instead of saving on every store
-        # if len(self.memory_storage) % 100 == 0: # Save every 100 memories
-        #     self.save_memory()
 
     def retrieve(self, query_context: QueryContext, top_k: int = 5) -> List[RetrievedMemory]:
         """
         Retrieves relevant memories using context (recency, semantic similarity, emotion).
-        Designed for providing context to the agent's "thought" process, prediction.
         """
         logging.debug(f"Retrieving memories (top_k={top_k}) with context: {query_context}")
         if not self.memory_storage: return []
 
         # --- Prepare Query Context ---
-        query_text = query_context.get("perception", {}).get("summary_text", "") # Example query text
-        query_embedding = get_embedding(query_text) if query_text else None
-        query_emotion = query_context.get("emotion", {}) # Current emotional state
+        query_text = query_context.get("perception", {}).get("summary_text", "")
+        query_embedding = get_embedding(query_text) if embedding_model else None # Generate embedding for query
+        query_emotion = query_context.get("emotion", {})
 
         # --- Scoring Logic ---
         scored_memories = []
         current_time = time.time()
-
-        # Iterate through a larger pool of recent memories for scoring
-        # Consider iterating through all if performance allows or using indexing
         search_pool_size = min(len(self.memory_storage), max(top_k * 10, 100))
         search_pool = list(self.memory_storage)[-search_pool_size:]
 
-        for timestamp, data in reversed(search_pool): # Iterate newest first
+        for timestamp, data in reversed(search_pool):
             score = 0.0
-            weight = 1.0 # Placeholder for meta-memory weighting
+            weight = 1.0
 
             # 1. Recency Score
             time_delta = current_time - timestamp
-            recency_score = 1.0 / (1 + time_delta / 300.0) # Example decay over 5 minutes
-            score += recency_score * 0.5 # Weight recency
+            recency_score = 1.0 / (1 + time_delta / 300.0)
+            score += recency_score * 0.5
 
-            # 2. Semantic Similarity Score (using embeddings)
+            # 2. Semantic Similarity Score (using REAL embeddings)
             memory_embedding = data.get('state_embedding')
             if query_embedding and memory_embedding:
-                similarity = cosine_similarity(query_embedding, memory_embedding)
-                score += similarity * 1.0 # Weight similarity
+                # Ensure embeddings are lists of floats before passing
+                if isinstance(query_embedding, list) and isinstance(memory_embedding, list):
+                     similarity = cosine_similarity(query_embedding, memory_embedding)
+                     score += similarity * 1.0 # Weight similarity
+                else:
+                     logging.warning("Embeddings are not lists, skipping similarity calculation.")
 
-            # 3. Emotional Similarity Score
+            # 3. Emotional Similarity Score (Placeholder logic remains)
             memory_emotion = data.get('emotional_state')
             if query_emotion and memory_emotion and isinstance(memory_emotion, dict):
-                # Example: Simple distance between dominant emotions or vector distance
-                # This requires a defined structure for EmotionalState
                 emotion_distance = sum(abs(query_emotion.get(k, 0) - memory_emotion.get(k, 0)) for k in query_emotion)
-                emotion_similarity = 1.0 / (1.0 + emotion_distance) # Inverse distance
-                score += emotion_similarity * 0.3 # Weight emotion
+                emotion_similarity = 1.0 / (1.0 + emotion_distance)
+                score += emotion_similarity * 0.3
 
             # 4. Goal Relevance Score (Placeholder)
-            # TODO: Compare query_context.get('active_goal') with data.get('active_goal')
-
             # 5. Apply Meta-Memory Weight (Placeholder)
-            # TODO: Retrieve or calculate weight based on past usefulness or outcome
-            # weight = self._get_meta_weight(data)
             final_score = score * weight
-
             scored_memories.append((final_score, timestamp, data))
 
-        # Sort by score (highest first)
+        # Sort by score
         scored_memories.sort(key=lambda x: x[0], reverse=True)
 
-        # Return top_k memories (just the data part)
+        # Return top_k
         retrieved: List[RetrievedMemory] = [mem_data for score, ts, mem_data in scored_memories[:top_k]]
-
         logging.debug(f"Retrieved {len(retrieved)} memories based on context.")
         return retrieved
 
@@ -227,6 +240,3 @@ class EmotionalMemoryCore(MemoryInterface):
         """Ensure memory is saved when the object is destroyed (e.g., program exit)."""
         logging.info("EmotionalMemoryCore shutting down. Saving memory...")
         self.save_memory()
-
-# --- Need to import numpy for random sampling in retrieve_batch_for_rl ---
-import numpy as np
