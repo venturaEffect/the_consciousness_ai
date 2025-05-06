@@ -25,9 +25,9 @@ models/
 │   └── tgnn/
 │       └── emotional_graph.py       # Potential Emotional Graph Neural Network
 ├── core/
-│   ├── consciousness_core.py        # Central orchestration, decision-making
+│   ├── consciousness_core.py        # Central orchestration, decision-making, includes AsimovComplianceFilter logic
 │   ├── consciousness_gating.py      # Attention control
-│   └── asimov_compliance_filter.py  # Integrated ethical filter (part of ConsciousnessCore logic)
+│   # └── asimov_compliance_filter.py  # Integrated ethical filter (logic within consciousness_core.py)
 └── self_model/
     └── self_representation_core.py  # Self-representation, internal state model
 # ... other model categories like integration/, evaluation/, narrative/, ace_core/
@@ -477,7 +477,7 @@ The project now integrates NVIDIA's Avatar and Chat Engine (ACE) with our Artifi
 
 - Consciousness Core for high-level cognition
 - Emotional Memory for experience accumulation
-- Attention Schema for meta-awareness
+- Consciousness Gating for meta-awareness (attention control)
 - World Model for predictive processing
 
 ## Configuration

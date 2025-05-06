@@ -9,7 +9,7 @@ The ACM architecture is designed not to explicitly code consciousness, but to fo
 3.  **Dynamic Emotional Memory:** A sophisticated memory system ([`EmotionalMemoryCore`](models/memory/emotional_memory_core.py), Pinecone) that indexes experiences with their emotional valence and context, influencing recall, decision-making, and long-term consolidation ([`MemoryConsolidationManager`](models/memory/consolidation.py)).
 4.  **Centralized Consciousness Orchestration:** A core module ([`ConsciousnessCore`](models/core/consciousness_core.py)) that integrates information streams from perception, memory, and emotion, manages attentional focus ([`ConsciousnessGating`](models/core/consciousness_gating.py)), maintains a dynamic self-model ([`SelfRepresentationCore`](models/self_model/self_representation_core.py)), and mediates action selection, ensuring alignment with ethical constraints.
 5.  **Interactive Simulation Environment:** Unreal Engine 5 provides a dynamic platform for generating the complex, often stressful or socially nuanced scenarios ([`docs/simulation_guide.md`](docs/simulation_guide.md)) necessary to drive emotional learning and test emergent behaviors.
-6.  **Ethical Governance Layer:** Mechanisms integrated within the core orchestration and decision-making processes to ensure adherence to Asimov's Three Laws.
+6.  **Ethical Governance Layer:** Mechanisms integrated within the core orchestration and decision-making processes to ensure adherence to Asimov's Three Laws. This is primarily implemented via the `AsimovComplianceFilter` class within the `ConsciousnessCore` module (see [`docs/ethics_framework.md`](docs/ethics_framework.md)).
 
 ## Emergence Hypothesis: Orchestration for Consciousness
 
