@@ -241,11 +241,11 @@ while simulation_running:
 
 The project includes a framework for analyzing the consciousness development over time:
 
-1.  ConsciousnessMonitor
+1.  [`ConsciousnessMonitor`](models/evaluation/consciousness_monitor.py)
     Designed to track internal metrics at runtime to compute a consciousness score.
 
 2.  ConsciousnessMetrics
-    Implements functions like `evaluate_emotional_awareness`, `evaluate_memory_coherence`, and `evaluate_learning_progress` to assess different dimensions of AI consciousness.
+    The `ConsciousnessMonitor` implements or utilizes functions (e.g., within `models/evaluation/`) like `evaluate_emotional_awareness`, `evaluate_memory_coherence`, and `evaluate_learning_progress` to assess different dimensions of AI consciousness.
 
 The system architecture allows for logging and plotting these metrics over time to evaluate the development of synthetic awareness.
 
@@ -341,9 +341,17 @@ Refer to Unreal Engine Docs [Unreal Engine Docs](https://docs.unrealengine.com/)
 - `docs/`: Documentation for architecture, installation, datasets, and the roadmap.
   - Includes `datasets.md` (Note: This document is planned) and `preprocessing.md` for dataset-related details.
 - `models/`: Pre-trained and fine-tuned AI models.
+  - `core/`: Central consciousness processing.
+  - `memory/`: Emotional memory systems.
+  - `emotion/`: Emotional processing and state generation.
+  - `self_model/`: Self-representation.
+  - `evaluation/`: Monitoring and evaluation tools.
+  - `integration/`: Integration with external models/services.
+  - `narrative/`: Narrative engine components.
+  - `ace_core/`: NVIDIA ACE integration.
 - `scripts/`: Utility scripts for setup, training, and testing.
+  - `utils/`: General utility scripts, including preprocessing.
 - `simulations/`: VR environments and APIs for agent interactions.
-- `tests/`: Unit and integration tests.
 
 ### Usage
 
@@ -517,6 +525,7 @@ This project is licensed under the terms of the `LICENSE` file.
 - Holonic consciousness
 - Emotional memory formation
 - Survival-driven attention
+- Consciousness Gating
 
 ## Citation & Credits
 

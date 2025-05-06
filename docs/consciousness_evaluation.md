@@ -17,4 +17,4 @@ This document outlines the metrics and procedures for evaluating consciousness i
 4. **Self-Awareness Score**
    - Query the self-model about internal states, count error corrections, or track introspective queries.
 
-Refer to [models/evaluation/consciousness_monitor.py](../models/evaluation/consciousness_monitor.py) for implementation details.
+Refer to [models/evaluation/consciousness_monitor.py](../models/evaluation/consciousness_monitor.py) for implementation details. The `ConsciousnessMonitor` class is responsible for orchestrating the calculation and tracking of these (and potentially other) metrics to provide an ongoing assessment of the ACM's state.
