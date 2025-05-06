@@ -27,7 +27,7 @@ We are always looking to enhance the quality of the ACM by integrating high-qual
    - **License**: Verify that the dataset is licensed for commercial use.
    - **Proposed Use**: Explain how the dataset can be used in the ACM project (e.g., training models, fine-tuning, validation).
 
-3. If approved, submit a pull request to add the dataset details to the `/docs/datasets.md` file.
+3. If approved, submit a pull request to add the dataset details to the `/docs/datasets.md` file. (Note: This `datasets.md` file is a planned document and crucial for dataset management. Its creation is a priority.)
 
 ---
 

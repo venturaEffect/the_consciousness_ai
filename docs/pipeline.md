@@ -10,7 +10,7 @@ This document outlines the typical flow of information and processing within the
 
 2.  **State Update & Integration (`ConsciousnessCore`):**
     *   The [`ConsciousnessCore`](models/core/consciousness_core.py) receives the processed perceptual information.
-    *   **Emotional Processing:** The [`EmotionalProcessingCore`](models/memory/emotional_processing.py) analyzes the input and current context to update the agent's internal emotional state (valence, arousal, specific emotions).
+    *   **Emotional Processing:** The [`EmotionalProcessingCore`](models/emotion/emotional_processing.py) analyzes the input and current context to update the agent's internal emotional state (valence, arousal, specific emotions).
     *   **Memory Retrieval:** Relevant memories are retrieved from the [`EmotionalMemoryCore`](models/memory/emotional_memory_core.py) based on perceptual cues and emotional state.
     *   **Self-Model Update:** The [`SelfRepresentationCore`](models/self_model/self_representation_core.py) updates its model of the agent's status.
     *   **World Model Update:** The predictive world model (DreamerV3) updates its internal state based on the new observation.

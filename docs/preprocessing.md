@@ -1,6 +1,6 @@
 # Dataset Preprocessing Guide
 
-This document provides instructions for downloading, preprocessing, and organizing datasets required for the Artificial Consciousness Module (ACM) project.
+This document provides instructions for downloading, preprocessing, and organizing datasets required for the Artificial Consciousness Module (ACM) project. It assumes that `docs/datasets.md` (a currently planned document) provides the primary list and sources for these datasets.
 
 ---
 

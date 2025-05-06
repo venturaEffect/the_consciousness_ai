@@ -6,25 +6,31 @@
 
 The **Artificial Consciousness Module (ACM)** is our ambitious project to explore synthetic awareness in AI systems. We're combining modern AI technologies with virtual reality environments and emotional reinforcement learning to investigate the potential emergence of consciousness-like behaviors in non-biological systems.
 
-Our design centers around the hypothesis that consciousness-like properties are not programmed directly but **emerge** from the complex, high-order interactions between multiple specialized AI systems. We orchestrate advanced models for perception (VideoLLaMA3, Whisper), memory ([`EmotionalMemoryCore`](models/memory/emotional_memory_core.py)), emotion ([`EmotionalProcessingCore`](models/memory/emotional_processing.py)), world modeling (DreamerV3), and narrative reasoning (LLaMA 3.3) within dynamic VR simulations (Unreal Engine 5). The [`ConsciousnessCore`](models/core/consciousness_core.py) acts as a central hub, integrating these streams of information and guiding the agent's attention and behavior based on simulated emotional states and goals. The goal is to develop AI agents that form and store emotional memories through these orchestrated experiences, leading to emergent self-awareness and potentially empathetic responses, all while adhering to Asimov's Three Laws as ethical guidelines.
+Our design centers around the hypothesis that consciousness-like properties are not programmed directly but **emerge** from the complex, high-order interactions between multiple specialized AI systems. We orchestrate advanced models for perception (VideoLLaMA3, Whisper), memory ([`EmotionalMemoryCore`](models/memory/emotional_memory_core.py)), emotion ([`EmotionalProcessingCore`](models/emotion/emotional_processing.py)), world modeling (DreamerV3), and narrative reasoning (LLaMA 3.3) within dynamic VR simulations (Unreal Engine 5). The [`ConsciousnessCore`](models/core/consciousness_core.py) acts as a central hub, integrating these streams of information and guiding the agent's attention and behavior based on simulated emotional states and goals. The goal is to develop AI agents that form and store emotional memories through these orchestrated experiences, leading to emergent self-awareness and potentially empathetic responses, all while adhering to Asimov's Three Laws as ethical guidelines.
 
 [![The Consciousness AI Module](./repo_images/acm_thumbnail_1.png)](https://theconsciousness.ai)
 
 ## Core Architecture
 
 ```python
-# Core components hierarchy
-consciousness/
+# Core components hierarchy (within models/ directory)
+models/
 ├── memory/
-│   ├── emotional_memory_core.py     # Emotional indexing
+│   ├── emotional_memory_core.py     # Emotional indexing and storage
 │   ├── temporal_coherence.py        # Experience sequencing
 │   └── consolidation.py             # Memory optimization
 ├── emotion/
-│   ├── emotional_processing.py      # Affect handling
-│   └── meta_emotional.py            # Learning
-└── core/
-    ├── consciousness_gating.py      # Attention control
-    └── self_model.py                # Self-representation
+│   ├── emotional_processing.py      # Affect handling, emotional state generation
+│   ├── meta_emotional.py            # Learning related to emotions
+│   └── tgnn/
+│       └── emotional_graph.py       # Potential Emotional Graph Neural Network
+├── core/
+│   ├── consciousness_core.py        # Central orchestration, decision-making
+│   ├── consciousness_gating.py      # Attention control
+│   └── asimov_compliance_filter.py  # Integrated ethical filter (part of ConsciousnessCore logic)
+└── self_model/
+    └── self_representation_core.py  # Self-representation, internal state model
+# ... other model categories like integration/, evaluation/, narrative/, ace_core/
 ```
 
 ## Core Features
@@ -43,7 +49,7 @@ consciousness/
 
 2. **Emotional Intelligence & Empathetic Learning**
 
-   Our emotional processing system ([`EmotionalProcessingCore`](models/memory/emotional_processing.py), potentially using [`EmotionalGraphNetwork`](models/emotion/tgnn/emotional_graph.py)) analyzes multimodal inputs to generate internal emotional states for the agent. Crucially, these self-generated emotions are not just passive states; they directly influence the agent's learning and behavior through **emotionally-grounded reinforcement learning**.
+   Our emotional processing system ([`EmotionalProcessingCore`](models/emotion/emotional_processing.py), potentially using [`EmotionalGraphNetwork`](models/emotion/tgnn/emotional_graph.py)) analyzes multimodal inputs to generate internal emotional states for the agent. Crucially, these self-generated emotions are not just passive states; they directly influence the agent's learning and behavior through **emotionally-grounded reinforcement learning**.
    *   **RL Integration:** We integrate these emotional states with the DreamerV3 world model. The agent learns to predict not only environmental outcomes but also its own likely emotional responses.
    *   **Reward Shaping for Empathy:** The RL reward signal ([`EmotionalRewardShaper`](models/evaluation/consciousness_development.py)) is shaped by these internal emotional states. Positive simulated emotions (e.g., from successful social interaction, achieving goals safely) act as positive reinforcement, while negative emotions (e.g., from simulated harm, failure, social rejection) act as negative reinforcement or penalties.
    *   **Emergent Empathy Hypothesis:** By learning to navigate complex scenarios ([`docs/simulation_guide.md`](docs/simulation_guide.md)) to maximize positive internal emotional states and minimize negative ones, particularly in social contexts (using datasets like MELD, RAMAS), we hypothesize the agent will develop behaviors interpretable as understanding and responding appropriately to the emotions of others – a foundation for empathy. Meta-learning capabilities aim to accelerate adaptation to new emotional contexts.
@@ -64,7 +70,7 @@ consciousness/
    2. Obey human orders unless conflicting with First Law.
    3. Self-preservation unless conflicting with First/Second Laws.
 
-   **Implementation:** Adherence is enforced primarily within the [`ConsciousnessCore`](models/core/consciousness_core.py) module via the integrated `AsimovComplianceFilter` class. This filter intercepts and evaluates potential actions against the laws based on predicted outcomes and current state *before* execution. Actions violating the prioritized laws are blocked, and a safe fallback is initiated. Continuous monitoring ([`SelfAwarenessEvaluator`](models/evaluation/self_awareness_evaluation.py)) also checks for ethical alignment. *(See [`docs/ethics_framework.md`](docs/ethics_framework.md) for detailed implementation strategy)*.
+   **Implementation:** Adherence is enforced primarily within the [`ConsciousnessCore`](models/core/consciousness_core.py) module via an integrated `AsimovComplianceFilter` logic. This filter intercepts and evaluates potential actions against the laws based on predicted outcomes and current state *before* execution. Actions violating the prioritized laws are blocked, and a safe fallback is initiated. Continuous monitoring ([`SelfAwarenessEvaluator`](models/evaluation/self_awareness_evaluation.py)) also checks for ethical alignment. *(See [`docs/ethics_framework.md`](docs/ethics_framework.md) for detailed implementation strategy)*.
 
 5. **Narrative Foundation**
 
@@ -84,7 +90,7 @@ The architecture incorporates DreamerV3 with emotional context weighting for wor
 
 ## Technologies
 
-- **Core AI:** LLaMA 3.3, palme (open-source PaLM-E), Whisper v3
+- **Core AI:** LLaMA 3.3, **palme (open-source PaLM-E)**, Whisper v3
 - **Animation & Expression:** NVIDIA ACE, Audio2Face
 - **Memory Systems:** Pinecone v2, Temporal Graph Neural Networks
 - **Emotion Processing:** GoEmotions, MELD, HEU Emotion
@@ -93,7 +99,7 @@ The architecture incorporates DreamerV3 with emotional context weighting for wor
 
 ## Available Datasets for Training
 
-The ACM leverages a variety of datasets for training its components. Below are some key examples. Please refer to `docs/datasets.md` for a comprehensive list, licensing details, and setup instructions.
+The ACM leverages a variety of datasets for training its components. Below are some key examples. Please refer to `docs/datasets.md` (Note: This document is planned and needs to be created) for a comprehensive list, licensing details, and setup instructions.
 
 ### First-Person Interaction & Simulation Datasets
 
@@ -179,7 +185,7 @@ These datasets are vital for training the emotional intelligence components of t
 
 ### Dataset Usage
 
-- Detailed setup instructions in `docs/datasets.md`
+- Detailed setup instructions in `docs/datasets.md` (Note: This document is planned and needs to be created)
 - Data preprocessing guidelines in `docs/preprocessing.md`
 - Example notebooks potentially in `notebooks/dataset_examples/` (if created)
 
@@ -187,7 +193,7 @@ These datasets are vital for training the emotional intelligence components of t
 
 ### Overview
 
-The design incorporates VideoLLaMA3 for processing live video or frames from simulations in real time, enabling AI agents to interpret their environment dynamically, especially in Unreal Engine simulations.
+The design incorporates VideoLLaMA3 for processing live video or frames from simulations in real time, enabling AI agents to interpret their environment dynamically, especially in Unreal Engine simulations. (Detailed setup in `docs/installation.md` or a dedicated integration guide is recommended).
 
 ### Requirements
 
@@ -317,7 +323,7 @@ source venv/bin/activate  # Linux/Mac
 
 ### 3. Install Dependencies
 
-Run the provided installation script:
+Run the provided installation script: (See `docs/installation.md` for more details and model-specific setup)
 
 ```bash
 pip install --upgrade pip
@@ -333,7 +339,7 @@ Refer to Unreal Engine Docs [Unreal Engine Docs](https://docs.unrealengine.com/)
 
 - `data/`: Datasets for emotions and simulations.
 - `docs/`: Documentation for architecture, installation, datasets, and the roadmap.
-  - Includes `datasets.md` and `preprocessing.md` for dataset-related details.
+  - Includes `datasets.md` (Note: This document is planned) and `preprocessing.md` for dataset-related details.
 - `models/`: Pre-trained and fine-tuned AI models.
 - `scripts/`: Utility scripts for setup, training, and testing.
 - `simulations/`: VR environments and APIs for agent interactions.
@@ -341,7 +347,7 @@ Refer to Unreal Engine Docs [Unreal Engine Docs](https://docs.unrealengine.com/)
 
 ### Usage
 
-Refer to the subdirectories (`/docs/` and `/models/`) for more detailed instructions.
+Refer to the subdirectories (`/docs/` and `/models/`) for more detailed instructions. (Detailed model setup and usage can be found in `docs/installation.md` and specific model integration guides).
 
 ### Contributing
 
@@ -355,7 +361,7 @@ This project is licensed under the terms of the `LICENSE` file.
 
 Datasets are hosted externally and need to be downloaded and preprocessed locally:
 
-1. Refer to `/docs/datasets.md` for dataset details and download links.
+1. Refer to `/docs/datasets.md` (Note: This document is planned) for dataset details and download links.
 2. Follow the preprocessing instructions in `/docs/preprocessing.md` to prepare datasets for use.
 
 Example:
@@ -424,6 +430,8 @@ For Windows and macOS, refer to [Unreal Engine Docs](https://docs.unrealengine.c
 
 ### Setting Up Other Models
 
+(For detailed setup of these and other models, please refer to `docs/installation.md` or specific integration guides.)
+
 **PaLM-E Integration:**
 
 ```bash
@@ -437,6 +445,8 @@ pip install whisper-v3
 ```
 
 ### Integration with VideoLLaMA3
+
+(This section might be better placed in `docs/installation.md` or a dedicated integration guide.)
 
 To integrate VideoLLaMA3 into the ACM project, follow these steps:
 
@@ -488,7 +498,7 @@ Detailed usage instructions for each module are in their respective directories 
 
 ## Contributing
 
-Contributions are welcome. Please see `docs/CONTRIBUTING.md` for details on contributing new datasets, features, or fixes.
+Contributions are welcome. Please see `docs/contributing.md` for details on contributing new datasets, features, or fixes.
 
 ## License
 
