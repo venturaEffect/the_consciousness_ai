@@ -31,6 +31,8 @@ This guide outlines the approach for setting up simulation scenarios in Unreal E
     - **FaceFX** – for facial animation and emotion mapping.
     - **Live Link Face** – to stream facial capture data into Unreal.
     - **AI-Assisted Tools:** Consider third-party AI copilot tools that integrate within Unreal Editor to assist in simulation development.
+  - **Unreal Engine Marketplace:** Actively search the Unreal Engine Marketplace for plugins that facilitate communication with external applications (e.g., via TCP/IP, UDP, gRPC, REST APIs) or offer direct Python scripting enhancements for runtime interactions. Many community-developed and official plugins can simplify the integration of external AI modules like the ACM.
+  - **Custom C++ or Blueprint Solutions:** For bespoke communication needs, develop custom C++ modules or Blueprint scripts within Unreal Engine to handle data exchange with your Python-based ACM. This could involve setting up socket listeners, gRPC services, or HTTP endpoints.
 
 ---
 
