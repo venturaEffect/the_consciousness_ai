@@ -50,7 +50,9 @@ This guide outlines the approach for setting up simulation scenarios in Unreal E
       # Basic environment step
       next_state, reward, done, info = super().step(action)
       # Capture basic instinctual reaction
-      info['emotional_context'] = simple_emotion_calculation(next_state)
+      # This info is then processed by EmotionalProcessingCore
+      info['raw_emotional_cues'] = {'state_features': next_state} 
+      # info['emotional_context'] = simple_emotion_calculation(next_state) # old
       return next_state, reward, done, info
   ```
 
@@ -67,11 +69,13 @@ This guide outlines the approach for setting up simulation scenarios in Unreal E
   def step(self, action: Dict) -> tuple:
       next_state, reward, done, info = super().step(action)
       # Obtain real-time facial emotion from Unreal's face recognition plugin
+      # This info is then processed by EmotionalProcessingCore
+      info['raw_emotional_cues'] = {'state_features': next_state}
       if self.face_recognition:
           facial_emotion = self.face_recognition.detect_emotion()
-          info['facial_emotion'] = facial_emotion
+          info['raw_emotional_cues']['facial_emotion'] = facial_emotion
       # Update contextual emotional state
-      info['emotional_context'] = compute_emotion(next_state, facial_emotion)
+      # info['emotional_context'] = compute_emotion(next_state, facial_emotion) # old
       return next_state, reward, done, info
   ```
 
@@ -82,58 +86,75 @@ This guide outlines the approach for setting up simulation scenarios in Unreal E
 ### Simulation Manager Responsibilities
 
 - **Interaction Episodes:** Manage episodes where the agent interacts with the environment.
-- **Reward Shaping:** Combine environmental rewards with emotional signals to calculate a composite emotional reward.
+- **Reward Shaping:** Utilize the `EmotionalRewardShaper` to combine environmental rewards with emotional signals to calculate a composite emotional reward.
 - **Memory and Meta-Memory:** Store each interaction’s emotional reward as meta-memory guiding both present behavior and future fine-tuning of models.
 
 ### Sample Interaction Loop:
 
 ```python
 # python: simulations/api/simulation_manager.py
+# Assuming self.emotional_processing_core and self.emotional_reward_shaper are initialized
+# and self.rl_agent represents the core RL algorithm (e.g., DreamerV3)
+
 def run_interaction_episode(self, agent, environment) -> Dict[str, Any]:
     episode_data = []
     state = environment.reset()
+    # Initial emotional context from EmotionalProcessingCore based on initial state
+    current_emotional_context = self.emotional_processing_core.get_emotional_state(state, agent.current_internal_state())
 
     done = False
-    step = 0
+    step_count = 0 # Renamed from 'step' to avoid conflict with environment.step
     while not done:
-        action = agent.select_action(state)
-        next_state, reward, done, info = environment.step(action)
+        action = agent.select_action(state, current_emotional_context) # Agent might use emotion for action selection
+        next_state, base_reward, done, info = environment.step(action)
 
-        # Compute composite emotional reward (including instinctual and social/emotional cues)
-        emotional_reward = self.rl_core.compute_reward(
-            state=state,
-            emotion_values=info.get('emotional_context'),
-            narrative=agent.current_narrative()
+        # Update emotional context based on new state and info from environment
+        # The EmotionalProcessingCore would interpret info['raw_emotional_cues']
+        next_emotional_context = self.emotional_processing_core.update_emotional_state(
+            next_state, 
+            info.get('raw_emotional_cues'), 
+            agent.current_internal_state()
+        )
+
+        # Compute composite emotional reward using EmotionalRewardShaper
+        composite_emotional_reward = self.emotional_reward_shaper.compute_reward(
+            base_reward=base_reward,
+            current_emotional_state=current_emotional_context,
+            next_emotional_state=next_emotional_context, # Rewarding transitions to better emotional states
+            narrative_coherence=agent.check_narrative_coherence(state, action, next_state), # Example
+            ethical_compliance=agent.check_ethical_compliance(action) # Example
         )
 
         # Store experience in memory for meta-learning
         self.memory.store_experience({
             "state": state,
             "action": action,
-            "reward": emotional_reward,
+            "reward": composite_emotional_reward, # Use the composite reward
             "next_state": next_state,
-            "emotion": info.get('emotional_context'),
-            "narrative": agent.current_narrative(),
+            "emotion_context_before_action": current_emotional_context,
+            "emotion_context_after_action": next_emotional_context,
+            "narrative_elements": agent.get_narrative_elements(), # Example
             "done": done
         })
 
-        # Update RL core based on emotional feedback
-        self.rl_core.update(
+        # Update RL agent based on emotional feedback
+        self.rl_agent.update(
             state=state,
             action=action,
-            reward=emotional_reward,
+            reward=composite_emotional_reward, # Use the composite reward
             next_state=next_state,
             done=done,
-            emotion_context=info.get('emotional_context')
+            emotional_context=current_emotional_context # Provide emotion as part of state if agent uses it
         )
 
         episode_data.append({
-            "step": step,
-            "emotion": info.get('emotional_context'),
-            "reward": emotional_reward
+            "step": step_count,
+            "emotion": current_emotional_context, # Log emotion at the time of action
+            "reward": composite_emotional_reward
         })
         state = next_state
-        step += 1
+        current_emotional_context = next_emotional_context
+        step_count += 1
 
     return {"episode_data": episode_data}
 ```
