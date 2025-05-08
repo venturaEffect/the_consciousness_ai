@@ -4,12 +4,23 @@ import numpy as np
 import time
 import logging
 from typing import Dict, Any, List, Optional, Tuple
+import torch
 
 # Placeholder types for state and core module
 State = Dict[str, Any]
 # from ..core.consciousness_core import ConsciousnessCore # Ideal import
 CoreModule = Any # Use Any if direct import is problematic
 MemorySystem = Any # Placeholder for MemoryCore or similar
+
+# Placeholder for MetricsLogger if detailed logging per test is desired
+try:
+    from scripts.logging.metrics_logger import MetricsLogger
+except ImportError:
+    class MetricsLogger: # Dummy logger if not found
+        def __init__(self, *args, **kwargs): print("Dummy MetricsLogger used in ConsciousnessCapabilityTester.")
+        def log_scalar_data(self, *args, **kwargs): pass
+        def log_tensor_data(self, *args, **kwargs): pass
+        def close(self): pass
 
 class IntegratedInformationCalculator:
     """
@@ -304,3 +315,165 @@ class ConsciousnessMetrics:
           else: metrics['self_awareness'] = {"error": "Monitor not initialized"}
 
           return metrics
+
+class ConsciousnessCapabilityTester:
+    def __init__(self, acm_agent_interface, config: dict = None, logger: MetricsLogger = None):
+        """
+        Initializes the ConsciousnessCapabilityTester.
+
+        This tester will implement a suite of behavioral and functional tests
+        based on an indicator-property rubric for AI consciousness.
+
+        Args:
+            acm_agent_interface: An interface to interact with the ACM agent,
+                                 allowing the tester to send stimuli/queries
+                                 and receive responses/internal states.
+            config (dict, optional): Configuration for the tests.
+            logger (MetricsLogger, optional): Logger for detailed test results.
+        """
+        self.agent_interface = acm_agent_interface
+        self.config = config if config else {}
+        self.logger = logger if logger else MetricsLogger(experiment_name="capability_tests") # Default logger
+        
+        print("ConsciousnessCapabilityTester initialized.")
+
+    def run_all_tests(self, step: int) -> dict:
+        """
+        Runs all defined capability tests and returns a summary of results.
+
+        Args:
+            step (int): The current simulation or operational step for logging.
+
+        Returns:
+            dict: A dictionary with test names as keys and results (e.g., pass/fail, scores) as values.
+        """
+        results = {}
+        
+        # Example of how tests might be called and results stored
+        results["embodiment_and_environment_interaction"] = self.test_embodiment_interaction(step)
+        results["self_awareness_mirror_test_analogue"] = self.test_self_awareness_mirror_analogue(step)
+        results["goal_directed_behavior_and_planning"] = self.test_goal_directed_behavior(step)
+        results["meta_cognition_confidence_reporting"] = self.test_meta_cognition_confidence(step)
+        results["reportability_of_internal_states"] = self.test_reportability(step)
+        # ... Add calls to other test methods for the 14 capabilities ...
+
+        if self.logger:
+            for test_name, test_result in results.items():
+                # Assuming test_result might be a simple score or a dict
+                if isinstance(test_result, (int, float, bool)):
+                    self.logger.log_scalar_data(f"capability_test_{test_name}", step, test_result)
+                elif isinstance(test_result, dict) and "score" in test_result:
+                     self.logger.log_scalar_data(f"capability_test_{test_name}_score", step, test_result["score"], test_result)
+                # Add more sophisticated logging if results are complex
+
+        return results
+
+    # --- Placeholder Test Methods for Capabilities ---
+    # These methods would need to be implemented with actual test logic,
+    # interacting with the self.agent_interface.
+
+    def test_embodiment_interaction(self, step: int) -> dict:
+        """
+        Tests the agent's ability to interact with its environment in a meaningful way,
+        showing understanding of its embodiment.
+        (Corresponds to indicators like "Embodiment", "Interaction with environment")
+        """
+        # Example: Send a command to interact with an object, check for appropriate action and state change.
+        # result = self.agent_interface.perform_action("touch_object_A")
+        # success = result.get("status") == "success"
+        # score = 1.0 if success else 0.0
+        print(f"Step {step}: Running test_embodiment_interaction (Placeholder)")
+        score = 0.5 # Placeholder
+        return {"score": score, "details": "Placeholder result"}
+
+    def test_self_awareness_mirror_test_analogue(self, step: int) -> dict:
+        """
+        Tests a form of self-recognition or self-modeling, analogous to a mirror test.
+        (Corresponds to indicators like "Self-Awareness", "Self-Recognition")
+        """
+        # Example: Present agent with its own "reflection" or data stream, see if it recognizes it as self.
+        # response = self.agent_interface.query_self_recognition("show_agent_avatar")
+        # score = response.get("self_recognized_score", 0.0)
+        print(f"Step {step}: Running test_self_awareness_mirror_test_analogue (Placeholder)")
+        score = 0.3 # Placeholder
+        return {"score": score, "details": "Placeholder result"}
+
+    def test_goal_directed_behavior(self, step: int) -> dict:
+        """
+        Tests the agent's ability to formulate and pursue goals, and adapt its plans.
+        (Corresponds to indicators like "Goal-directed behavior", "Planning")
+        """
+        print(f"Step {step}: Running test_goal_directed_behavior (Placeholder)")
+        score = 0.7 # Placeholder
+        return {"score": score, "details": "Placeholder result"}
+
+    def test_meta_cognition_confidence(self, step: int) -> dict:
+        """
+        Tests the agent's ability to report confidence in its knowledge or decisions.
+        (Corresponds to indicators like "Metacognition", "Confidence estimation")
+        """
+        # Example: Ask a question, then ask for confidence in the answer.
+        # answer = self.agent_interface.query("What is X?")
+        # confidence = self.agent_interface.query_confidence(answer_context=answer)
+        # score = confidence.get("level", 0.0)
+        print(f"Step {step}: Running test_meta_cognition_confidence (Placeholder)")
+        score = 0.6 # Placeholder
+        return {"score": score, "details": "Placeholder result"}
+
+    def test_reportability(self, step: int) -> dict:
+        """
+        Tests the agent's ability to report on its internal states, focus of attention, etc.
+        (Corresponds to indicators like "Reportability", "Access consciousness")
+        """
+        # Example: Query agent about its current focus or "what it's thinking about."
+        # report = self.agent_interface.query_internal_focus()
+        # coherence_score = self._analyze_report_coherence(report) # Internal helper
+        print(f"Step {step}: Running test_reportability (Placeholder)")
+        score = 0.4 # Placeholder
+        return {"score": score, "details": "Placeholder result"}
+
+    # ... Add more placeholder methods for the other ~9-10 capabilities ...
+    # Examples:
+    # def test_information_integration(self, step: int) -> dict: ... (IIT-inspired behavioral test)
+    # def test_global_availability(self, step: int) -> dict: ... (GNW-inspired behavioral test)
+    # def test_attention_mechanisms(self, step: int) -> dict: ...
+    # def test_memory_and_recall(self, step: int) -> dict: ... (Beyond simple storage)
+    # def test_learning_and_adaptation(self, step: int) -> dict: ...
+    # def test_autonomy_and_agency(self, step: int) -> dict: ...
+    # def test_flexibility_and_creativity(self, step: int) -> dict: ... (Simple forms)
+    # def test_social_interaction_rudimentary(self, step: int) -> dict: ... (Theory of Mind analogues)
+    # def test_temporal_awareness(self, step: int) -> dict: ... (Understanding past/present/future in tasks)
+
+    def shutdown_logger(self):
+        """Closes the logger if it was initialized by this class."""
+        if self.logger and hasattr(self.logger, "close"):
+            self.logger.close()
+            print("ConsciousnessCapabilityTester logger closed.")
+
+if __name__ == '__main__':
+    # This example requires a mock or real ACM agent interface.
+    class MockACMAgentInterface:
+        def perform_action(self, action_command):
+            print(f"MockAgent: Performing action '{action_command}'")
+            return {"status": "success", "details": f"Action {action_command} completed."}
+
+        def query(self, query_text):
+            print(f"MockAgent: Received query '{query_text}'")
+            return {"answer": "Mock answer to " + query_text, "confidence_raw": torch.rand(1).item()}
+        
+        def query_internal_focus(self):
+            return {"focus": "simulating future states", "details": "high activity in predictive module"}
+
+        # Add other methods that the tests might call
+
+    mock_agent = MockACMAgentInterface()
+    # Assuming MetricsLogger is accessible or its dummy is used
+    capability_tester = ConsciousnessCapabilityTester(acm_agent_interface=mock_agent)
+
+    print("\n--- Running All Capability Tests (Example) ---")
+    test_summary = capability_tester.run_all_tests(step=1)
+    print("\n--- Test Summary ---")
+    for test_name, result in test_summary.items():
+        print(f"{test_name}: {result}")
+    
+    capability_tester.shutdown_logger()

@@ -1,141 +1,88 @@
-# Roadmap for the Artificial Consciousness Module (ACM)
+# ACM Development Roadmap
 
-## Phase 1: Initial Setup and Research
+This roadmap outlines the planned development phases for the Artificial Consciousness Module (ACM).
 
-- Refine project scope and objectives.
-- Evaluate and document required technologies:
-  - **Unreal Engine 5** for immersive VR simulations.
-  - **Key AI Models:**
-    - LLaMA 3.3 for narrative construction.
-    - **palme (open-source PaLM-E)** for vision-language understanding.
-    - Whisper v3 for speech recognition and transcription.
-  - **Vector Storage System:** Pinecone v2 for high-speed memory retrieval.
-  - **Emotion Datasets:**
-    - GoEmotions (textual emotion classification).
-    - Emotion2Vec+ for audio-based emotional analysis.
-    - LibreFace for visual emotion recognition.
+## Guiding Principles
+
+- **Iterative Development:** Build and test components incrementally.
+- **Emergence-Focused:** Design for emergent properties rather than explicit programming of consciousness.
+- **Theory-Grounded:** Integrate insights from neuroscience and AI consciousness research (e.g., GNW, IIT, Higher-Order Theories).
+- **Ethical Alignment:** Continuously ensure adherence to Asimov's Laws and responsible AI principles.
 
 ---
 
-## Phase 2: Core Infrastructure
+## Phase 1: Foundational Setup & Core Modules (Completed/Ongoing)
 
-- Build modular and scalable architecture:
-  - Integrate foundational models:
-    - LLaMA 3.3 for reasoning and contextual generation.
-    - **palme (open-source PaLM-E)** for vision-language tasks with scene comprehension.
-    - Whisper v3 for accurate audio transcription.
-  - Establish memory infrastructure:
-    - Deploy Pinecone v2 for vector storage and contextual memory retrieval.
-    - Implement indexing pipelines for multimodal embeddings.
-  - Create a robust simulation API using gRPC for managing VR environments.
+- **Goal:** Establish the basic project structure, core AI model integrations, and initial simulation environment.
+- **Key AI Models:**
+  - LLaMA 3.3 for narrative construction.
+  - palme (open-source PaLM-E) for vision-language understanding.
+  - Whisper v3 for speech recognition and transcription.
+- **Deliverables:**
+  - Core repository structure.
+  - Initial integration of LLaMA 3.3, palme, Whisper v3.
+  - Basic Unreal Engine 5 simulation setup.
+  - [`ConsciousnessCore`](../models/core/consciousness_core.py) V0.1 (stub).
+  - [`EmotionalProcessingCore`](../models/emotion/emotional_processing.py) V0.1 (stub).
+  - [`EmotionalMemoryCore`](../models/memory/emotional_memory_core.py) V0.1 (stub with Pinecone).
 
----
+## Phase 2: Initial Integration & Basic Emotional Loop (Current Focus - S1: Instrumentation)
 
-## Phase 3: Multimodal Processing
+- **Goal:** Implement a basic emotional processing loop and memory storage within simple simulations. Develop instrumentation for metric collection.
+- **Deliverables:**
+  - Basic emotional processing loop.
+  - Initial `EmotionalMemoryCore` integration.
+  - Simple survival scenarios in Unreal Engine.
+  - **Instrumentation Layer:** Develop `scripts/logging/metrics_logger.py` to capture hidden-state tensors from key modules, a prerequisite for advanced consciousness metrics. (Corresponds to Sprint S-1 from Watanabe notes)
 
-- Enhance input-output integration:
-  - Implement vision-language fusion using **palme (open-source PaLM-E)**.
-  - Extend Whisper v3 functionality to handle real-time and batch processing of audio inputs.
-  - Develop the Multimodal Fusion module:
-    - Add support for haptic inputs and their integration.
-    - Align modalities through cross-attention mechanisms.
+## Phase 3: Enhanced Perception, Memory & Basic Self-Model (S2: Φ* & Ignition)
 
----
+- **Goal:** Integrate advanced perception, refine memory, and introduce a basic self-representation. Implement initial consciousness metrics.
+- **Deliverables:**
+  - Integration of VideoLLaMA3 and Whisper.
+  - More complex emotional memory indexing.
+  - Initial version of `SelfRepresentationCore`.
+  - **Φ* Calculator & Ignition Detector:**
+    Implement initial versions of `models/evaluation/iit_phi.py` (for Φ*) and `models/evaluation/gnw_metrics.py` (for GNW Ignition Index). Develop a basic dashboard (e.g., Grafana, or a custom `consciousness_dashboard.py`) for these metrics. (Corresponds to Sprint S-2 from Watanabe notes)
 
-## Phase 4: Emotional Intelligence
+## Phase 4: Advanced Social Interactions & Narrative Engine (S3: Indicator Tests)
 
-- Integrate emotion recognition across modalities:
-  - **Text:**
-    - Use GoEmotions to classify emotional context.
-  - **Audio:**
-    - Fine-tune Emotion2Vec+ for real-time emotion tracking.
-  - **Visual:**
-    - Develop pipelines using LibreFace for facial expression analysis.
-- Establish an Emotional Graph Neural Network (EGNN) to model relationships between detected emotions.
+- **Goal:** Enable more complex social interactions, integrate narrative reasoning, and expand behavioral evaluation.
+- **Deliverables:**
+  - Complex social scenarios in Unreal Engine.
+  - `NarrativeEngine` V1 for contextual reasoning.
+  - **Indicator-Property Test Suite:** Develop `models/evaluation/consciousness_metrics.py` with a substantial set of tests from the AI consciousness rubric. (Corresponds to Sprint S-3 from Watanabe notes)
+  - Refinement of emotional RL based on social feedback.
 
-- **Reinforcement Learning:**
-  - Implement DreamerV3 with emotional context
-  - Develop reward shaping mechanisms
-  - Create meta-learning adaptation system
+## Phase 5: Dynamic Self-Representation & Meta-Cognition (S4: Self-Representation)
 
----
+- **Goal:** Implement a dynamic, learned self-model and explore meta-cognitive capabilities.
+- **Deliverables:**
+  - **Dynamic Self-Representation Module:** Implement the learned "self-vector" loop within `ConsciousnessCore` and `SelfRepresentationCore` as per Higher-Order theories.
+  - Reflective prompt templates and mechanisms for meta-cognitive evaluation.
+  - Enhanced `ConsciousnessGating` informed by the dynamic self-model. (Corresponds to Sprint S-4 from Watanabe notes)
 
-## Phase 5: Memory and Narrative Building
+## Phase 6: Creative Simulation & Advanced Evaluation (S5: Imagination Buffer)
 
-- Enhance memory architecture:
-  - Optimize Pinecone-based retrieval for high-dimensional embeddings.
-  - Index emotional contexts alongside events for nuanced memory recall.
-- Extend narrative reasoning capabilities:
-  - Fine-tune LLaMA 3.3 for adaptive and context-sensitive narratives.
-  - Enable long-context processing for maintaining continuity in simulations.
+- **Goal:** Introduce mechanisms for creative simulation and refine advanced consciousness metrics.
+- **Deliverables:**
+  - **Creative Imagination Buffer:** Implement the "Imagination Buffer" for generating and evaluating novel mental simulations, potentially selecting based on Φ or GNW ignition.
+  - Reward-shaping hooks based on creative outputs.
+  - Advanced IIT metrics (e.g., CES visualization). (Corresponds to Sprint S-5 from Watanabe notes)
 
----
+## Phase 7: Peer Consciousness & Robustness (S6: Peer Probes)
 
-## Phase 6: Advanced VR Integration and Performance Optimization
+- **Goal:** Explore inter-agent awareness and conduct comprehensive system validation.
+- **Deliverables:**
+  - **Peer-Consciousness Probes:** Scenarios where two ACM agents interact and attempt to model/estimate each other's (simulated) internal states. (Corresponds to Sprint S-6 from Watanabe notes)
+  - Comprehensive ethical review and safety testing.
+  - Long-term stability and learning assessments.
 
-- Unreal Engine 5:
-  - Develop plugins for real-time agent interactions.
-  - Create physics-based simulations with immersive agent behaviors.
-- Optimize AI model performance:
-  - Use quantization for LLaMA 3.3 and other large models.
-  - Implement distributed processing for simulation scalability.
+## Future Directions
 
----
-
-## Phase 7: Communication and API Development
-
-- Build APIs for broader application:
-  - Develop RESTful APIs using FastAPI.
-  - Implement WebSocket-based real-time communication.
-  - Enhance gRPC services for inter-process communication.
-  - Include robust authentication and security features.
-- Design interfaces:
-  - Command-line tools for direct developer interaction.
-  - A web-based dashboard for performance monitoring and simulation management.
-
----
-
-## Phase 8: Testing and Validation
-
-- Develop a comprehensive test suite:
-  - Unit testing for individual modules.
-  - Integration tests for multimodal pipelines.
-  - Stress tests for memory and API performance.
-- Validate system functionality:
-  - Emotional intelligence metrics.
-  - Accuracy and consistency in multimodal fusion.
-  - Real-time system response and stability.
-
----
-
-## Phase 9: Documentation and Deployment
-
-- Finalize and publish documentation:
-  - User manuals for developers and researchers.
-  - API and system architecture guides.
-  - Maintenance and troubleshooting documentation.
-- Deploy production-ready systems:
-  - Containerize applications using Docker.
-  - Use Kubernetes for deployment orchestration.
-  - Set up CI/CD pipelines for automated testing and deployment.
-
----
-
-## Short-Term Goals
-
-- Implement and test LLaMA 3.3 integration.
-- Establish a functional multimodal fusion layer with **palme (open-source PaLM-E)** and Whisper.
-- Validate initial memory core integration with Pinecone v2.
-
-## Long-Term Goals
-
-- Build advanced emotional reasoning systems with EGNN.
-- Achieve seamless integration with Unreal Engine 5.
-- Enable high-scale real-time processing with distributed architecture.
-
-## Success Metrics
-
-- **Emotional Recognition Accuracy:** 95% accuracy in multimodal emotion recognition.
-- **Memory Retrieval Efficiency:** 99% efficiency in memory retrieval and indexing.
-- **Real-Time Response:** Consistent system response times below 100 ms in real-time tasks.
-- **Ethical Compliance:** 100% adherence to ethical guidelines across all simulations and interactions.
+- Full perceptual loop integration with robotics or advanced VR sensors.
+- Subjective-report alignment processes (e.g., RLHF) so the agent’s language faithfully mirrors internal states.
+- Exploration of more advanced AI consciousness theories and their computational correlates.
+- Continuous refinement of the `AsimovComplianceFilter` and ethical governance.
+- Development of `ACM-Consciousness-Metric.md` as a living spec for external contributors.
+- Discussion on licensing for any developed datasets (e.g., indicator-property dataset).
