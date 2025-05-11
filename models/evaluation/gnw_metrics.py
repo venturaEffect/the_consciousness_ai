@@ -2,6 +2,7 @@ import time
 from collections import deque, defaultdict
 import numpy as np
 import torch
+from typing import Optional
 
 class GNWMetrics:
     def __init__(self, num_modules: int, ignition_threshold_delta: float = 0.5, 

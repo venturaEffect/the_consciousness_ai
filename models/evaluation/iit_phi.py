@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+from typing import Optional
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import PCA
 
