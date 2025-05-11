@@ -1,175 +1,149 @@
-import torch
 import time
+from collections import deque, defaultdict
+import numpy as np
+import torch
 
 class GNWMetrics:
-    def __init__(self, num_modules: int, ignition_threshold_delta: float = 0.5, min_modules_for_ignition: int = 2, logger=None):
-        """
-        Initializes the GNWMetrics calculator.
-
-        Args:
-            num_modules (int): The number of distinct modules or areas in the GNW being monitored.
-            ignition_threshold_delta (float): The minimum change (delta) in activation for a module
-                                             to be considered part of an ignition event.
-            min_modules_for_ignition (int): The minimum number of modules that must surpass the
-                                           threshold simultaneously for an ignition event to be declared.
-            logger (MetricsLogger, optional): An instance of MetricsLogger.
-        """
-        self.num_modules = num_modules
-        self.ignition_threshold_delta = ignition_threshold_delta
-        self.min_modules_for_ignition = max(1, min_modules_for_ignition) # Ensure at least 1
+    def __init__(self, num_modules: int, ignition_threshold_delta: float = 0.5, 
+                 min_modules_for_ignition: int = 1, logger=None, 
+                 max_history_len: int = 1000, broadcast_content_window: int = 100):
         self.logger = logger
+        self.num_modules = num_modules # Expected number of distinct information sources/types
         
-        self.previous_activations = None # torch.Tensor of shape (num_modules,)
-        self.event_timestamps = {} # For Global Availability Latency: {event_id: timestamp}
-        
-        print(f"GNWMetrics module initialized. Num modules: {num_modules}, Ignition Threshold Delta: {self.ignition_threshold_delta}, Min Modules for Ignition: {self.min_modules_for_ignition}")
+        # For GNW Ignition Index based on broadcast strength
+        self.broadcast_strength_history = deque(maxlen=max_history_len)
+        self.last_broadcast_strength = 0.0
+        self.ignition_threshold_delta = ignition_threshold_delta # Min change to count as new ignition peak
+        self.min_modules_for_ignition = min_modules_for_ignition # If using module count from competition
 
-    def update_activations(self, current_activations: torch.Tensor, step: int) -> int:
+        # For Global Availability Latency
+        self.sensory_event_timestamps = {} # event_id: start_time
+        self.broadcast_event_timestamps = {} # event_id: broadcast_time
+
+        # For Content Diversity / Richness
+        self.broadcast_content_signatures = deque(maxlen=broadcast_content_window) # Store hashes or simplified reps
+
+        # For Event Reuse / Reportability
+        self.event_module_access_log = defaultdict(lambda: defaultdict(list)) # event_id -> module_name -> [access_timestamps]
+
+        print(f"GNWMetrics initialized. Num modules: {num_modules}, Ignition Delta: {ignition_threshold_delta}")
+
+    def update_workspace_status(self, workspace_state: dict, step: int):
         """
-        Updates module activations and checks for GNW ignition events.
-
+        Receives the current state from GlobalWorkspace after a competition cycle.
         Args:
-            current_activations (torch.Tensor): A tensor representing the current activation
-                                                levels of the GNW modules.
-                                                Expected shape: (num_modules,).
-            step (int): The current simulation or training step.
-
-        Returns:
-            int: 1 if an ignition event occurred, 0 otherwise.
+            workspace_state (dict): Expected keys:
+                'active_content': The content that was broadcast (if any).
+                'broadcast_strength': The strength of the winning bid.
+                'competition_results': Dict of all bids {module_name: bid_strength}.
+                'winners': List of winning module names.
+            step (int): Current simulation step.
         """
-        if not isinstance(current_activations, torch.Tensor) or current_activations.shape != (self.num_modules,):
-            # Log this with the system logger if available, or print
-            print(f"Error: GNWMetrics current_activations has incorrect shape or type. Expected ({self.num_modules},), got {current_activations.shape if isinstance(current_activations, torch.Tensor) else type(current_activations)}")
+        current_strength = workspace_state.get('broadcast_strength', 0.0)
+        self.broadcast_strength_history.append(current_strength)
+
+        # --- 1. GNW Ignition Index ---
+        # Simple version: count significant broadcast events
+        ignition_detected_this_step = 0
+        if current_strength > 0 and (current_strength - self.last_broadcast_strength) > self.ignition_threshold_delta:
+            # Could also check if workspace_state.get('winners') meets min_modules_for_ignition
+            ignition_detected_this_step = 1
             if self.logger:
-                 self.logger.log_scalar_data("gnw_error", step, 1, {"error_type": "invalid_activation_input"})
-            return 0
+                self.logger.log_scalar_data("gnw_ignition_event", step, 1, 
+                                            {"strength": current_strength, 
+                                             "winners": workspace_state.get('winners', [])})
+        
+        self.last_broadcast_strength = current_strength
+        
+        # More complex: Analyze pattern of broadcast_strength_history for "ignition events"
+        # (e.g., sustained high activity, rapid increases)
+        # For now, we log the raw strength and the simple event detection.
+        if self.logger:
+            self.logger.log_scalar_data("gnw_broadcast_strength", step, current_strength)
 
-        ignition_event_occurred = 0
-        if self.previous_activations is not None:
-            delta_activations = current_activations - self.previous_activations
-            
-            # Check for ignition
-            # Modules that surpassed the positive delta threshold
-            ignited_modules_mask = delta_activations > self.ignition_threshold_delta
-            num_ignited_modules = torch.sum(ignited_modules_mask).item()
-
-            if num_ignited_modules >= self.min_modules_for_ignition:
-                ignition_event_occurred = 1
-                print(f"Step {step}: GNW Ignition Event Detected! {num_ignited_modules} modules ignited.")
+        # --- 2. Global Availability Latency (Update) ---
+        active_content = workspace_state.get('active_content', {})
+        if active_content: # Something was broadcast
+            # Assuming broadcast content has an 'event_id' if it's tied to a sensory event
+            event_id = active_content.get('metadata', {}).get('source_event_id')
+            if event_id and event_id in self.sensory_event_timestamps:
+                latency = time.time() - self.sensory_event_timestamps[event_id]
                 if self.logger:
-                    self.logger.log_scalar_data(
-                        metric_name="gnw_ignition_event",
-                        step=step,
-                        scalar_value=1,
-                        metadata={
-                            "num_ignited_modules": num_ignited_modules,
-                            "threshold_delta": self.ignition_threshold_delta,
-                            "min_modules_required": self.min_modules_for_ignition
-                        }
-                    )
-                    # Log which modules ignited if needed
-                    # ignited_indices = torch.where(ignited_modules_mask)[0].tolist()
-                    # self.logger.log_scalar_data("gnw_ignited_module_indices", step, ignited_indices) 
-            else:
-                 if self.logger: # Log even if no ignition, to see the count
-                    self.logger.log_scalar_data("gnw_ignition_event", step, 0, {"num_ignited_modules": num_ignited_modules})
+                    self.logger.log_scalar_data("gnw_availability_latency", step, latency, {"event_id": event_id})
+                # Clean up to avoid re-calculating for the same event if broadcast multiple times
+                # Or allow multiple broadcasts and log each. For now, simple cleanup.
+                del self.sensory_event_timestamps[event_id] 
+
+        # --- 3. Content Diversity / Richness ---
+        if active_content:
+            # Create a simple signature of the content for diversity tracking
+            # This needs a more robust implementation based on content structure
+            try:
+                content_str = str(sorted(active_content.items()))
+                signature = hash(content_str)
+                self.broadcast_content_signatures.append(signature)
+            except TypeError: # if content is not easily sortable/hashable
+                self.broadcast_content_signatures.append(hash(str(active_content)))
 
 
-        self.previous_activations = current_activations.clone()
-        return ignition_event_occurred
+    def log_sensory_event_start(self, event_id: str, timestamp: Optional[float] = None):
+        """Call this when a distinct sensory event begins, to track latency."""
+        self.sensory_event_timestamps[event_id] = timestamp or time.time()
 
-    def log_sensory_event_start(self, event_id: str):
-        """
-        Logs the timestamp when a sensory event (or any event of interest) starts.
-        Used for calculating Global Availability Latency.
+    def log_event_reuse(self, event_id: str, module_name: str, step: int, timestamp: Optional[float] = None):
+        """Logs when a module accesses/reuses information related to an event_id that might have been broadcast."""
+        access_time = timestamp or time.time()
+        self.event_module_access_log[event_id][module_name].append(access_time)
+        if self.logger:
+            self.logger.log_event(
+                event_name="gnw_event_information_reuse",
+                step=step,
+                metadata={"event_id": event_id, "module_name": module_name, "access_time": access_time}
+            )
 
-        Args:
-            event_id (str): A unique identifier for the event.
-        """
-        self.event_timestamps[event_id] = time.perf_counter()
-        # print(f"GNW: Sensory event '{event_id}' started at {self.event_timestamps[event_id]}")
+    def calculate_periodic_gnw_metrics(self, step: int) -> dict:
+        """Calculates summary GNW metrics over recent history."""
+        metrics = {}
+        
+        # Ignition Index (e.g., average strength or frequency of ignitions)
+        if self.broadcast_strength_history:
+            metrics["avg_broadcast_strength"] = np.mean(self.broadcast_strength_history)
+            # A more sophisticated ignition index could be calculated here based on patterns.
+        
+        # Content Diversity (e.g., number of unique content signatures)
+        if self.broadcast_content_signatures:
+            metrics["unique_broadcasts_window"] = len(set(self.broadcast_content_signatures))
+            metrics["broadcast_window_size"] = len(self.broadcast_content_signatures)
 
-    def log_event_reuse(self, event_id: str, module_name: str, step: int):
-        """
-        Logs when a module reuses or processes information related to a previously logged event.
-        Calculates and logs the Global Availability Latency.
+        if self.logger and metrics:
+            for key, value in metrics.items():
+                self.logger.log_scalar_data(f"gnw_summary_{key}", step, value)
+        
+        return metrics
 
-        Args:
-            event_id (str): The unique identifier of the event being reused.
-            module_name (str): Name of the module reusing the event information.
-            step (int): The current simulation or training step.
-        """
-        if event_id in self.event_timestamps:
-            current_time = time.perf_counter()
-            latency = current_time - self.event_timestamps[event_id]
-            
-            print(f"Step {step}: Event '{event_id}' reused by module '{module_name}'. Latency: {latency:.4f}s")
-            if self.logger:
-                self.logger.log_scalar_data(
-                    metric_name="gnw_global_availability_latency",
-                    step=step,
-                    scalar_value=latency,
-                    metadata={
-                        "event_id": event_id,
-                        "reusing_module": module_name
-                    }
-                )
-            # Optionally remove the event to prevent re-logging for the same first reuse,
-            # or allow multiple reuse logs if that's desired.
-            # del self.event_timestamps[event_id] 
-        else:
-            # print(f"Warning: Event '{event_id}' not found for latency calculation by module '{module_name}'.")
-            if self.logger:
-                self.logger.log_scalar_data("gnw_error", step, 1, {"error_type": "event_id_not_found_for_latency", "event_id": event_id})
-
-
+# Example Usage (Conceptual - would be driven by ConsciousnessMonitor)
 if __name__ == '__main__':
-    try:
-        # This relative import will work if this script is run from the project root directory
-        # and the 'scripts' directory is in the Python path.
-        # For direct execution of this file, you might need to adjust sys.path or run as a module.
-        from scripts.logging.metrics_logger import MetricsLogger
-        logger_instance = MetricsLogger(experiment_name="gnw_metrics_test")
-    except ImportError:
-        print("MetricsLogger not found, running GNWMetrics without logging for this example.")
-        print("Ensure 'scripts' directory is in PYTHONPATH or run this script as part of the project.")
-        logger_instance = None
+    # Mock logger
+    class MockLogger:
+        def log_scalar_data(self, *args, **kwargs): print(f"LogScalar: {args}, {kwargs}")
+        def log_event(self, *args, **kwargs): print(f"LogEvent: {args}, {kwargs}")
 
-    # Example Usage
-    num_test_modules = 5
-    gnw_evaluator = GNWMetrics(
-        num_modules=num_test_modules, 
-        ignition_threshold_delta=0.5, 
-        min_modules_for_ignition=2,
-        logger=logger_instance
-    )
-
-    # Simulate activation updates
-    activations_step0 = torch.tensor([0.1, 0.2, 0.1, 0.3, 0.2])
-    gnw_evaluator.update_activations(activations_step0, step=0) # Initialize previous_activations
-
-    activations_step1 = torch.tensor([0.2, 0.3, 0.8, 0.4, 0.9]) # Modules 2 and 4 should ignite (0-indexed)
-    ignition1 = gnw_evaluator.update_activations(activations_step1, step=1)
-    assert ignition1 == 1, f"Expected ignition at step 1, got {ignition1}"
-
-    activations_step2 = torch.tensor([0.25, 0.35, 0.85, 0.45, 0.95]) # Small increase, no new ignition
-    ignition2 = gnw_evaluator.update_activations(activations_step2, step=2)
-    assert ignition2 == 0, f"Expected no ignition at step 2, got {ignition2}"
+    gnw_metrics_calculator = GNWMetrics(num_modules=5, logger=MockLogger())
     
-    activations_step3 = torch.tensor([1.0, 1.0, 0.2, 1.0, 0.3]) # Modules 0, 1, 3 should ignite
-    ignition3 = gnw_evaluator.update_activations(activations_step3, step=3)
-    assert ignition3 == 1, f"Expected ignition at step 3, got {ignition3}"
-
-    # Simulate latency tracking
-    event_id_1 = "visual_stimulus_001"
-    gnw_evaluator.log_sensory_event_start(event_id_1)
+    # Simulate a sensory event
+    event_1_id = "visual_stimulus_001"
+    gnw_metrics_calculator.log_sensory_event_start(event_1_id)
     
-    # Simulate some processing time
-    time.sleep(0.05) 
-    gnw_evaluator.log_event_reuse(event_id_1, module_name="ConsciousnessCore", step=4)
-    
-    time.sleep(0.02)
-    gnw_evaluator.log_event_reuse(event_id_1, module_name="MemoryModule", step=4) # Example of logging multiple reuses
+    # Simulate a few workspace updates
+    for i in range(5):
+        mock_workspace_state = {
+            'active_content': {"data": f"info_{i}", "metadata": {"source_event_id": event_1_id if i==2 else None}}, # Broadcast event_1 at step 2
+            'broadcast_strength': np.random.rand() * 0.5 + (0.5 if i==2 else 0.1), # Higher strength at step 2
+            'competition_results': {f"module_{j}": np.random.rand() for j in range(3)},
+            'winners': [f"module_{np.random.randint(0,3)}"] if (np.random.rand() * 0.5 + 0.1) > 0.3 else []
+        }
+        gnw_metrics_calculator.update_workspace_status(mock_workspace_state, step=i)
+        time.sleep(0.1) # Simulate time passing
 
-    if logger_instance:
-        logger_instance.close()
+    summary = gnw_metrics_calculator.calculate_periodic_gnw_metrics(step=5)
+    print("GNW Summary Metrics:", summary)
