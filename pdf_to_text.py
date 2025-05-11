@@ -38,4 +38,4 @@ def convert_pdf_to_text(pdf_path: str, output_path: str) -> None:
 
 if __name__ == "__main__":
     # Example usage
-    convert_pdf_to_text("2501.13106v1.pdf", "2501.13106v1.txt")
+    convert_pdf_to_text("acm_iit_gnw_explanation.pdf", "acm_iit_gnw_explanation.txt")

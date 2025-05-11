@@ -25,6 +25,9 @@ from transformers import Blip2ForConditionalGeneration, Blip2Processor
 from torch.cuda.amp import autocast
 import logging
 
+# Configure basic logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 @dataclass
 class VideoLLaMA3Config:
     """Configuration for VideoLLaMA3 integration"""
@@ -94,10 +97,10 @@ class VideoLLaMA3Integration:
             # Load tokenizer
             self.tokenizer = self._load_tokenizer()
             
-            print(f"Successfully loaded VideoLLaMA3 ({self.current_variant} variant)")
+            logging.info(f"Successfully loaded VideoLLaMA3 ({self.current_variant} variant)")
             
         except Exception as e:
-            print(f"Error loading VideoLLaMA3 models: {str(e)}")
+            logging.error(f"Error loading VideoLLaMA3 models: {str(e)}")
             raise
             
     def process_video(self, video_path: str, query: Optional[str] = None) -> Dict:
@@ -327,4 +330,4 @@ class VideoMemoryOptimizer:
         # Clear old patterns
         self.access_patterns = []
         
-        print(f"Memory optimization performed. Average compression ratio: {avg_compression:.2f}")
+        logging.info(f"Memory optimization performed. Average compression ratio: {avg_compression:.2f}")

@@ -1,4 +1,6 @@
 import torch
+import numpy as np  # Added import for numpy
+
 # Placeholder for potential future imports related to specific IIT libraries or algorithms
 # from some_iit_library import calculate_phi_star_oizumi
 
@@ -54,15 +56,13 @@ class IITMetrics:
                     "method": "mismatched_decoding_placeholder"
                 }
             )
-            # Potentially log input tensors if small enough or for debugging
-            # self.logger.log_tensor_data("phi_star_input_zt", step, z_t)
-
+        
         print(f"Step {step}: Placeholder Φ* calculated: {phi_star_value} for partition {partition_P}")
         return phi_star_value
 
     def calculate_ces_graph_metrics(self, system_states_timeseries: list, step: int) -> dict:
         """
-        Placeholder for calculating metrics related to the Cause-Effect Structure (CES) graph.
+        Placeholder for calculating Cause-Effect Structure (CES) graph metrics.
         This is even more complex than scalar Φ and involves identifying concepts
         and their causal relationships within the system.
 
@@ -75,10 +75,13 @@ class IITMetrics:
         """
         # --- Placeholder Logic ---
         # A real implementation would involve algorithms from pyphi or similar libraries.
+        # Placeholder logic
+        num_concepts = np.random.randint(5, 20)
+        avg_phi_per_concept = np.random.rand() * 2.0
         ces_metrics = {
-            "num_concepts": torch.randint(5, 15, (1,)).item(),
-            "max_phi_concept": torch.rand(1).item(),
-            "graph_density": torch.rand(1).item() * 0.5
+            "num_concepts": num_concepts,
+            "average_phi_per_concept": avg_phi_per_concept,
+            "complexity_score": num_concepts * avg_phi_per_concept # Example composite score
         }
 
         if self.logger:
