@@ -33,7 +33,7 @@ class VideoLLaMA3Config:
     """Configuration for VideoLLaMA3 integration"""
     model_path: str
     model_variant: str = "default"
-    vision_encoder_type: str = "sigLIP".
+    vision_encoder_type: str = "sigLIP"
     max_frame_count: int = 180
     frame_sampling_rate: int = 1
     diff_threshold: float = 0.1  # Threshold for DiffFP
