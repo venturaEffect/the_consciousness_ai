@@ -1,4 +1,3 @@
-// filepath: c:\Users\zaesa\OneDrive\Escritorio\Artificial_counsciousness\the_consciousness_ai\models\evaluation\subjective_testing_suite.py
 import time
 # from simulations.api.simulation_manager import SimulationManager # For controlling stimuli
 # from models.communication.qualia_reporter import QualiaReporter # For getting ACM's report
