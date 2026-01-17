@@ -43,8 +43,10 @@ class EmotionalRewardShaper(nn.Module):
                 - 'reward': Sub-dict with 'base_scale', 'memory_influence', 'coherence_weight'
         """
         super().__init__()
+        self.config = config
 
         # Core components.
+
         self.emotion_encoder = nn.Linear(
             config['emotional_dims'],
             config['hidden_size']
@@ -162,15 +164,16 @@ class EmotionalRewardShaper(nn.Module):
         
         # Apply core emotional modulation
         if 'valence' in emotion_values:
-            reward += emotion_values['valence'] * self.config['valence_weight']
+            reward += emotion_values['valence'] * self.valence_weight
         if 'dominance' in emotion_values:
-            reward += emotion_values['dominance'] * self.config['dominance_weight']
+            reward += emotion_values['dominance'] * self.dominance_weight
         
         # Apply arousal penalty for high stress (if configured)
-        if 'arousal' in emotion_values and self.config.get('arousal_penalty', 0) > 0:
-            if emotion_values['arousal'] > self.config.get('arousal_threshold', 0.7):
-                penalty = (emotion_values['arousal'] - self.config['arousal_threshold']) * self.config['arousal_penalty']
+        if 'arousal' in emotion_values and self.arousal_penalty > 0:
+            if emotion_values['arousal'] > self.arousal_threshold:
+                penalty = (emotion_values['arousal'] - self.arousal_threshold) * self.arousal_penalty
                 reward -= penalty
+
                 
         # Incorporate historical trend analysis 
         if context and 'emotional_history' in context and len(context['emotional_history']) > 5:
