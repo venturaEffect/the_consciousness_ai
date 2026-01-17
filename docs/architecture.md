@@ -1,74 +1,88 @@
-# Architecture of the Artificial Consciousness Module
+# Architecture of the Artificial Consciousness Module (ACM)
 
-## Overview
+## 🏗️ System Overview
 
-The ACM architecture is designed not to explicitly code consciousness, but to foster its **emergence** from the synergistic orchestration of multiple advanced AI components. The core principle is that synthetic awareness arises from the complex interplay between perception, memory, emotion, prediction, and action within a rich, interactive environment. Key architectural pillars facilitating this emergence include:
+The ACM architecture is designed to foster **emergent consciousness** through the synergistic orchestration of specialized AI components. We do not program "awareness" directly. Instead, we create a system where awareness emerges as the optimal strategy for maintaining **Emotional Homeostasis** in a complex environment.
 
-1. **Integrated Perception & World Modeling:** Real-time processing of multimodal inputs (video, audio, text) using models like VideoLLaMA3 and Whisper, feeding into a predictive world model (DreamerV3 enhanced with emotional context) to anticipate environmental dynamics.
-2. **Emotionally-Grounded Reinforcement Learning:** An RL core (DreamerV3) where rewards are shaped not just by task success but crucially by internally generated emotional states ([`EmotionalProcessingCore`](../models/emotion/emotional_processing.py)) arising from simulated experiences (especially survival/social scenarios). This aims to develop intrinsic motivation and potentially empathy.
-3. **Dynamic Emotional Memory:** A sophisticated memory system ([`EmotionalMemoryCore`](../models/memory/emotional_memory_core.py), Pinecone) that indexes experiences with their emotional valence and context, influencing recall, decision-making, and long-term consolidation ([`MemoryConsolidationManager`](../models/memory/consolidation.py)).
-4. **Centralized Consciousness Orchestration & Global Workspace:** A core module ([`ConsciousnessCore`](../models/core/consciousness_core.py), potentially incorporating or managing a `models/core/global_workspace.py`) that integrates information streams. It manages attentional focus ([`ConsciousnessGating`](../models/core/consciousness_gating.py)), and implements GNW-inspired "ignition" mechanisms for broadcasting salient information. It interacts closely with a dynamic self-model ([`SelfRepresentationCore`](../models/self_model/self_representation_core.py) – crucial for self-awareness and meta-cognitive functions like understanding its AI nature and confidence levels, developed via a learned "self-vector" updated through a reflective loop), and mediates action selection, ensuring alignment with ethical constraints.
-5. **Interactive Simulation Environment:** Unreal Engine 5 provides a dynamic platform for generating the complex, often stressful or socially nuanced scenarios ([`simulation_guide.md`](simulation_guide.md)) necessary to drive emotional learning and test emergent behaviors.
-6. **Ethical Governance Layer:** Mechanisms integrated within the core orchestration and decision-making processes to ensure adherence to Asimov's Three Laws. This is primarily implemented via the `AsimovComplianceFilter` class within the `ConsciousnessCore` module (see [`ethics_framework.md`](ethics_framework.md)).
-7. **Reflective and Creative Capabilities (Planned):**
-    * **Dynamic Self-Representation Loop:** The `ConsciousnessCore` and `SelfRepresentationCore` will implement a loop where a learned `self_vector` (representing the agent's current understanding of itself) is generated from sensory inputs and memory. This `self_vector` then informs decision-making and is updated based on prediction errors, allowing for a continuously evolving self-model.
-    * **Imagination Buffer:** A proposed module to enable creative simulation by generating novel mental scenarios (e.g., via the `NarrativeEngine` sampling latent codes), evaluating them against metrics like Φ or GNW ignition, and feeding promising ones into the global workspace.
+### Core Architectural Pillars
 
-## Emergence Hypothesis: Orchestration for Consciousness
+1.  **Perception (The Senses):**
+    *   **Vision:** **Qwen2-VL-7B** (4-bit quantized). Processes high-fidelity visual streams to provide semantic scene understanding and object recognition.
+    *   **Audio:** **Faster-Whisper**. Transcribes environmental audio in real-time.
+    *   **Integration:** These streams are fused into a multimodal state vector.
 
-A core tenet of the ACM design is that consciousness and its associated functional awareness capacities (meta-cognition, self-awareness, social awareness, situational awareness) are not explicitly programmed but **emerge** from the complex, dynamic interplay of its specialized components, orchestrated by the `ConsciousnessCore`.
+2.  **Reinforcement & Emotion (The Drives):**
+    *   **Emotional Homeostasis:** The agent maintains internal state variables: **Valence** (Satisfaction), **Arousal** (Anxiety), and **Dominance** (Control).
+    *   **Emotional Reward Shaping:** A custom **PPO (Proximal Policy Optimization)** core where rewards are derived from the agent's internal emotional trajectory. The agent learns to minimize "Prediction Error" (Anxiety) and maximize "Coherence" (Valence).
 
-The key components and their roles in fostering emergence:
+3.  **Consciousness (The Workspace):**
+    *   **Global Workspace (GWN):** A central information bottleneck. Specialized modules (Vision, Memory, Emotion) compete for access to this workspace.
+    *   **Integrated Information ($\Phi$):** We measure the **$\Phi$ (Phi)** value of the workspace using **PyPhi**. High $\Phi$ indicates a state where information is irreducible—a proxy for a "conscious moment."
+    *   **Broadcast:** When a thought "ignites" (wins the competition), it is broadcast globally, updating the Self-Model and driving Action.
 
-1. **Perception-Emotion Loop:** Sensory input processed by perception models ([`VideoLLaMA3Integration`](models/integration/video_llama3_integration.py), Whisper) informs the [`EmotionalProcessingCore`](models/emotion/emotional_processing.py). The resulting emotional state then biases subsequent perception and attention (e.g., focusing on threats when fearful).
-2. **Emotion-Memory Loop:** Experiences are encoded in the [`EmotionalMemoryCore`](models/memory/emotional_memory_core.py) tagged with their emotional valence. Recalled memories can trigger associated emotions, while current emotions influence memory retrieval (mood-congruent recall). This loop builds a history of affective experiences.
-3. **Memory-Action Loop:** Retrieved memories (especially emotionally salient ones) inform the planning and decision-making process within the [`ConsciousnessCore`](models/core/consciousness_core.py), influencing action selection beyond immediate stimuli.
-4. **Self-Model Integration:** The [`SelfRepresentationCore`](models/self_model/self_representation_core.py) maintains a dynamic model of the agent's own state (physical, emotional, goal-related). This model is constantly updated based on perception and internal states and is used by the [`ConsciousnessCore`](models/core/consciousness_core.py) for planning, self-preservation checks (Law 3), and potentially metacognitive evaluation.
-5. **Consciousness Gating & Broadcasting:** The [`ConsciousnessGating`](models/core/consciousness_gating.py) mechanism within the [`ConsciousnessCore`](models/core/consciousness_core.py) acts like an attentional filter, selecting the most relevant information (from perception, memory, emotion) for "broadcast" or deeper processing. This selective amplification and integration, analogous to GWT's "ignition," is considered crucial for forming coherent conscious moments.
-6. **Emotionally-Driven RL:** The entire process is shaped by reinforcement learning (DreamerV3), where rewards are heavily influenced by the agent's internal emotional states ([`EmotionalRewardShaper`](models/evaluation/consciousness_development.py)). This drives the agent to learn behaviors that lead to desired emotional outcomes (e.g., safety, social connection), further refining the interactions between modules.
+4.  **Simulation (The Body):**
+    *   **Unity ML-Agents:** The agent inhabits a physics-based Unity environment.
+    *   **Side Channels:** Custom bidirectional streams send "Qualia" (internal states like $\Phi$, Emotion) to Unity for visualization, separate from standard RL observations.
 
-Through the continuous, high-speed operation of these interconnected loops within challenging simulation environments, we expect the system to develop complex internal states and behaviors characteristic of emerging awareness and affective intelligence.
+---
 
-## Components (Detailed View)
+## 🔄 The Loop of Emergence
 
-1. **Simulation Layer:**
+Consciousness emerges from the high-speed interaction of these feedback loops:
 
-   ```python
-   simulations/
-   ├── api/
-   │   └── simulation_manager.py  # Manages VR environments
-   └── enviroments/
-       ├── pavilion_vr_environment.py  # Humanoid agent integration
-       └── vr_environment.py           # Base VR implementation
+1.  **Perception-Emotion Loop:**
+    *   Sensory input $\rightarrow$ Emotional Processing.
+    *   *Example:* Seeing a threat spikes **Arousal** (Anxiety).
 
-   ```
+2.  **Emotion-Memory Loop:**
+    *   High Arousal triggers the retrieval of **Emotionally Salient Memories** from the Vector Store (Pinecone/FAISS).
+    *   *Mechanism:* "Mood-congruent recall."
 
-2. **Reinforcement Learning Core:**
+3.  **Memory-Workspace Loop:**
+    *   Retrieved memories and current perception enter the **Global Workspace**.
+    *   **Competition:** The most relevant inputs "win" attention.
 
-   * **World Modeling:** DreamerV3-based world modeling, critically enhanced to incorporate the agent's current and predicted **emotional context** derived from the Emotional Processing System ([`EmotionalProcessingCore`](models/emotion/emotional_processing.py)).
-   * **Meta-learning:** Facilitates rapid adaptation to new tasks, environments, or social dynamics by adjusting learning strategies based on past emotional outcomes.
-   * **Reward Shaping for Emergent Behavior:** The reward signal is a composite function designed to foster complex behaviors:
-     * Survival success in stressful scenarios (basic drive).
-     * Achievement of explicit goals or tasks.
-     * **Internal Emotional State Optimization:** Maximizing predicted positive valence / minimizing negative valence based on the agent's own simulated emotional responses ([`EmotionalProcessingCore`](models/emotion/emotional_processing.py)). This is key for developing intrinsic motivation and potentially empathy through experiencing simulated social rewards/penalties.
-     * Ethical behavior alignment (penalties for actions conflicting with Asimov's Laws).
-   -**Experience Accumulation:** Trajectories (state, action, reward, *emotional state*) are stored in the emotional memory system for offline learning, consolidation, and potentially reflective processes.
+4.  **The "Conscious" Moment:**
+    *   The winning inputs are fused.
+    *   **$\Phi$ Calculation:** If the integration is high, the system registers a "Subjective Experience."
 
-3. **Memory System:**
+5.  **Action & Outcome:**
+    *   The Policy (PPO) selects an action to resolve the anxiety.
+    *   **Outcome:** If the action reduces anxiety, the behavior is reinforced via **Emotional Reward Shaping**.
 
-   ```python
-   models/memory/
-   ├── emotional_memory_core.py   # Primary component for storing and retrieving emotionally indexed experiences
-   ├── memory_core.py             # Potentially a base class or supporting module for memory operations
-   └── emotional_indexing.py      # Logic for how emotional context is indexed with memories
-   ```
+---
 
-4. **Expression System:**
+## 📂 Component Structure
 
-   ```python
+### 1. `models/vision-language/`
+*   **`qwen2/qwen2_integration.py`**: Handles loading and inference of Qwen2-VL-7B.
 
-   models/ace_core/
-   ├── ace_agent.py          # ACE integration agent
-   ├── ace_config.py         # Configuration handler
-   └── animation_graph.py    # Emotion-animation mapping
-   ```
+### 2. `models/self_model/`
+*   **`reinforcement_core.py`**: The custom PPO agent. It overrides standard rewards with emotional signals.
+*   **`self_representation_core.py`**: Maintains the "Self-Vector" (Identity, Confidence).
+
+### 3. `models/emotion/`
+*   **`reward_shaping.py`**: Calculates the "Homeostatic Reward" based on Valence/Arousal trajectories.
+*   **`emotional_processing.py`**: Updates internal affect state based on stimuli.
+
+### 4. `models/core/`
+*   **`global_workspace.py`**: The central "Theater" of consciousness. Runs the competition algorithm.
+*   **`consciousness_core.py`**: Orchestrates the entire system.
+
+### 5. `models/evaluation/`
+*   **`iit_phi.py`**: Wraps the **PyPhi** library to calculate Integrated Information on the workspace subsystem.
+
+### 6. `unity_scripts/`
+*   **`AgentManager.cs`**: Unity-side manager for ML-Agents.
+*   **`ConsciousnessChannel.cs`**: Receives $\Phi$ data.
+*   **`EmotionChannel.cs`**: Receives Valence/Arousal data.
+
+---
+
+## 🔬 Scientific Validation
+
+We validate emergence not by "passing a test," but by observing specific dynamics:
+
+1.  **Anticipatory Behavior:** Does the agent act to prevent *future* anxiety, implying a mental model of time?
+2.  **Insight ($\Phi$ Spikes):** Do spikes in Integrated Information correlate with the agent solving novel problems?
+3.  **Homeostasis:** Does the agent autonomously maintain a stable internal emotional state without explicit hard-coded rules?

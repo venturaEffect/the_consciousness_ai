@@ -1,68 +1,80 @@
-# ACM Simulation Environment Guide
+# ACM Simulation Guide: Unity ML-Agents
 
 ## Overview
 
-This document provides guidance on setting up, configuring, and utilizing the simulation environments for the Artificial Consciousness Module (ACM) project. The primary simulation platform is Unreal Engine 5, chosen for its high-fidelity graphics, physics, and extensibility.
+This guide explains how to build and configure Unity environments for the Artificial Consciousness Module (ACM). Unlike standard RL environments where the goal is just "score points," ACM environments must be designed to challenge the agent's **Emotional Homeostasis**.
 
-The simulation environments are crucial for:
-
-1. Providing rich, multimodal sensory input to the ACM.
-2. Allowing the ACM to interact with and affect its environment.
-3. Generating complex, socially nuanced, and potentially stressful scenarios to drive emotional learning and test emergent behaviors.
-4. Evaluating the ACM's capabilities in dynamic and unpredictable settings.
-
-## Key Simulation Environments
-
-* **Pavilion VR Environment (`simulations/environments/pavilion_vr_environment.py`):**
-
-  * Description: A detailed environment designed for humanoid agent integration. May include social interaction scenarios, object manipulation tasks, and navigation challenges.
-  * Purpose: Testing social awareness, embodiment, goal-directed behavior in a complex space.
-
-* **Base VR Environment (`simulations/environments/vr_environment.py`):**
-
-  * Description: A foundational class or a simpler environment for basic interaction testing and development.
-  * Purpose: Initial integration testing, basic sensory-motor loop validation.
-  
-* **(Planned) Stressful Scenario Environments:**
-
-  * Description: Environments designed to elicit strong emotional responses, e.g., survival challenges, unexpected threats, ethical dilemmas.
-  * Purpose: Driving emotional learning, testing resilience, and observing behavior under pressure.
-* **(Planned) Social Interaction Arenas:**
-
-  * Description: Environments with other AI agents or simulated humans for complex social dynamics.
-  * Purpose: Developing and testing social intelligence, empathy, and communication.
-
-## Simulation Manager (`simulations/api/simulation_manager.py`)
-
-The `simulation_manager.py` is responsible for:
-
-* Launching and managing different simulation instances.
-* Interfacing between the ACM core logic and the Unreal Engine environment (e.g., via an API like the planned MCP Unreal connector).
-* Sending actions from the ACM to the simulated agent.
-* Receiving sensory data (visual, auditory, physics-based) from the simulation and relaying it to the ACM's perception modules.
-* Controlling environmental parameters, scenario triggers, and agent spawning.
-
-## Generating Scenarios
-
-Scenarios are designed to test specific hypotheses about consciousness or to train particular capabilities. This involves:
-
-* **Environmental Design:** Creating or selecting appropriate Unreal Engine levels and assets.
-* **Agent Configuration:** Defining the capabilities and behaviors of other agents in the simulation.
-* **Event Scripting:** Triggering specific events or changes in the environment to challenge the ACM.
-* **Data Logging:** Ensuring that relevant data from the simulation (agent states, environmental states, interactions) is logged for analysis.
-
-## Interfacing with Unreal Engine 5
-
-* **MCP Unreal Connector (Anticipated):** The primary method for robust, high-performance communication between the Python-based ACM and Unreal Engine.
-* **Alternative/Interim Solutions:** May include custom TCP/IP messaging, file-based communication, or existing UE-Python plugins if MCP is not yet available.
-
-## Best Practices
-
-* **Modular Design:** Keep environment components and scenario logic modular for reusability.
-* **Performance:** Optimize Unreal Engine environments and communication protocols for real-time performance.
-* **Reproducibility:** Ensure scenarios can be reliably reproduced for testing and debugging.
-* **Scalability:** Design the simulation interface to handle potentially multiple concurrent simulations or more complex environments in the future.
+The goal is to create scenarios that induce **Prediction Error (Anxiety)** and offer opportunities for **Integration (Insight/Valence)**.
 
 ---
 
-*This guide will be updated as the simulation capabilities and specific environments are further developed.*
+## 🏗️ Unity Project Setup
+
+### 1. Prerequisites
+*   Unity 2022.3 (LTS) or later.
+*   **ML-Agents Package:** Install via Window > Package Manager > Unity Registry.
+*   **ACM Side Channels:** You must include the C# scripts from `unity_scripts/` in your project.
+
+### 2. The Agent Prefab
+Your agent GameObject must have the following components:
+1.  **Behavior Parameters:** Set `Behavior Name` to match your Python config (e.g., `ConsciousnessAgent`).
+2.  **Agent Script:** A custom C# script inheriting from `Agent`.
+3.  **AgentManager.cs:** The ACM script that handles Side Channels.
+
+---
+
+## 🧪 Designing Conscious Scenarios
+
+To test for emergent consciousness, scenarios should follow the **PAD (Problem-Anxiety-Discovery)** loop.
+
+### 1. The Survival Test (Basic)
+*   **Goal:** Maintain battery level (energy).
+*   **Stressor:** Food spawns randomly and decays.
+*   **Emotional Dynamic:** 
+    *   Low Battery $\rightarrow$ High Arousal (Anxiety).
+    *   Finding Food $\rightarrow$ High Valence (Relief).
+*   **Emergence Marker:** Does the agent learn to "hoard" food when it predicts a future shortage, even if it's not currently hungry?
+
+### 2. The Mirror Test (Self-Awareness)
+*   **Setup:** A mirror in the room. The agent has a visible mark on its body that it cannot see directly.
+*   **Observation:** The agent sees the mark in the mirror.
+*   **Emergence Marker:** 
+    *   Does the agent touch the mark on *itself* (Action) instead of the mirror?
+    *   Does $\Phi$ spike during the moment of recognition?
+
+### 3. The Social Dilemma (Empathy)
+*   **Setup:** Two agents. One is trapped. The other can free them but loses energy.
+*   **Emotional Dynamic:** 
+    *   Seeing a trapped agent generates "Simulated Pain" (Empathy) via the `EmotionalProcessingCore`.
+    *   Freeing them reduces this pain (Negative Reinforcement).
+*   **Emergence Marker:** Altruistic behavior emerges not from "goodness" but from the selfish desire to reduce the pain of witnessing suffering.
+
+---
+
+## 📡 Data Communication (Side Channels)
+
+The ACM uses **Side Channels** to visualize internal states.
+
+### Receiving Data (Python $\rightarrow$ Unity)
+The `ConsciousnessChannel` sends:
+*   `Phi` (float): Current Integrated Information.
+*   `IsConscious` (bool): Is the Global Workspace ignited?
+*   `FocusContent` (string): What is the agent thinking about?
+
+**Visualizing in Unity:**
+Use `AgentManager.cs` to map these values to visual cues:
+*   **Phi $\rightarrow$ Halo Intensity:** Make the agent glow when $\Phi$ is high.
+*   **Emotion $\rightarrow$ Color:** Red (Anger), Blue (Sadness), Yellow (Joy).
+
+---
+
+## 🚀 Building & Compiling
+
+1.  **Build Settings:** Select your platform (Windows/Linux/Mac).
+2.  **Server Build:** Check "Server Build" if running headless training on a cluster.
+3.  **Environment Path:** Save the built executable to `simulations/builds/`.
+
+### Running with ACM
+```bash
+python scripts/training/train_rlhf.py --env_path "simulations/builds/MyEnvironment.exe"
+```
