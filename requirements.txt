@@ -1,100 +1,63 @@
 # -------------------------------------------------------
-# Deep Learning & AI
+# Deep Learning & AI Core
 # -------------------------------------------------------
-torch==1.13.1
-transformers==4.29.2
-whisper==1.0.0  # Check the correct version for your project usage
-huggingface_hub>=0.16.4
-bitsandbytes>=0.37.0
-accelerate>=0.20.0
-einops>=0.6.0
-fairscale>=0.4.0
-peft>=0.4.0
-safetensors>=0.3.1
+torch>=2.4.0
+transformers>=4.45.0  # Required for Qwen2-VL and modern Llama
+accelerate>=0.33.0
+bitsandbytes>=0.43.0  # For 4-bit quantization (critical for size constraints)
+qwen-vl-utils>=0.0.4  # Utilities for Qwen2-VL
+huggingface_hub>=0.24.0
 
-flake8==5.0.4
-black==23.3.0
+# -------------------------------------------------------
+# Consciousness & IIT
+# -------------------------------------------------------
+pyphi>=1.2.0          # Integrated Information Theory library
+networkx>=3.0
 
-# For vision-language & speech
-palme      # Check actual PyPI package name if published
-openai-whisper>=20230918
+# -------------------------------------------------------
+# Unity Integration
+# -------------------------------------------------------
+mlagents>=1.0.0       # Unity ML-Agents Python API
+mlagents-envs>=1.0.0
+grpcio>=1.60.0
+protobuf>=4.25.0
+
+# -------------------------------------------------------
+# Vision & Audio
+# -------------------------------------------------------
+opencv-python>=4.10.0
+Pillow>=10.4.0
+librosa>=0.10.0
+soundfile>=0.12.0
+openai-whisper>=20231117
 
 # -------------------------------------------------------
 # Memory & Vector Storage
 # -------------------------------------------------------
-pinecone-client>=2.2.1
-faiss-cpu>=1.7.0
+faiss-cpu>=1.8.0
+numpy>=1.26.0
+pandas>=2.2.0
+scikit-learn>=1.5.0
 
 # -------------------------------------------------------
-# Vision & Audio Processing
+# API & Web
 # -------------------------------------------------------
-opencv-python
-opencv-contrib-python>=4.8.0
-Pillow>=10.0.0
-librosa>=0.10.0
-soundfile>=0.12.0
-face-recognition>=1.3.0
-dlib>=19.24.0
+fastapi>=0.111.0
+uvicorn>=0.30.0
 
 # -------------------------------------------------------
-# UnrealCV & gRPC
+# Utilities
 # -------------------------------------------------------
-unrealcv>=1.0.0
-grpcio>=1.56.0
-protobuf>=4.23.0
+tiktoken>=0.7.0
+pydantic>=2.8.0
+tqdm>=4.66.0
+einops>=0.8.0
 
 # -------------------------------------------------------
-# Data Processing & ML
+# Dev & Testing
 # -------------------------------------------------------
-numpy==1.23.5
-pandas>=2.0.0
-scikit-learn>=1.3.0
-scipy>=1.10.0
-networkx>=3.0
-
-# -------------------------------------------------------
-# Web & API
-# -------------------------------------------------------
-fastapi>=0.100.0
-uvicorn>=0.23.0
-websockets>=11.0.0
-
-# -------------------------------------------------------
-# Text Processing
-# -------------------------------------------------------
-tiktoken==0.4.0
-sentencepiece>=0.1.99
-regex>=2023.0.0
-nltk>=3.8.0
-
-# -------------------------------------------------------
-# Validation & Config
-# -------------------------------------------------------
-pydantic>=2.0.0
-
-# -------------------------------------------------------
-# Testing & Development
-# -------------------------------------------------------
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
-hypothesis>=6.82.0
-mock>=5.0.0
-
-# -------------------------------------------------------
-# Monitoring & Logging
-# -------------------------------------------------------
-tensorboard>=2.13.0
-wandb>=0.15.0
-
-# -------------------------------------------------------
-# Optimization & Performance
-# -------------------------------------------------------
-torch-optimizer>=0.3.0
-flash-attn>=2.0.0
-triton>=2.0.0
-
-# -------------------------------------------------------
-# Documentation
-# -------------------------------------------------------
-sphinx>=7.0.0
-sphinx-rtd-theme>=1.3.0
+pytest>=8.2.0
+pytest-asyncio>=0.23.0
+black>=24.0.0
+flake8>=7.0.0
+wandb>=0.17.0

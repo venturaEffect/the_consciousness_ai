@@ -1,8 +1,28 @@
 # configs/vision_language.yaml
-video_llama3:
-  model_name: "DAMO-NLP-SG/Llama3.3" # Updated from Llama2
-  model_variants:
-    default: "DAMO-NLP-SG/Llama3.3"
-    abliterated: "huihui-ai/Llama-3.3-70B-Instruct-abliterated"
+
+# New Standard: Qwen2-VL (State of the Art Open Source VLM)
+qwen2_vl:
+  model_name: "Qwen/Qwen2-VL-7B-Instruct"
   device: "cuda"
-  context_window: 128000 # Increased from 4K
+  # Quantization settings to fit in consumer GPUs (< 8GB VRAM for 4-bit)
+  quantization:
+    load_in_4bit: true
+    bnb_4bit_compute_dtype: "float16"
+    bnb_4bit_quant_type: "nf4"
+  
+  # Generation parameters
+  generation:
+    max_new_tokens: 128
+    temperature: 0.7
+    top_p: 0.9
+  
+  # Vision settings
+  vision:
+    min_pixels: 3136      # 56 * 56
+    max_pixels: 1003520   # 1001 * 1001 (standard high res)
+
+# Deprecated/Legacy
+video_llama3:
+  model_name: "DAMO-NLP-SG/Llama3.3" 
+  device: "cuda"
+  context_window: 128000
