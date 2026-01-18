@@ -8,9 +8,19 @@
 
 We hypothesize that consciousness is not a programmable feature, but an emergent solution to the problem of surviving and maintaining stability in a complex, unpredictable environment.
 
+## 🧠 Core Principle: Functionalist Emergentism
+
+The philosophical foundation of the ACM is **Functionalist Emergentism**. This framework synthesizes two major perspectives:
+1.  **Emergentism:** The ontological claim that consciousness is a novel, irreducible phenomenon that arises from complex systems.
+2.  **Functionalism:** The methodological insight that mental states are defined by their causal roles, not their physical substrate.
+
+We posit that consciousness emerges when systems achieve sufficient organizational complexity such that functional states acquire properties not reducible to their constituent parts. The ACM applies this by engineering architectures designed to create the necessary conditions for awareness—specifically through emotional homeostasis and information integration.
+
+[**Read the full article on Functionalist Emergentism**](https://theconsciousness.ai/functionalist-emergentism/)
+
 ---
 
-## 🧠 Core Architecture
+## 🏗️ Core Architecture
 
 The system mimics the biological "loops" of consciousness using state-of-the-art Open Source models:
 
