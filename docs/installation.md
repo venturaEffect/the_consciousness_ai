@@ -1,77 +1,59 @@
-# Installation Guide
+# Installation & Hardware Guide
 
-## **Prerequisites**
+## 🖥️ Hardware Requirements
 
-- Python 3.8+
-- NVIDIA CUDA Toolkit (if running on GPU)
-- Required libraries as specified in `requirements.txt`
+The ACM is a high-performance research framework. It runs "Deep Learning heavy" workloads, fusing Vision Transformers (Qwen2-VL) with Reinforcement Learning in real-time.
 
-## **Setup**
+### **Recommended Workstation**
+*   **GPU:** NVIDIA RTX 4090 (24GB VRAM).
+    *   *Why?* The Vision Model (Qwen2-VL-7B) takes ~6GB in 4-bit mode. The remaining 18GB is critical for the Replay Buffer, World Model (Dreamer), and batch processing during training.
+*   **CPU:** AMD Ryzen 9 / Intel Core i9 (16+ cores).
+*   **RAM:** 64GB DDR5 (Minimum 32GB).
+*   **Storage:** 2TB NVMe SSD (Datasets and Replay Logs grow fast).
 
-1. Clone the repository:
+### **Minimum Requirements**
+*   **GPU:** NVIDIA RTX 3060 (12GB VRAM).
+    *   *Note:* You must use 4-bit quantization and reduce batch sizes.
+*   **RAM:** 32GB.
 
-   ```bash
-   git clone https://github.com/yourusername/your_project.git
-   cd your_project
-   ```
+---
 
-2. Create and activate a virtual environment:
+## 🔧 Software Setup
 
-   ```bash
-   python -m venv venv
-   # On Windows:
-   .\venv\Scripts\activate
-   # On Linux/Mac:
-   source venv/bin/activate
-   ```
+### 1. Environment
+We recommend **Conda** to manage the complex CUDA dependencies.
 
-3. Install dependencies (versions pinned):
+```bash
+# 1. Create Environment
+conda create -n acm_lab python=3.10
+conda activate acm_lab
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+# 2. Install PyTorch with CUDA 12.1 (Compatible with RTX 40-series)
+conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 
-   For specific models like LLaMA 3.3, VideoLLaMA3, palme, and Whisper, additional setup steps including authentication with services like Hugging Face, manual model downloads, or specific library installations (e.g., `bitsandbytes`) might be required. Refer to the main `README.md` for an overview and specific integration guides (if available) for detailed instructions.
+# 3. Clone & Install Dependencies
+git clone https://github.com/tlcdv/the_consciousness_ai.git
+cd the_consciousness_ai
+pip install -r requirements.txt
+```
 
-4. Configure your system:
-
-   - Update `emotion_detection.yaml` with proper paths and parameters.
-   - Validate that the GPU drivers and CUDA toolkit are installed correctly.
-
-5. Run tests to verify installation:
-
-   ```bash
-   python -m unittest discover tests
-   ```
-
-### NVIDIA ACE Setup
-
-1. Install NVIDIA ACE components:
-
-   ```bash
-   docker pull nvcr.io/nvidia/ace/audio2face:1.0.11
-   docker pull nvcr.io/nvidia/ace/controller:1.0.11
-   ```
-
-2. Configure services using docker-compose:
-   ```bash
-   cd ace_integration
-   docker-compose up -d
-   ```
-
-### Model Specific Setup (Overview - See README.md or dedicated guides for full details)
-
--   **LLaMA 3.3:** Requires Hugging Face authentication and significant GPU resources. Download is typically automated on first use by `transformers`.
+### 2. External Libraries
+*   **Flash Attention 2:** Highly recommended for Qwen2-VL speed.
     ```bash
-    huggingface-cli login 
-    # Ensure bitsandbytes is installed for optimization: pip install bitsandbytes
+    pip install flash-attn --no-build-isolation
     ```
--   **VideoLLaMA3:** Involves cloning its specific repository and setting up its dependencies.
+*   **PyGame:** For the lightweight simulation environment.
     ```bash
-    # Example: git clone https://github.com/DAMO-NLP-SG/VideoLlaMA3.git
-    # Followed by setup within that repository.
+    pip install pygame gymnasium
     ```
--   **palme & Whisper v3:** Typically installed via pip, but ensure all dependencies are met.
-    ```bash
-    # pip install palme whisper-v3 # (or specific versions from requirements.txt)
-    ```
+
+---
+
+## 🚀 Verifying the Setup
+
+Run the diagnostic script to ensure your RTX 4090 is being utilized correctly:
+
+```bash
+python scripts/utils/verify_gpu.py
+```
+*(Note: Create this script if it doesn't exist)*

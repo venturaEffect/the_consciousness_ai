@@ -1,0 +1,208 @@
+import torch
+import numpy as np
+import logging
+import time
+from typing import Dict, Any, Tuple, Optional
+
+# Components
+from models.vision_language.qwen2.qwen2_integration import Qwen2VLIntegration
+from models.core.global_workspace import GlobalWorkspace
+from models.self_model.reinforcement_core import ReinforcementCore
+from models.emotion.reward_shaping import EmotionalRewardShaper
+from models.memory.memory_core import MemoryCore
+
+logger = logging.getLogger(__name__)
+
+class ConsciousnessAgent:
+    """
+    The Central Controller (The Self).
+    Orchestrates the loop between Perception, Emotion, Consciousness, and Action.
+    
+    Architecture:
+    1. Senses (Qwen2-VL) -> Percepts
+    2. Emotion (Homeostasis) -> Affect
+    3. Workspace (GNW) -> Conscious State (Ignition)
+    4. Action (PPO) -> Behavior
+    """
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+        self.device = config.get("device", "cuda" if torch.cuda.is_available() else "cpu")
+        
+        logger.info("Initializing Consciousness Agent...")
+        
+        # 1. Perception (The Senses)
+        # We use Qwen2-VL to turn raw pixels into semantic descriptions.
+        self.vision_system = Qwen2VLIntegration(config.get("vision", {}))
+        
+        # 2. Memory & Emotion (The Self)
+        self.memory = MemoryCore(config.get("memory", {}))
+        self.emotion_shaper = EmotionalRewardShaper(config.get("emotion", {}))
+        
+        # 3. Drives & Action (The Policy)
+        self.rl_core = ReinforcementCore(
+            config.get("reinforcement", {}), 
+            self.emotion_shaper, 
+            self.memory
+        )
+        
+        # 4. Consciousness (The Workspace)
+        self.global_workspace = GlobalWorkspace(config.get("workspace", {}))
+        
+        # Internal State
+        self.current_emotion = {"valence": 0.0, "arousal": 0.0, "dominance": 0.0}
+        self.anxiety_level = 0.0
+        self.step_count = 0
+        
+        # Simple Text Encoder for PPO State (Placeholder for a better semantic encoder)
+        # Maps text descriptions to the state_dim expected by PPO
+        self.state_dim = config.get("reinforcement", {}).get("state_dim", 128)
+        self.text_encoder = torch.nn.Sequential(
+            torch.nn.Linear(768, self.state_dim), # Assuming we get 768 dim embeddings (e.g. BERT-like)
+            torch.nn.ReLU()
+        ).to(self.device)
+        # We'll use a random projection if no real text encoder is loaded for this prototype
+        self.text_projection = torch.randn(768, self.state_dim).to(self.device)
+
+    def step(self, observation: Any) -> Tuple[np.ndarray, Dict[str, Any]]:
+        """
+        Main Cognitive Cycle.
+        """
+        self.step_count += 1
+        start_time = time.time()
+        
+        # --- 1. Perception ---
+        # Analyze scene with Qwen2-VL
+        # For performance in "Dark Room", we might cache or skip frames in production.
+        try:
+            visual_description = self.vision_system.analyze_scene(observation, prompt="Describe the light level and safety.")
+        except Exception as e:
+            logger.error(f"Vision failure: {e}")
+            visual_description = "darkness and uncertainty"
+
+        # --- 2. Emotion (Fast Path) ---
+        # Evaluate "Reflexive" emotional response to the percept
+        # In "Dark Room", darkness = high arousal (anxiety)
+        # This logic mimics the Amygdala (fast, pattern-matched)
+        reflex_emotion = self._evaluate_reflex_emotion(visual_description)
+        self.current_emotion = reflex_emotion
+        
+        # --- 3. Consciousness (Global Workspace) ---
+        # Submit bids to the workspace
+        inputs = {
+            "vision": visual_description,
+            "emotion": reflex_emotion,
+            "memory": "No active recall" # Placeholder
+        }
+        
+        # Calculate Goal Vector (Homeostasis) - Agent wants High Valence, Low Arousal
+        goal_vector = torch.tensor([1.0, -1.0, 1.0], device=self.device) # Target: [Valence=1, Arousal=-1, Dominance=1]
+        
+        # Run GNW Competition
+        broadcast_content, bids = self.global_workspace.run_competition(inputs, goal_vector)
+        
+        # Check Ignition
+        is_conscious = self.global_workspace.state.is_conscious
+        phi = self.global_workspace.state.phi_value
+        
+        # --- 4. Action Selection ---
+        # State Construction:
+        # We need to feed a vector to PPO. 
+        # If Conscious: Use the Broadcast Content (Integrated)
+        # If Zombie: Use the Raw Percept (Reflex)
+        
+        active_text = str(broadcast_content) if is_conscious else visual_description
+        state_vector = self._encode_text_to_state(active_text)
+        
+        # Get Action from PPO
+        action, value = self.rl_core.select_action(state_vector)
+        
+        # --- 5. Return ---
+        info = {
+            "description": visual_description,
+            "emotion": self.current_emotion,
+            "is_conscious": is_conscious,
+            "phi": phi,
+            "qualia": self.global_workspace.get_unity_metrics()[3], # Qualia Vector
+            "action_value": value,
+            "latency": time.time() - start_time
+        }
+        
+        return action, info
+
+    def update(self, 
+               state: np.ndarray, 
+               action: np.ndarray, 
+               reward: float, 
+               next_state: np.ndarray, 
+               done: bool, 
+               info: Dict[str, Any]):
+        """
+        Learning Step (Post-Action).
+        Feeds result back to Reinforcement Core.
+        """
+        # Convert raw numpy inputs to tensors/embeddings matching step() logic
+        # Note: In a real loop, we'd cache the tensors from step() to avoid re-encoding
+        # For this prototype, we re-encode or assume caller handles it.
+        # But wait, PPO update needs tensors.
+        
+        # We'll trust the RL Core to handle the buffering if we pass the right data.
+        # rl_core.step() takes (state, action, reward, next_state...)
+        
+        # Re-encode for consistency (Optimization: pass tensors from step return)
+        state_vec = self._encode_text_to_state(info["description"]) # Approximation
+        # Next state needs encoding too? 
+        # In "Dark Room", next_state image comes from environment *after* step.
+        # We might skip re-encoding 'next_state' here and let RL Core handle sparse rewards 
+        # or require the Training Loop to call agent.encode(next_obs).
+        
+        # Simplified: We just pass the values to RL Core's step function
+        # The RL Core stores them.
+        
+        # We pass the *shaped* emotional state
+        self.rl_core.step(
+            state=state_vec,
+            action=action,
+            raw_reward=reward,
+            next_state=state_vec, # Placeholder: PPO needs real next state, usually handled in training loop
+            done=done,
+            emotion_state=self.current_emotion,
+            attention_level=self.global_workspace.state.broadcast_strength,
+            narrative=info["description"]
+        )
+        
+        # Trigger PPO Update if buffer is full
+        metrics = self.rl_core.update_policy()
+        return metrics
+
+    def _evaluate_reflex_emotion(self, description: str) -> Dict[str, float]:
+        """
+        Heuristic 'Amygdala'.
+        Decodes text to basic PAD (Pleasure-Arousal-Dominance) values.
+        """
+        description = description.lower()
+        valence = 0.0
+        arousal = 0.0
+        dominance = 0.0
+        
+        # Dark Room Heuristics
+        if "dark" in description or "black" in description or "nothing" in description:
+            valence = -0.8
+            arousal = 0.8  # Anxiety
+            dominance = -0.5 # Helpless
+        elif "light" in description or "bright" in description:
+            valence = 0.8
+            arousal = -0.2 # Relief
+            dominance = 0.5 # Control
+            
+        return {"valence": valence, "arousal": arousal, "dominance": dominance}
+
+    def _encode_text_to_state(self, text: str) -> torch.Tensor:
+        """
+        Dummy Semantic Encoder. 
+        In production, use a frozen BERT/CLIP text encoder.
+        Here, we hash the string to a random but consistent vector for 'Blind' testing.
+        """
+        # Deterministic hash seed
+        seed = hash(text) % (2**32)
+        torch.manual_seed(seed)
+        return torch.randn(self.state_dim, device=self.device)

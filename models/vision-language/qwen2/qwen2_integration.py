@@ -131,4 +131,5 @@ class Qwen2VLIntegration:
         # Simplified approach: Return last hidden state of the vision encoder
         # This requires digging into the model structure or doing a forward pass
         # without generation.
-        pass # To be implemented if 'Raw' visual embeddings are needed for vector DB
+        raise NotImplementedError("Visual embeddings not yet implemented for Qwen2-VL")
+
