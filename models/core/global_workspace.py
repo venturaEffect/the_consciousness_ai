@@ -3,28 +3,35 @@ import numpy as np
 import time
 from typing import Dict, List, Any, Tuple, Optional
 from dataclasses import dataclass
+import torch.nn.functional as F
 
 from models.evaluation.iit_phi import IITMetrics
+from models.core.qualia_mapper import QualiaMapper
 
 @dataclass
 class WorkspaceState:
     """Current state of the global workspace"""
     active_content: Dict[str, Any]
     access_history: List[Dict[str, Any]]
-    broadcast_strength: float
+    broadcast_strength: float # Activation level (0.0 - 1.0)
     competition_results: Dict[str, float]
-    # New fields for Consciousness metrics
+    
+    # Consciousness metrics
     phi_value: float = 0.0
     is_conscious: bool = False
     focus_topic: str = "idle"
+    
+    # Phenomenological State (Qualia)
+    qualia_vector: np.ndarray = np.zeros(3) # [Intensity, Valence, Complexity]
 
 class GlobalWorkspace:
     """
-    Implementation of Global Workspace Theory (GWT) for artificial consciousness.
+    Implementation of Global Neuronal Workspace (GNW) for artificial consciousness.
     
-    This provides a central "theater" where specialized processes compete and
-    cooperate to broadcast their signals, making them globally available
-    to other cognitive systems.
+    Upgrades:
+    1. Sigmoid Ignition (Non-linear Phase Transition)
+    2. Recurrent Reverberation (Working Memory)
+    3. Synchrony Binding (Multimodal Integration)
     """
     
     def __init__(self, config: Dict):
@@ -36,144 +43,138 @@ class GlobalWorkspace:
             competition_results={},
             phi_value=0.0,
             is_conscious=False,
-            focus_topic="idle"
+            focus_topic="idle",
+            qualia_vector=np.zeros(3)
         )
         self.specialist_modules = {}
-        self.broadcast_threshold = config.get("broadcast_threshold", 0.7)
+        
+        # GNW Parameters
+        self.ignition_threshold = config.get("ignition_threshold", 0.6)
+        self.ignition_gain = config.get("ignition_gain", 10.0) # Steepness of sigmoid
+        self.reverberation_alpha = config.get("reverberation_alpha", 0.7) # Decay rate
         self.max_history = config.get("max_history", 100)
         
-        # Initialize IIT Calculator for real-time Phi estimation of the workspace
+        # Dependencies
         self.iit_metrics = IITMetrics()
+        self.qualia_mapper = QualiaMapper()
         
     def register_specialist(self, name: str, module: Any) -> None:
         """Register a specialist cognitive module"""
         self.specialist_modules[name] = module
     
-    def run_competition(self, inputs: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, float]]:
+    def run_competition(self, inputs: Dict[str, Any], goal_vector: torch.Tensor) -> Tuple[Dict[str, Any], Dict[str, float]]:
         """
-        Run competition among specialist modules to determine what enters consciousness.
-        Each module submits a "bid" (signal strength) based on current inputs.
+        Run GNW competition with Non-linear Ignition and Reverberation.
         """
         bids = {}
         contents = {}
         
-        # Collect bids from all specialists
+        # 1. Collect Bids
         for name, module in self.specialist_modules.items():
             if hasattr(module, 'evaluate_salience'):
-                # Get bid strength and content from specialist
                 content, bid = module.evaluate_salience(inputs)
                 bids[name] = bid
                 contents[name] = content
         
-        # Determine winner(s) based on bid strength and cooperation patterns
-        winners = self._resolve_competition(bids)
-        broadcast_content = {}
+        # 2. Synchrony Binding (Scientific Upgrade)
+        # If multiple modalities bid high simultaneously, boost them.
+        # Simple heuristic: If Vision and Audio both > 0.5, multiply by 1.5
+        # In a real neural net, this would be temporal coincidence detection.
+        if bids.get('vision', 0) > 0.5 and bids.get('audio', 0) > 0.5:
+            bids['vision'] *= 1.2
+            bids['audio'] *= 1.2
         
-        # Combine content from winning specialists
-        for winner in winners:
-            broadcast_content.update(contents[winner])
-            
-        # Update state
-        broadcast_strength = max(bids.values()) if bids else 0.0
-        self.state.broadcast_strength = broadcast_strength
+        # 3. Calculate Input Energy (Max Bid)
+        input_energy = max(bids.values()) if bids else 0.0
+        
+        # 4. Non-linear Ignition (Sigmoid)
+        # S(x) = 1 / (1 + e^(-k(x - theta)))
+        # Phase transition from subconscious (low) to conscious (high)
+        ignition_val = 1.0 / (1.0 + np.exp(-self.ignition_gain * (input_energy - self.ignition_threshold)))
+        
+        # 5. Reverberation (Recurrence)
+        # New State = Alpha * Old State + (1-Alpha) * New Input
+        # This gives the workspace "memory" (Working Memory)
+        current_strength = (self.reverberation_alpha * self.state.broadcast_strength) + \
+                           ((1.0 - self.reverberation_alpha) * ignition_val)
+        
+        self.state.broadcast_strength = current_strength
         self.state.competition_results = bids
         
-        # --- Consciousness Metric Calculation ---
-        # We simulate a "workspace activation tensor" based on the bids.
-        # This allows us to run the IIT calculation on the abstract "workspace" substrate.
-        workspace_tensor = self._bids_to_tensor(bids)
-        phi = self.iit_metrics.compute_phi_proxy(workspace_tensor)
+        # 6. Determine Consciousness (Threshold Check on Reverberated State)
+        self.state.is_conscious = current_strength >= self.ignition_threshold
         
-        self.state.phi_value = phi
-        self.state.is_conscious = broadcast_strength >= self.broadcast_threshold
-        
-        # Determine focus topic (simple heuristic for now)
-        if winners:
-            self.state.focus_topic = f"Processing: {', '.join(winners)}"
-        else:
-            self.state.focus_topic = "Idle / Subconscious"
-
-        # Only broadcast if strength exceeds threshold
+        # 7. Select Winners (If Conscious)
+        winners = []
         if self.state.is_conscious:
+            winners = self._resolve_competition(bids)
+            
+        # 8. IIT & Qualia Calculation (Only if Conscious)
+        if self.state.is_conscious:
+            # Create Abstract Activation Tensor
+            workspace_tensor = self._bids_to_tensor(bids)
+            
+            # Calculate Phi (Using Proxy for now, will upgrade to Empirical later)
+            phi = self.iit_metrics.compute_phi_proxy(workspace_tensor)
+            self.state.phi_value = phi
+            
+            # Map to Qualia (Phenomenology)
+            qualia = self.qualia_mapper.map_state(workspace_tensor, goal_vector)
+            self.state.qualia_vector = qualia.to_vector()
+            
+            # Broadcast
+            broadcast_content = {}
+            for winner in winners:
+                broadcast_content.update(contents[winner])
+            
             self.state.active_content = broadcast_content
+            self.state.focus_topic = f"Processing: {', '.join(winners)}"
+            
+            # History
             self.state.access_history.append({
                 'content': broadcast_content,
-                'strength': broadcast_strength,
+                'strength': current_strength,
                 'winners': winners,
                 'phi': phi,
+                'qualia': self.state.qualia_vector.tolist(),
                 'timestamp': time.time()
             })
-            
-            # Trim history if needed
+             # Trim history if needed
             if len(self.state.access_history) > self.max_history:
                 self.state.access_history = self.state.access_history[-self.max_history:]
-                
+
             return broadcast_content, bids
         else:
+            # Subconscious Processing
+            self.state.focus_topic = "Idle / Subconscious"
+            self.state.phi_value = 0.0
+            self.state.qualia_vector = np.zeros(3)
             return {}, bids
     
     def _resolve_competition(self, bids: Dict[str, float]) -> List[str]:
-        """
-        Determine which specialists win the competition for access.
-        """
-        if not bids:
-            return []
-            
-        # Sort bids by strength
+        """Determine winners (Winner-Take-Most)."""
+        if not bids: return []
         sorted_bids = sorted(bids.items(), key=lambda x: x[1], reverse=True)
-        
-        # Find all specialists above threshold
-        winners = [name for name, bid in sorted_bids 
-                  if bid >= self.broadcast_threshold]
-                  
-        # If no winners, take the top one if it's close to threshold
-        if not winners and sorted_bids:
-            top_name, top_bid = sorted_bids[0]
-            if top_bid >= self.broadcast_threshold * 0.8:  # Within 80% of threshold
-                winners = [top_name]
-                
-        return winners
-    
+        # Return top K or all above threshold
+        return [k for k, v in sorted_bids if v >= self.ignition_threshold * 0.8] # Soft threshold
+
     def _bids_to_tensor(self, bids: Dict[str, float]) -> torch.Tensor:
-        """
-        Convert dictionary bids into a tensor representation for IIT calculation.
-        Creates a mock 'activation map' where each specialist is a 'head'.
-        """
-        if not bids:
-            return torch.zeros((1, 4, 1, 1)) # Dummy 4-head tensor
-            
-        # Normalize bids to 0-1
-        values = list(bids.values())
-        if not values:
-            return torch.zeros((1, 4, 1, 1))
+        """Convert bids to tensor for IIT/Qualia mapping."""
+        slots = 8
+        data = torch.zeros(slots)
+        vals = list(bids.values())
+        for i, v in enumerate(vals):
+            if i < slots: data[i] = v
+        return data
 
-        # Create a tensor representing the 'activation' of workspace nodes
-        # We assume a fixed number of 'slots' in the workspace (e.g., 8)
-        workspace_slots = 8
-        tensor_data = torch.zeros(workspace_slots)
-        
-        for i, val in enumerate(values):
-            if i < workspace_slots:
-                tensor_data[i] = val
-                
-        # Reshape to mimic attention weights: (Batch=1, Heads=Slots, Seq=1, Seq=1)
-        return tensor_data.view(1, workspace_slots, 1, 1)
-
-    def get_unity_metrics(self) -> Tuple[float, bool, str]:
+    def get_unity_metrics(self) -> Tuple[float, bool, str, List[float]]:
         """
-        Export metrics specifically for the Unity Bridge Side Channel.
-        Returns: (Phi, IsConscious, FocusTopic)
+        Export metrics for Unity Bridge.
+        Returns: (Phi, IsConscious, FocusTopic, QualiaVector)
         """
         return (
             self.state.phi_value,
             self.state.is_conscious,
-            self.state.focus_topic
+            self.state.focus_topic,
+            self.state.qualia_vector.tolist()
         )
-
-    def get_current_broadcast(self) -> Dict[str, Any]:
-        """Get the currently broadcast content"""
-        return self.state.active_content
-        
-    def get_competition_status(self) -> Dict[str, float]:
-        """Get the results of the most recent competition"""
-        return self.state.competition_results
