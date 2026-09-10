@@ -33,6 +33,10 @@ We posit that consciousness emerges when systems achieve sufficient organization
 
 ## Architecture
 
+[![The Consciousness AI core architecture map](https://theconsciousness.ai/architecture/diagrams/core-architecture-card.png)](https://theconsciousness.ai/architecture/diagrams/core-architecture.html)
+
+**[Open the interactive architecture map](https://theconsciousness.ai/architecture/diagrams/core-architecture.html)**. Every component carries a git-verified source link pinned to this repository, and the map is re-validated against the latest main automatically. Search nodes, trace upstream and downstream reach, probe exact routes, compare roles, play guided stories, and export PNG, SVG, WebM or share cards.
+
 The system is built on a biologically grounded architecture informed by Feinberg & Mallatt's neuroevolutionary theory of consciousness (*The Ancient Origins of Consciousness*, MIT Press 2016). Six special neurobiological features guide the design: hierarchical depth, isomorphic mapping, reciprocal connections, oscillatory binding, nested compositional hierarchies, and neuron type diversity.
 
 ### 1. Sensory Tectum (Perception)
