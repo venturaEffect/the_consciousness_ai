@@ -104,3 +104,12 @@ at all three models (clean accuracy 0.33 to 0.77, chance 0.167). So any statemen
 carry the class", or that the readout was "at chance" because of the stream, is withdrawn. It describes the readout of this
 probe. The pass, fail and untestable verdicts above remain correct records of what this probe measured. They are not
 statements about the representations. The gate series is superseded by the dose-response study.
+
+## Correction, 2026-10-11 (closed stimulus set)
+
+This document used cross validation folds grouped by trial. DMTS draws its sample from 72 stimuli and trials repeat them, so the
+test rows repeated training inputs exactly. With folds that hold out whole stimuli (`docs/results/thermodynamic_closed_stimulus_2026_10.md`)
+the shape readout of `obs_map`, `tectum_content` and `z_state` falls below chance at all three models, and only `workspace_broadcast` stays
+above it (0.48 to 0.55). So every clean accuracy in this document describes the label of a KNOWN stimulus, and for those three streams it
+is a statement about telling 72 known items apart, not about reading shape. Statements here that these streams "carry the class" are
+withdrawn in the general sense. The numbers stand as measured, and the noise findings keep their form as properties of noise on a known set.

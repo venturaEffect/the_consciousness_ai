@@ -205,3 +205,12 @@ result says nothing about consciousness or Phi.
 The main reservation above (readouts fitted on clean vectors) was tested in `docs/results/thermodynamic_matched_readout_2026_10.md`.
 With readouts trained on the channel's own noisy outputs, the budget saving over plain stayed at the same size (`half` 16 to 256 times,
 `full` 64 to 1024 times, where both reach 95%). The gain did not come from a brittle plain readout.
+
+## Correction, 2026-10-11 (closed stimulus set)
+
+This document used cross validation folds grouped by trial. DMTS draws its sample from 72 stimuli and trials repeat them, so the
+test rows repeated training inputs exactly. With folds that hold out whole stimuli (`docs/results/thermodynamic_closed_stimulus_2026_10.md`)
+the shape readout of `obs_map`, `tectum_content` and `z_state` falls below chance at all three models, and only `workspace_broadcast` stays
+above it (0.48 to 0.55). So every clean accuracy in this document describes the label of a KNOWN stimulus, and for those three streams it
+is a statement about telling 72 known items apart, not about reading shape. Statements here that these streams "carry the class" are
+withdrawn in the general sense. The numbers stand as measured, and the noise findings keep their form as properties of noise on a known set.

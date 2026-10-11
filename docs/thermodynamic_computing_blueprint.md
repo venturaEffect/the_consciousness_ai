@@ -182,8 +182,18 @@ modelled cell energy of about 2 fJ) gives a ratio near 2300, where it does not p
 matrix at no cost, but that projection dominates the total energy. So the equalisation is a lever on fidelity per channel event, and a lever
 on total energy only where the pre-processing is cheap.
 
-**Open experiments, in order.** Rank-truncated equalisation for the raw streams. A sweep of the
-equalisation strength on held-out draws. A noisy attractor memory across the delay phase. The policy in the loop.
+**Rank truncation (2026-10-11).** About 64 principal axes keep the label readable, and with 64 equalised axes the total energy falls
+about 4 times for the larger streams, which is the ratio of the projection costs (`docs/results/thermodynamic_frontier_2026_10.md`).
+
+**Closed stimulus set (2026-10-11), a correction to everything above.** DMTS has 72 stimuli and trials repeat them. All results above
+used folds grouped by trial, so test rows repeated training inputs. With folds that hold out whole stimuli the shape readout of `obs_map`,
+`tectum_content` and `z_state` falls below chance, and only `workspace_broadcast` stays above it (0.48 to 0.55)
+(`docs/results/thermodynamic_closed_stimulus_2026_10.md`). The results above therefore describe the label of a known stimulus read through
+noise. They are not evidence that those three streams carry shape for an unseen stimulus. For `workspace_broadcast` the 64-axis equalised
+encoding reaches 95% of the clean accuracy at 16 to 64 samples per axis under stimulus folds. Every later probe uses stimulus folds.
+
+**Open experiments, in order.** A p-bit working memory across the delay and an offline match decision, both on `workspace_broadcast` with
+stimulus folds. A readout with more distinct stimuli or a nonlinear form for `obs_map`. Sourced figures for a stated target.
 
 ## 4. Files
 
@@ -201,4 +211,6 @@ equalisation strength on held-out draws. A noisy attractor memory across the del
 | `scripts/analysis/probe_thermodynamic_encoding.py` | Variance-equalised encoding arms on the cached recordings |
 | `scripts/analysis/probe_thermodynamic_matched.py` | The same arms with a readout trained on channel outputs |
 | `scripts/analysis/probe_thermodynamic_transform_cost.py` | Operation counts of the transform and the break-even energy ratio |
+| `scripts/analysis/probe_thermodynamic_frontier.py` | Rank-truncated equalised encodings, events and energy |
+| `scripts/analysis/probe_thermodynamic_stimulus.py` | Folds that hold out whole stimuli, the closed-set correction |
 | `tests/test_substrate_isolation.py` | Import graph guard |

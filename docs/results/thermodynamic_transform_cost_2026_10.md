@@ -86,3 +86,12 @@ Instruments stay UNPROVEN, and 0 are TRUSTED. This result says nothing about con
 2. **A measured rho** for a stated target (a digital process or an in-memory array), from sourced figures for both the multiply-add and the channel event.
 3. **A sweep of the equalisation strength** on held-out draws.
 4. **The system boundary:** add the energy to produce the vector, so the comparison covers the whole decision.
+
+## Correction, 2026-10-11 (closed stimulus set)
+
+This document used cross validation folds grouped by trial. DMTS draws its sample from 72 stimuli and trials repeat them, so the
+test rows repeated training inputs exactly. With folds that hold out whole stimuli (`docs/results/thermodynamic_closed_stimulus_2026_10.md`)
+the shape readout of `obs_map`, `tectum_content` and `z_state` falls below chance at all three models, and only `workspace_broadcast` stays
+above it (0.48 to 0.55). So every clean accuracy in this document describes the label of a KNOWN stimulus, and for those three streams it
+is a statement about telling 72 known items apart, not about reading shape. Statements here that these streams "carry the class" are
+withdrawn in the general sense. The numbers stand as measured, and the noise findings keep their form as properties of noise on a known set.

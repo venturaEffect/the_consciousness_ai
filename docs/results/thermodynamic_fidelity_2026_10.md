@@ -150,3 +150,12 @@ the grid extended to 1e-5 (`docs/results/thermodynamic_encoding_2026_10.md`, the
 The other entries moved by 0.01 or less. So the clean accuracies and the retention values of those three entries in this document
 are understated, and their budgets describe a readout that was not at its optimum. The caveat above that said so is confirmed.
 The ordering of the streams by cost is unchanged for the other entries.
+
+## Correction, 2026-10-11 (closed stimulus set)
+
+This document used cross validation folds grouped by trial. DMTS draws its sample from 72 stimuli and trials repeat them, so the
+test rows repeated training inputs exactly. With folds that hold out whole stimuli (`docs/results/thermodynamic_closed_stimulus_2026_10.md`)
+the shape readout of `obs_map`, `tectum_content` and `z_state` falls below chance at all three models, and only `workspace_broadcast` stays
+above it (0.48 to 0.55). So every clean accuracy in this document describes the label of a KNOWN stimulus, and for those three streams it
+is a statement about telling 72 known items apart, not about reading shape. Statements here that these streams "carry the class" are
+withdrawn in the general sense. The numbers stand as measured, and the noise findings keep their form as properties of noise on a known set.
