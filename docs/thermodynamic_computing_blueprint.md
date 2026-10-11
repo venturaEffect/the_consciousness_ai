@@ -192,8 +192,16 @@ used folds grouped by trial, so test rows repeated training inputs. With folds t
 noise. They are not evidence that those three streams carry shape for an unseen stimulus. For `workspace_broadcast` the 64-axis equalised
 encoding reaches 95% of the clean accuracy at 16 to 64 samples per axis under stimulus folds. Every later probe uses stimulus folds.
 
-**Open experiments, in order.** A p-bit working memory across the delay and an offline match decision, both on `workspace_broadcast` with
-stimulus folds. A readout with more distinct stimuli or a nonlinear form for `obs_map`. Sourced figures for a stated target.
+**Survival on the project's own probe (2026-10-11).** The project's two decoders, on the project's split, with a p-bit channel in front
+(`docs/results/thermodynamic_survival_2026_10.md`). On `obs_map` the shape decode reaches 90% of its clean value at 64 samples per axis
+with the 64-axis encoding at all three models, and the 72-way identity decode reaches it at 16. With whole stimuli held out, shape is at
+chance for `obs_map`, `z_state` and `tectum_content` with the project's decoders too. One prediction failed. With pixel noise of standard
+deviation 8 on the sample, the project's shape decode falls to chance on every stream before any channel is applied. So the property that
+survives the channel is the discrimination of a known stimulus.
+
+**Open experiments, each needs its own plan first.** Why shape is lost under sensory noise (a noise sweep, more trials). The three readings
+for `workspace_broadcast`. The delay memory and the offline match decision, re-based on known-stimulus identity. Sourced figures for a
+stated target.
 
 ## 4. Files
 
@@ -213,4 +221,5 @@ stimulus folds. A readout with more distinct stimuli or a nonlinear form for `ob
 | `scripts/analysis/probe_thermodynamic_transform_cost.py` | Operation counts of the transform and the break-even energy ratio |
 | `scripts/analysis/probe_thermodynamic_frontier.py` | Rank-truncated equalised encodings, events and energy |
 | `scripts/analysis/probe_thermodynamic_stimulus.py` | Folds that hold out whole stimuli, the closed-set correction |
+| `scripts/analysis/probe_thermodynamic_survival.py` | The project's decoders and split with a p-bit channel in front, three readings |
 | `tests/test_substrate_isolation.py` | Import graph guard |
