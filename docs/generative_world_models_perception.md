@@ -31,8 +31,9 @@ Project page: https://dino-wm.github.io/
   current features and actions, with no pixel reconstruction. Because DINOv2 patch tokens
   keep spatial structure, the predicted latent keeps identity, and the model supports
   planning by optimizing actions toward goal features.
-- **Why it fits this project specifically:** The tectum already encodes frames with
-  DINOv2 (`models/core/sensory_tectum.py`). So a DINO-WM-style objective, predict the
+- **Why it fits this project specifically:** The tectum has an optional DINOv2 encoder
+  (`models/core/sensory_tectum.py`, off by default. The training loop uses a
+  convolutional stack). So a DINO-WM-style objective, predict the
   next-step DINOv2 patch features, is close to a drop-in target for the RSSM. It avoids
   building and training a pixel decoder, and it preserves identity by construction
   because the target is the same patch-feature space that already decodes at ~1.0 in the

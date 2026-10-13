@@ -17,7 +17,7 @@ structure only, kept current from the actual tree.
 | `models/self_model/` | Action selection (basal ganglia), self-representation, working memory, policy variants |
 | `models/memory/` | Episodic and emotional memory stores and indices |
 | `models/predictive/` | DreamerV3 wrappers and predictive/attention helpers |
-| `models/vision_language/` | Qwen2-VL semantic pathway and vision-language helpers |
+| `models/vision_language/` | Optional Qwen2-VL module and vision-language helpers. The training loop does not load them |
 | `models/narrative/` | Narrative engine (LLM-backed with template fallback) |
 | `models/validation/` | Brian2 spiking-network validation of the binding dynamics |
 | `models/world_model/` | Standalone generative world-model module |
@@ -38,11 +38,11 @@ structure only, kept current from the actual tree.
 ## Core architecture, by pipeline stage (models/core unless noted)
 
 ### Perception (the senses)
-- `retinotopic_encoder.py` -- DINOv2-B/14 frozen backbone with a conv-stack fallback; retinotopic patch tokens.
+- `retinotopic_encoder.py` -- conv stack (used by the training loop) and an optional DINOv2-B/14 frozen backbone, off by default; retinotopic grid.
 - `sensory_tectum.py` -- topographic multisensory map, DreamerV3 RSSM, trimodal inverse-effectiveness fusion, capsule composition. Central perception module.
 - `topographic_loss.py` -- TDANN spatial self-organization loss.
 - `visual_tectum_projection.py` -- projection helper for the tectum grid.
-- `semantic_pathway.py` -- Qwen2-VL embeddings as the 5th workspace competitor.
+- `semantic_pathway.py` -- the 5th workspace competitor, designed for Qwen2-VL embeddings; the training loop feeds it nothing, or a stand-in.
 - `mock_semantic.py` -- deterministic stand-in semantic module (no Qwen2-VL weights needed).
 - `models/audio/` -- the auditory pathway: `gammatone_filterbank.py`, `hair_cell_model.py`, `tonotopic_encoder.py`, `spatial_audio.py`, `audio_affect_extractor.py`, `auditory_specialist.py` (the workspace competitor).
 

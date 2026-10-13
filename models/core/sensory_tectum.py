@@ -314,8 +314,9 @@ class SensoryTectum(nn.Module):
                              action_dim=config.get("wm_action_dim", 0),
                              latent_mode=self.latent_mode)
 
-        # Retinotopic encoder: DINOv2-B/14 (frozen) -> [B, feature_dim, grid_size, grid_size]
-        # Falls back to conv stack when DINOv2 weights unavailable (CI/testing)
+        # Retinotopic encoder -> [B, feature_dim, grid_size, grid_size]. The conv stack
+        # is the default. DINOv2-B/14 (frozen) loads only when the config sets
+        # use_pretrained_dino, and no training flag sets it.
         use_pretrained = config.get("use_pretrained_dino", False)
         self.retinotopic_encoder = RetinotopicEncoder(
             out_channels=self.feature_dim,

@@ -6,7 +6,7 @@ This document outlines the typical flow of information and processing within The
 
 1.  **Perception:**
     *   Raw sensor data (video, audio, text) from the simulation environment (Unreal Engine 5 via [`SimulationManager`](simulations/api/simulation_manager.py)) is received.
-    *   Specialized models process this data into structured representations. DINOv2 retinotopic encoder handles spatial vision, Qwen2-VL provides semantic understanding, and the cochlear auditory pipeline (gammatone filterbank, inner hair cell model, tonotopic encoder) processes audio into frequency decomposed features and affect signals.
+    *   Specialized models process this data into structured representations. A retinotopic convolutional encoder handles spatial vision in the training loop (DINOv2 is an option that is off by default). Qwen2-VL is an optional module for semantic understanding that the training loop does not load. The cochlear auditory pipeline (gammatone filterbank, inner hair cell model, tonotopic encoder) processes audio into frequency decomposed features and affect signals.
 
 2.  **State Update & Integration (`ConsciousnessCore`):**
     *   The [`ConsciousnessCore`](models/core/consciousness_core.py) receives the processed perceptual information.

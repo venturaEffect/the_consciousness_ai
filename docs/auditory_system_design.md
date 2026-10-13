@@ -2,7 +2,7 @@
 
 ## 1. Motivation
 
-The project models consciousness emergence through biologically grounded perception. The visual pipeline (DINOv2 retinotopic encoder, topographic maps, inverse effectiveness fusion) mirrors the structure of the mammalian visual system from retina to primary visual cortex. However, audio processing was limited to a Faster Whisper transcription stub, which has no biological correspondence. Human auditory perception does not start with text. It starts at the cochlea.
+The project models consciousness emergence through biologically grounded perception. The visual pipeline (retinotopic encoder, topographic maps, inverse effectiveness fusion) mirrors the structure of the mammalian visual system from retina to primary visual cortex. However, audio processing was limited to a Faster Whisper transcription stub, which has no biological correspondence. Human auditory perception does not start with text. It starts at the cochlea.
 
 This document describes the design of a cochlear inspired auditory pipeline that replaces Whisper transcription with a biophysically grounded processing chain: gammatone filterbank, inner hair cell model, tonotopic encoder, acoustic affect extraction, and workspace integration. The system is open source (MIT/BSD dependencies only), runs on average hardware, and produces features aligned with human auditory perception.
 

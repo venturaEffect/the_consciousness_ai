@@ -266,7 +266,7 @@ The following documents in the repository provide deeper technical detail:
 | `models/evaluation/effective_information.py` | Hoel's Effective Information (causal emergence) |
 | `models/evaluation/iit_phi.py` | IIT Phi measurement |
 | `models/self_model/self_representation_core.py` | Self-model with body schema + interoception |
-| `models/core/semantic_pathway.py` | Qwen2-VL semantic embeddings as 5th workspace oscillator |
+| `models/core/semantic_pathway.py` | 5th workspace competitor, designed for Qwen2-VL semantic embeddings. The training loop feeds it nothing, or a stand-in |
 | `simulations/environments/dmts_env.py` | Delayed Match-to-Sample (consciousness-demanding) |
 | `simulations/environments/wcst_env.py` | Wisconsin Card Sort (meta-cognition test) |
 | `simulations/environments/navigation_env.py` | Multi-room navigation with fog of war |

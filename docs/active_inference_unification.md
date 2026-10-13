@@ -47,8 +47,8 @@ action as one objective: minimize (expected) free energy.
   that generative objective, not by a separate ad-hoc reward-MSE. See also
   [generative_world_models_perception.md](generative_world_models_perception.md) for the
   reconstruction-target choice: predicting frozen DINOv2 patch features (DINO-WM) is an
-  identity-preserving alternative to pixel-level ELBO, and the tectum already encodes with
-  DINOv2.
+  identity-preserving alternative to pixel-level ELBO, and the tectum has an optional
+  DINOv2 encoder (off by default).
 - **Action = expected free energy (EFE)**, which decomposes into:
   - **pragmatic value** - reach preferred observations (a *prior over outcomes*, where
     reward enters as a preference, not as the learning signal); and

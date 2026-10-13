@@ -7,8 +7,8 @@ The system architecture fosters emergent consciousness through orchestrated spec
 ### Core Architectural Pillars
 
 1.  **Perception (The Senses):**
-    *   **Vision (Spatial):** DINOv2-B/14 (frozen). Provides spatially faithful patch tokens with direct retinotopic correspondence for the Sensory Tectum spatial pathway.
-    *   **Vision (Semantic):** Qwen2-VL-7B (4-bit quantized, optional). Provides high level scene understanding via the SemanticPathway, competing in the workspace as the 5th oscillator.
+    *   **Vision (Spatial):** A 4-layer strided convolutional stack that keeps the retinotopic grid for the Sensory Tectum spatial pathway. The training loop uses this encoder. DINOv2-B/14 (frozen) is an option in the code that is off by default, and no training flag turns it on.
+    *   **Vision (Semantic):** The SemanticPathway is the 5th workspace competitor. The training loop gives it no input, so it bids 0, unless `--enable-mock-semantic` feeds it a stand-in embedding. Qwen2-VL-7B (4-bit quantized) is an optional module that the training loop does not load.
     *   **Audio:** Cochlear inspired auditory pipeline. Gammatone filterbank (64 ERB bands, frozen) decomposes waveforms into frequency channels, inner hair cell model extracts envelope and temporal fine structure, tonotopic encoder (trainable) produces spatial features for tectum integration, acoustic affect extraction maps 6 spectral features to PAD emotional state.
     *   **Somatosensory:** Body schema projected onto the tectum spatial grid via learned linear mapping for proprioceptive integration.
     *   **Fusion:** Trimodal inverse effectiveness fusion in the TopographicMap (Stein & Meredith 1993). TDANN topographic loss (Margalit 2024) enforces spatial self-organization.
@@ -65,8 +65,8 @@ Consciousness emerges from the interaction of these feedback loops:
 *   **`reentrant_processor.py`**: 5-10 adaptive convergence cycles wrapping GNW competition.
 *   **`oscillatory_binding.py`**: AKOrN Kuramoto oscillatory neurons (ICLR 2025).
 *   **`capsule_composition.py`**: 4-level hierarchical capsule routing with multi-level reentrant feedback.
-*   **`retinotopic_encoder.py`**: DINOv2-B/14 frozen backbone with conv stack fallback.
-*   **`semantic_pathway.py`**: Qwen2-VL embeddings as 5th workspace oscillator.
+*   **`retinotopic_encoder.py`**: Convolutional stack (the encoder the training loop uses) and an optional DINOv2-B/14 frozen backbone, off by default.
+*   **`semantic_pathway.py`**: Projection of a 1536-D semantic embedding into the workspace as the 5th competitor. Designed for Qwen2-VL embeddings. The training loop feeds it nothing, or a stand-in with `--enable-mock-semantic`.
 *   **`consciousness_core.py`**: Orchestrates the full system. AsimovComplianceFilter ethics.
 *   **`consciousness_gating.py`**: 5-node gate subsystem (attention, stability, adaptation, coherence, confidence). Broadcast predictor for reconstruction loss.
 

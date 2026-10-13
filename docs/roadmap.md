@@ -15,8 +15,8 @@ This roadmap outlines the planned development phases for The Consciousness AI.
 
 - **Goal:** Establish the basic project structure, core AI model integrations, and initial simulation environment.
 - **Key AI Models:**
-  - Qwen2-VL-7B for vision-language understanding (replaced PaLM-E and VideoLLaMA3).
-  - DINOv2-B/14 (frozen) for spatially faithful retinotopic encoding.
+  - Qwen2-VL-7B for vision-language understanding (replaced PaLM-E and VideoLLaMA3). Optional module. The training loop does not load it.
+  - DINOv2-B/14 (frozen) for spatially faithful retinotopic encoding. Optional and off by default. The training loop uses the convolutional stack.
   - Cochlear auditory pipeline (gammatone filterbank, inner hair cell model, tonotopic encoder, acoustic affect extraction).
 - **Deliverables:**
   - Core repository structure.
@@ -85,7 +85,7 @@ This roadmap outlines the planned development phases for The Consciousness AI.
   - ~~Metrics logger wired into training loop.~~ DONE.
   - ~~Memory consolidation cycle (relevance decay, cosine merge, pruning).~~ DONE.
   - ~~Navigation environment (multi-room, fog of war, battery).~~ DONE.
-  - ~~Semantic pathway (Qwen2-VL embeddings as 5th workspace oscillator).~~ DONE.
+  - ~~Semantic pathway (Qwen2-VL embeddings as 5th workspace oscillator).~~ DONE as a module. The training loop does not feed it Qwen2-VL embeddings. It receives no input, or a stand-in with `--enable-mock-semantic`.
   - ~~Documentation synchronization across all docs.~~ DONE 2026-05-17 (six docs updated to reflect 2026-05-14 pyphi ablation and 2026-05-16 RIIU empirical results).
 
 ### Status 2026-05-17

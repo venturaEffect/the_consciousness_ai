@@ -44,7 +44,8 @@ arXiv:2411.04983 (ICML 2025). Project page: https://dino-wm.github.io/
 
 - **Why aligned (highest single value):** Builds a world model by predicting **frozen
   DINOv2 patch features**, with no pixel reconstruction, which keeps spatial structure
-  and supports planning. The project already encodes the tectum with DINOv2, so this is
+  and supports planning. The tectum has an optional DINOv2 encoder (off by default, and
+  the training loop uses a convolutional stack), so this is
   a direct, published recipe for the exact problem the collapse probe localized. It is
   an alternative or complement to the ELBO-reconstruction path in
   [active_inference_unification.md](active_inference_unification.md).

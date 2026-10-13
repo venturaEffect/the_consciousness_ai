@@ -4,9 +4,9 @@ Training entrypoint for the consciousness agent in the Dark Room environment.
 Runs the full cognitive loop: perception (tectum) -> emotion (PAD modulator) ->
 consciousness (GNW with reentrant processing) -> action (basal ganglia Go/No-Go).
 
-This script uses the core architecture components directly. It does not require
-Qwen2-VL or other large model weights, running instead on the DINOv2 retinotopic
-encoder (falls back to a conv stack when weights are unavailable).
+This script uses the core architecture components directly. It loads no pretrained
+model weights. The vision encoder is the retinotopic conv stack. The DINOv2 backbone
+of the encoder is off by default, and no flag of this script turns it on.
 
 Usage:
     python -m scripts.training.train_rlhf

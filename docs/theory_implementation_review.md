@@ -94,7 +94,7 @@ The three-subsystem design (Perception, Emotion, Global Workspace) correctly mir
 
 | Thesis Claim | Status |
 |---|---|
-| Multimodal perception building unified predictive models | **Complete.** Dual-stream: DINOv2 spatial + Qwen2-VL semantic. Trimodal tectum fusion. |
+| Multimodal perception building unified predictive models | **Modules exist. The training loop loads neither model.** Spatial stream: a convolutional stack (DINOv2 is off by default). Semantic stream: no input by default, so it bids 0. Trimodal tectum fusion. |
 | Emotional homeostasis with shaped RL rewards | **Complete.** Full PAD with homeostatic arousal term + Dominance. |
 | Global Workspace as information bottleneck | **Complete.** GNW with AKOrN binding, reentrant processing, capsule hierarchy. |
 | Phi (IIT) as measurable consciousness correlate | **Tested and FAILED (in-training Phi-1).** Causal gate-state pipeline implemented (38 tests). The in-training Phi-1 prediction (phi correlates r > 0.4 with binding sync_R during training) FAILED across 9 runs / 4 architectures / 2 phi formulations (pyphi + RIIU). Best positive r = +0.089; KomplexNet RIIU produced a substantively significant INVERSE r = -0.11 (p < 1e-100). The 2026-02-21 3-condition synthetic test of phi monotonicity with binding still stands; what is exhausted is the in-training measurement choice. See `docs/preregistered_predictions.md` sections 7-12 and `docs/results/phi1_phaseBalt_2026_05_24.md`. |

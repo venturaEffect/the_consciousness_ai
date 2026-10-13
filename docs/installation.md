@@ -4,6 +4,8 @@
 
 The system is a high-performance research framework. It runs "Deep Learning heavy" workloads, fusing Vision Transformers (Qwen2-VL) with Reinforcement Learning in real-time.
 
+> **Correction, 2026-10-13.** The training loop (`scripts/training/train_rlhf.py`) loads no pretrained model. It does not load Qwen2-VL or DINOv2. The vision encoder of the training loop is a 4-layer convolutional stack. The hardware numbers below describe the optional Qwen2-VL module and were not measured for the training loop.
+
 ### **Recommended Workstation**
 *   **GPU:** NVIDIA RTX 4090 (24GB VRAM).
     *   *Why?* The Vision Model (Qwen2-VL-7B) takes ~6GB in 4-bit mode. The remaining 18GB is critical for the Replay Buffer, World Model (Dreamer), and batch processing during training.
