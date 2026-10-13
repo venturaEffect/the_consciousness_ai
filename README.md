@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Non--Commercial-blue.svg)](LICENSE.md)
 [![Version](https://img.shields.io/badge/Version-v1.6.0-blue)]()
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.8%20%7C%203.12-blue)](docs/decisions/2026_10_13_python_environment.md)
 [![Tests](https://img.shields.io/badge/Tests-1722%20passing-brightgreen)]()
 
 [![Project Website](https://img.shields.io/badge/Project-Website-181717?logo=googlechrome&logoColor=white)](https://theconsciousness.ai/)
@@ -124,7 +124,7 @@ The development validates emergent properties through:
 ## Installation & Setup
 
 ### Requirements
-*   **Python 3.10+**
+*   **Python 3.8.3** produced every recorded result (`requirements-py38-record.txt`). The public test suite also passes on **Python 3.12.10** with the newest package releases of 2026-10-13. The two are not interchangeable for results, see [the Python environment record](docs/decisions/2026_10_13_python_environment.md).
 *   **NVIDIA GPU** recommended. The training loop loads no pretrained model, and CPU works for the Dark Room environment. The memory need of the optional Qwen2-VL module was not measured in this project
 
 ### 1. Clone and Install
@@ -135,7 +135,7 @@ cd the_consciousness_ai
 pip install -r requirements.txt
 ```
 
-> **Note:** Some dependencies are optional. `pyphi` (IIT library) requires specific Python versions. `gymnasium` and `pygame` are needed for the Dark Room environment. The core architecture modules (tectum, GNW, binding, capsules) require only `torch`, `numpy`, and `einops`.
+> **Note:** Some dependencies are optional. `pyphi` 1.2.0 (IIT library) imports on Python 3.8 and fails on Python 3.10 or later. There the code uses a stand-in formula for phi and labels it `proxy`, and phi changes the agent's exploration, reward and memory priority, so the agent is not the same. `gymnasium` and `pygame` are needed for the Dark Room environment. The core architecture modules (tectum, GNW, binding, capsules) require only `torch`, `numpy`, and `einops`.
 
 ### 2. Running Training
 

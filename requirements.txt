@@ -1,80 +1,68 @@
 # pip requirements
-# -------------------------------------------------------
-# Deep Learning & AI Core
-# -------------------------------------------------------
-torch>=2.4.0
-transformers>=4.45.0  # Required for Qwen2-VL and modern Llama
-accelerate>=0.33.0
-bitsandbytes>=0.43.0  # For 4-bit quantization (critical for size constraints)
-qwen-vl-utils>=0.0.4  # Utilities for Qwen2-VL
-huggingface_hub>=0.24.0
+#
+# Two environments are tested. See docs/decisions/2026_10_13_python_environment.md.
+#   Python 3.8.3   the environment that produced every recorded result. Its exact
+#                  versions are in requirements-py38-record.txt.
+#   Python 3.12.10 the public test suite passes with the newest releases of
+#                  2026-10-13 (torch 2.14.1, numpy 2.5.4, transformers 5.19.0).
+# The lower limits of the first three sections are the versions of the Python 3.8.3
+# environment. Optional thermodynamic libraries are in requirements-thermodynamic.txt.
 
 # -------------------------------------------------------
-# Consciousness & IIT
+# Training loop, probes and tests
 # -------------------------------------------------------
-pyphi>=1.2.0          # Integrated Information Theory library
-networkx>=3.0
-
-# -------------------------------------------------------
-# Unity Integration (optional)
-# Install manually: pip install mlagents==0.29.0 mlagents-envs>=1.0.0
-# -------------------------------------------------------
-grpcio>=1.60.0
-protobuf>=4.25.0
-
-# -------------------------------------------------------
-# Vision & Audio
-# -------------------------------------------------------
-opencv-python>=4.10.0
+torch>=2.4.1
+numpy>=1.24.4
+scipy>=1.10.1
+pandas>=2.0.3
+scikit-learn>=1.3.2
+gymnasium>=1.1.1
+pygame>=2.6.1
+matplotlib>=3.7.5
 Pillow>=10.4.0
-librosa>=0.10.0
-soundfile>=0.12.0
-# Audio uses cochlear gammatone pipeline (scipy + torch, no external model weights)
+pytest>=8.2.0
 
 # -------------------------------------------------------
-# Memory & Vector Storage
+# Integrated information
+# pyphi 1.2.0 imports on Python 3.8 and fails on Python 3.10 or later. There the code
+# computes a stand-in formula, labelled "proxy" in the phi_method column.
+# The pin keeps pyphi 2.x out, which has a different interface.
 # -------------------------------------------------------
+pyphi==1.2.0          # licence GPL 3.0 or later
+networkx>=3.1
+
+# -------------------------------------------------------
+# Optional modules. The training loop loads none of these.
+# -------------------------------------------------------
+transformers>=4.46.3
+sentence-transformers>=3.2.1
+huggingface_hub>=0.24.0
+accelerate>=0.33.0
+bitsandbytes>=0.43.0  # 4-bit loading of the optional Qwen2-VL module
+qwen-vl-utils>=0.0.4
 faiss-cpu>=1.8.0
-numpy>=1.26.0
-pandas>=2.2.0
-scikit-learn>=1.5.0
-
-# -------------------------------------------------------
-# API & Web
-# -------------------------------------------------------
-fastapi>=0.111.0
-uvicorn>=0.30.0
-aiohttp>=3.9.0
-
-# -------------------------------------------------------
-# NLP & Embeddings
-# -------------------------------------------------------
-sentence-transformers>=2.6.0
-
-# -------------------------------------------------------
-# Visualization
-# -------------------------------------------------------
-matplotlib>=3.8.0
-
-# -------------------------------------------------------
-# Environments & Simulation
-# -------------------------------------------------------
-gymnasium>=0.29.0
-pygame>=2.5.0
-
-# -------------------------------------------------------
-# Utilities
-# -------------------------------------------------------
-tiktoken>=0.7.0
-pydantic>=2.8.0
-tqdm>=4.66.0
 einops>=0.8.0
 
 # -------------------------------------------------------
-# Dev & Testing
+# Listed before 2026-10-13 and kept as they were. No tracked Python file imports
+# these packages.
 # -------------------------------------------------------
-pytest>=8.2.0
+opencv-python>=4.10.0
+librosa>=0.10.0
+soundfile>=0.12.0
+grpcio>=1.60.0
+protobuf>=4.25.0
+fastapi>=0.111.0
+uvicorn>=0.30.0
+aiohttp>=3.9.0
+tiktoken>=0.7.0
+pydantic>=2.8.0
+tqdm>=4.66.0
+wandb>=0.17.0
+
+# -------------------------------------------------------
+# Dev
+# -------------------------------------------------------
 pytest-asyncio>=0.23.0
 black>=24.0.0
 flake8>=7.0.0
-wandb>=0.17.0
