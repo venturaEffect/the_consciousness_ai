@@ -1,10 +1,11 @@
 # pip requirements
 #
 # Two environments are tested. See docs/decisions/2026_10_13_python_environment.md.
-#   Python 3.8.3   the environment that produced every recorded result. Its exact
-#                  versions are in requirements-py38-record.txt.
-#   Python 3.12.10 the public test suite passes with the newest releases of
-#                  2026-10-13 (torch 2.14.1, numpy 2.5.4, transformers 5.19.0).
+#   Python 3.12.10 the environment for new result runs from 2026-10-13, with the
+#                  newest releases of that date (torch 2.14.1, numpy 2.5.4,
+#                  transformers 5.19.0).
+#   Python 3.8.3   the environment that produced every result recorded before that
+#                  date. Its exact versions are in requirements-py38-record.txt.
 # The lower limits of the first three sections are the versions of the Python 3.8.3
 # environment. Optional thermodynamic libraries are in requirements-thermodynamic.txt.
 
@@ -24,8 +25,10 @@ pytest>=8.2.0
 
 # -------------------------------------------------------
 # Integrated information
-# pyphi 1.2.0 imports on Python 3.8 and fails on Python 3.10 or later. There the code
-# computes a stand-in formula, labelled "proxy" in the phi_method column.
+# pyphi 1.2.0 uses names that Python 3.10 removed. models/evaluation/iit_phi.py adds
+# them for the import, so pyphi 1.2.0 works on Python 3.8 and on Python 3.12. Without
+# pyphi the training loop stops, unless --phi-proxy asks for a stand-in formula,
+# labelled "proxy" in the phi_method column.
 # The pin keeps pyphi 2.x out, which has a different interface.
 # -------------------------------------------------------
 pyphi==1.2.0          # licence GPL 3.0 or later

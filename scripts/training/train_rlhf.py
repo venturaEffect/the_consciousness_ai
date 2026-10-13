@@ -57,6 +57,7 @@ from models.ethics.framework import (
     write_ethics_manifest,
 )
 from models.emotion.reward_shaping import EmotionalRewardShaper
+from models.evaluation import iit_phi
 from models.emotion.learned_valence import LearnedValence
 from models.self_model.action_selection_core import ActionSelectionCore
 from models.self_model.standard_actor_critic import StandardActorCritic
@@ -2265,6 +2266,16 @@ def _reject_incompatible_flags(parser: argparse.ArgumentParser, args) -> None:
                      "and --learned-valence is not set." % args.valence_boost)
 
 
+def _require_pyphi(parser: argparse.ArgumentParser, args, pyphi_module) -> None:
+    """Stop when pyphi could not be imported, unless --phi-proxy asks for the stand-in."""
+    if pyphi_module is None and not getattr(args, "phi_proxy", False):
+        parser.error("pyphi could not be imported, so phi would come from an unvalidated "
+                     "stand-in formula. Phi scales exploration, is a reward term and sets "
+                     "memory priority, so the agent would not be the one in the recorded "
+                     "results. Install pyphi 1.2.0, or pass --phi-proxy to run with the "
+                     "stand-in.")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Train consciousness agent in the Dark Room")
     parser.add_argument("--episodes", type=int, default=20)
@@ -2851,8 +2862,16 @@ def main():
                              "Isolates whether tectum training degrades the in-loop match "
                              "signal vs the trained run. Default off.")
 
+    parser.add_argument("--phi-proxy", action="store_true",
+                        help="Run with the stand-in formula for phi when pyphi cannot be "
+                             "imported. Default off: without pyphi the run stops, because "
+                             "phi scales exploration, is a reward term and sets memory "
+                             "priority. The stand-in is not validated against pyphi, and "
+                             "its rows are labelled proxy in the phi_method column. With "
+                             "pyphi present the flag changes nothing.")
     args = parser.parse_args()
     _reject_incompatible_flags(parser, args)
+    _require_pyphi(parser, args, iit_phi.pyphi)
 
     if args.seed is not None:
         _set_global_seed(args.seed)

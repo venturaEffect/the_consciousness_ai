@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/License-Non--Commercial-blue.svg)](LICENSE.md)
 [![Version](https://img.shields.io/badge/Version-v1.6.0-blue)]()
 [![Python](https://img.shields.io/badge/Python-3.8%20%7C%203.12-blue)](docs/decisions/2026_10_13_python_environment.md)
-[![Tests](https://img.shields.io/badge/Tests-1722%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/Tests-1775%20passing-brightgreen)]()
 
 [![Project Website](https://img.shields.io/badge/Project-Website-181717?logo=googlechrome&logoColor=white)](https://theconsciousness.ai/)
 [![Architecture](https://img.shields.io/badge/Architecture-Technical-0052CC?logo=read-the-docs&logoColor=white)](https://theconsciousness.ai/architecture/)
@@ -124,7 +124,7 @@ The development validates emergent properties through:
 ## Installation & Setup
 
 ### Requirements
-*   **Python 3.8.3** produced every recorded result (`requirements-py38-record.txt`). The public test suite also passes on **Python 3.12.10** with the newest package releases of 2026-10-13. The two are not interchangeable for results, see [the Python environment record](docs/decisions/2026_10_13_python_environment.md).
+*   **Python 3.12.10** is the environment for new result runs from 2026-10-13, with the newest package releases of that date. **Python 3.8.3** produced every result recorded before that date (`requirements-py38-record.txt`). A run on one is not bit-comparable with a run on the other, see [the Python environment record](docs/decisions/2026_10_13_python_environment.md).
 *   **NVIDIA GPU** recommended. The training loop loads no pretrained model, and CPU works for the Dark Room environment. The memory need of the optional Qwen2-VL module was not measured in this project
 
 ### 1. Clone and Install
@@ -135,7 +135,7 @@ cd the_consciousness_ai
 pip install -r requirements.txt
 ```
 
-> **Note:** Some dependencies are optional. `pyphi` 1.2.0 (IIT library) imports on Python 3.8 and fails on Python 3.10 or later. There the code uses a stand-in formula for phi and labels it `proxy`, and phi changes the agent's exploration, reward and memory priority, so the agent is not the same. `gymnasium` and `pygame` are needed for the Dark Room environment. The core architecture modules (tectum, GNW, binding, capsules) require only `torch`, `numpy`, and `einops`.
+> **Note:** Some dependencies are optional. `pyphi` 1.2.0 (IIT library) is needed by the training loop, because phi changes the agent's exploration, reward and memory priority. The training loop stops when pyphi cannot be imported. The flag `--phi-proxy` runs it with a stand-in formula, labelled `proxy`, and that is not the same agent. `gymnasium` and `pygame` are needed for the Dark Room environment. The core architecture modules (tectum, GNW, binding, capsules) require only `torch`, `numpy`, and `einops`.
 
 ### 2. Running Training
 
@@ -180,7 +180,7 @@ Stage 2 of the emotion appraisal does not run. `map_state` needs a goal vector a
 pytest tests/ -v
 ```
 
-1722 tests pass, covering oscillatory binding, capsule routing, reentrant processing, inverse effectiveness fusion, topographic loss, affective modulation, ethics compliance, effective information, causal emergence (CE 2.0 SVD heuristic), perturbational complexity (PCI), phase coupling measures, near-threshold stimulus rendering, IIT Phi with causal gate states, Brian2 biological validation, the experimental substrate package (p-bit emulation against exact Boltzmann statistics, free energy relaxation against closed-form posteriors, rate, latency and phase spike coding, a stand-in driver, NIR export of spiking layers, an optional THRML sampler checked against exact statistics, and an import guard that keeps it out of production), cochlear auditory pipeline (gammatone, hair cell, tonotopic, spatial, affect extraction), environment audio synthesis, DMTS/WCST consciousness demanding environments, DQN baseline, memory consolidation, semantic pathway, the RSSM reconstruction and value-equivalent world-model objectives, and full pipeline integration.
+1775 tests pass on Python 3.12.10 (1770 on Python 3.8.3), covering oscillatory binding, capsule routing, reentrant processing, inverse effectiveness fusion, topographic loss, affective modulation, ethics compliance, effective information, causal emergence (CE 2.0 SVD heuristic), perturbational complexity (PCI), phase coupling measures, near-threshold stimulus rendering, IIT Phi with causal gate states, Brian2 biological validation, the experimental substrate package (p-bit emulation against exact Boltzmann statistics, free energy relaxation against closed-form posteriors, rate, latency and phase spike coding, a stand-in driver, NIR export of spiking layers, an optional THRML sampler checked against exact statistics, and an import guard that keeps it out of production), cochlear auditory pipeline (gammatone, hair cell, tonotopic, spatial, affect extraction), environment audio synthesis, DMTS/WCST consciousness demanding environments, DQN baseline, memory consolidation, semantic pathway, the RSSM reconstruction and value-equivalent world-model objectives, and full pipeline integration.
 
 ### 4. AKOrN Binding Demo
 
@@ -226,7 +226,7 @@ the_consciousness_ai/
 │   ├── analysis/           # Analysis and comparison scripts
 │   └── demos/              # AKOrN binding visualization
 ├── configs/                # YAML and Python configuration files
-├── tests/                  # 1722 passing tests
+├── tests/                  # 1775 passing tests
 ├── unity_scripts/          # C# scripts for Unity ML-Agents integration
 ├── docs/                   # Research docs, theory review, architecture deep dives
 └── requirements.txt

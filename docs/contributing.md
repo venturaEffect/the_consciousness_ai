@@ -37,7 +37,7 @@ We are always looking to enhance the quality of the system by integrating high-q
 
 Ensure you have the necessary tools and dependencies installed:
 
-- **Python 3.8** (the environment of every recorded result, `requirements-py38-record.txt`) or **Python 3.12** (the public test suite passes). See `docs/decisions/2026_10_13_python_environment.md` before you compare results across the two
+- **Python 3.12** (the environment for new result runs from 2026-10-13) or **Python 3.8** (the environment of every result recorded before that date, `requirements-py38-record.txt`). See `docs/decisions/2026_10_13_python_environment.md` before you compare results across the two
 - **Git**
 - **CUDA Toolkit** (for GPU support)
 - **Unreal Engine 5**

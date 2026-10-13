@@ -1,7 +1,8 @@
 # Python versions: what the repo says, what ran, and a pre-stated check for a new environment
 
-Date: 2026-10-13. Status: inventory and pre-statement. The owner decides the move to a
-new environment after the check below reports.
+Date: 2026-10-13. Status: decided. The check and the follow-up check PASSED, and new
+result runs move to Python 3.12.10 with pyphi 1.2.0. The sections below are in the
+order in which they were written.
 
 ## The mismatch
 
@@ -246,3 +247,130 @@ python -m scripts.analysis.probe_gate_b2 --runs runs/env_py312_s73 ... runs/env_
 The launcher is a short script outside the repo. It sets `collections.Iterable` and the 9 other removed names
 from `collections.abc`, puts the working directory on `sys.path`, imports pyphi, and
 calls `runpy.run_module("scripts.training.train_rlhf", run_name="__main__")`.
+
+## Owner decisions of 2026-10-13, and the follow-up check. Written before its runs
+
+The owner decided three points.
+
+1. New result runs move to Python 3.12 with pyphi 1.2.0, after one more check on a
+   DMTS run and a checkpoint load.
+2. Training stops with a message when pyphi cannot be imported, unless a flag asks for
+   the stand-in formula.
+3. pyphi 2.0 stays a later and separate decision.
+
+**The code change.** `models/evaluation/iit_phi.py` now puts the removed names into
+`collections` for the import of pyphi and takes them out again. On Python 3.8 and 3.9 it
+adds nothing. `scripts/training/train_rlhf.py` has a new flag `--phi-proxy`, off by
+default, and stops at the command line when pyphi is missing and the flag is not set.
+Tests: `tests/test_pyphi_import.py`.
+
+**The follow-up check.** One run per item. A run is repeated only when its csv files are
+incomplete.
+
+- F1. Python 3.8.3, seed 73, the Gate B7 command, this revision. Prediction: the
+  `metrics.csv` has md5 `6099064c2361d70fd1d2ced48462511d`, the Gate B7 file. The change
+  does nothing on Python 3.8.
+- F2. Python 3.12, seed 73, the Gate B7 command, this revision, started as
+  `python -m scripts.training.train_rlhf` with no launcher. Prediction: the `metrics.csv`
+  is identical to the file of the launcher run `runs/env_py312_s73`, and no row is
+  `proxy`.
+- F3. DMTS on both Pythons. `--env dmts --episodes 10 --max-steps 500 --seed 42
+  --rssm-latent-mode continuous --capsule-workspace-source all_levels --existence-drive
+  on`. Prediction: both runs complete with 10 episode rows, and the Python 3.12 run has
+  no `proxy` row. The two runs are not identical. Their episode rewards are reported
+  side by side. No pass line is set on the rewards, because 10 episodes of an untrained
+  agent carry no verdict.
+- F4. Checkpoint load on Python 3.12. The recording of model 42 (`runs/capfix_alllevels/
+  tectum.pt`, a checkpoint saved on Python 3.8) is made with the `record` command of the
+  survival probe, 280 trials, no sensory noise. Prediction: the checkpoint loads, the
+  three label arrays are identical to the recording made on Python 3.8, and the three
+  vector arrays are close but not identical. The largest absolute difference is
+  reported. Then the project's linear decode of shape on `obs_map` and on `z_state`, on
+  the project's split, is run on the new recording with the Python 3.12 libraries.
+  Prediction: both are within one test row (0.012) of 0.988, the value on Python 3.8.
+
+**Verdict rule.** PASSED when F1 and F2 hold, both DMTS runs complete with no `proxy`
+row, the checkpoint loads with identical labels, and both decode values are within
+0.012 of 0.988. FAILED when any of these does not hold. The move to Python 3.12 for new
+result runs follows a PASSED verdict only.
+
+## Result of the follow-up check (2026-10-13)
+
+Revision `2c4b93d`, pushed before the first run. Each run was made once. Completion was
+checked by csv row counts.
+
+| Prediction | Result |
+|---|---|
+| F1. On Python 3.8 the `metrics.csv` is the Gate B7 file | HOLDS. md5 `6099064c2361d70fd1d2ced48462511d`, 10 episode rows, 2000 metric rows |
+| F2. On Python 3.12 with no launcher the file equals the launcher run, and no row is `proxy` | HOLDS. Both files have md5 `7825766f42d3d85b032f8028c94dc1e0`. 399 `pyphi` rows, 0 `proxy` rows |
+| F3. Both DMTS runs complete, and the Python 3.12 run has no `proxy` row | HOLDS. 10 episode rows and 5000 metric rows in each run. 999 `pyphi` rows and 0 `proxy` rows in each run. The files are not identical |
+| F4. The checkpoint loads, labels identical, vectors close, both decode values within 0.012 of 0.988 | HOLDS. See the two tables below |
+
+**F3, DMTS, seed 42, episode rewards side by side.**
+
+| Episode | Python 3.8.3 | Python 3.12.10 |
+|---|---|---|
+| 0 | -58.1643 | -58.1643 |
+| 1 | -55.5187 | -55.5191 |
+| 2 | -57.2899 | -57.2899 |
+| 3 | -60.7193 | -60.7196 |
+| 4 | -61.4273 | -61.6288 |
+| 5 | -54.1681 | -53.9585 |
+| 6 | -55.7889 | -55.3772 |
+| 7 | -63.1590 | -63.9581 |
+| 8 | -57.4499 | -57.6486 |
+| 9 | -63.4876 | -63.2900 |
+| Mean | -58.7173 | -58.7554 |
+
+The first metric row that differs is row 14, in `broadcast_mag`. The mean phi over the
+999 `pyphi` rows is 0.00206 on Python 3.8 and 0.00221 on Python 3.12. The largest phi is
+0.01690 and 0.01763. No pass line was set on these numbers.
+
+**F4, the recording of model 42 made on Python 3.12, against the recording made on
+Python 3.8.** 280 trials in each.
+
+| Array | Identical | Largest absolute difference | Largest absolute value |
+|---|---|---|---|
+| `shape`, `color`, `size` (labels) | yes | not applicable | not applicable |
+| `obs_map` | no | 0.0000021 | 3.237 |
+| `z_state` | no | 0.0000014 | 4.260 |
+| `tectum_content` | no | 0.00000003 | 0.068 |
+
+| Linear decode of shape, project split, seed 42, run with the Python 3.12 libraries | `obs_map` | `z_state` |
+|---|---|---|
+| Recording made on Python 3.12 | 0.988 | 0.988 |
+| Recording made on Python 3.8 | 0.988 | 0.988 |
+| Value in `docs/results/thermodynamic_survival_2026_10.md`, Python 3.8 libraries | 0.988 | 0.988 |
+
+Each value is 83 of 84 test rows. The Python 3.12 environment has scikit-learn 1.9.1
+and numpy 2.5.4.
+
+**Verdict. PASSED.** Every condition of the verdict rule holds. By the owner decision
+above, new result runs move to Python 3.12.10 with pyphi 1.2.0.
+
+**Limits.**
+
+- One seed per item. This is a check that the environment works on two more
+  configurations. It is not a replication of a DMTS result.
+- A run on Python 3.12 is not bit-comparable with a run on Python 3.8. A comparison of
+  two arms needs both arms from the same environment. The record of the Python 3.8
+  environment is `requirements-py38-record.txt`.
+- The pca and MLP decode, the survival evaluation with its channel, and the other
+  probes that load checkpoints were not run on Python 3.12.
+- The DMTS run took 26 minutes 25 seconds on Python 3.8 and 16 minutes 38 seconds on
+  Python 3.12. One run each, so this is not a speed result.
+- No indicator and no clock value changes.
+
+**Tests on this branch.** `python -m pytest tests/ -q --ignore=tests/test_emergence_governor.py`
+gives 1729 passed, 12 skipped on Python 3.8.3 and 1734 passed, 7 skipped on Python
+3.12.10.
+
+**Reproduce.**
+
+```
+python -m scripts.training.train_rlhf <Gate B7 flags> --seed 73 --log-dir runs/f1_py38_s73
+<python 3.12> -m scripts.training.train_rlhf <Gate B7 flags> --seed 73 --log-dir runs/f2_py312_s73
+<python> -m scripts.training.train_rlhf --env dmts --episodes 10 --max-steps 500 --seed 42 \
+    --rssm-latent-mode continuous --capsule-workspace-source all_levels --existence-drive on --log-dir <folder>
+<python 3.12> scripts/analysis/probe_thermodynamic_survival.py record --models 42 --noise 0 --out-dir <folder>
+```

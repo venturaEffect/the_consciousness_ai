@@ -18,13 +18,39 @@ structure approximates integration.
 """
 from __future__ import annotations
 
+import collections
+import collections.abc
+
 import torch
 import numpy as np
 
-try:
-    import pyphi
-except ImportError:
-    pyphi = None
+# pyphi 1.2.0 imports these names from `collections`. Python 3.10 removed them there
+# (they are in `collections.abc`), so the import failed with an ImportError and phi
+# came from the stand-in formula without a word.
+REMOVED_ABC_NAMES = ("Iterable", "Sequence", "Mapping", "MutableMapping", "Hashable",
+                     "Set", "Callable", "Iterator", "Sized", "Container")
+
+
+def _import_pyphi():
+    """Import pyphi, or return None when it is not installed.
+
+    The names pyphi 1.2.0 needs are put into `collections` for the import and taken out
+    again, so no other module sees them. On Python 3.8 and 3.9 nothing is added.
+    """
+    added = [name for name in REMOVED_ABC_NAMES if not hasattr(collections, name)]
+    for name in added:
+        setattr(collections, name, getattr(collections.abc, name))
+    try:
+        import pyphi as module
+    except ImportError:
+        module = None
+    finally:
+        for name in added:
+            delattr(collections, name)
+    return module
+
+
+pyphi = _import_pyphi()
 
 from typing import Any
 import logging
