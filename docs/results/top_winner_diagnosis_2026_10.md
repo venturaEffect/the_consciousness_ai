@@ -125,8 +125,16 @@ itself.
 
 ## Next step, for the owner to approve
 
-The read-only replay was run and is VOID, see above. The size hypothesis is still not
-tested.
+The read-only replay was run and is VOID, see above. The size hypothesis was then
+tested on the real loop on 2026-10-14. The result is NOT SUPPORTED by the pre-stated
+rule, see the last section. Two decisions are open for the owner.
+
+1. A pre-stated test of the observation that the winner shares return to the range of
+   the default merge when the sizes are equal. It needs fresh seeds.
+2. The feedback rule raises the bid of the module that is not in the broadcast, at any
+   vector size. The sources in `docs/sensory_selection_evidence.md` describe
+   suppression of the signals that are not selected. A change of the rule is a design
+   decision.
 
 ## Limits
 
@@ -144,4 +152,85 @@ python -m scripts.analysis.probe_reentrant_boost \
   --pair runs/gate_b7_s73 runs/carrier_t1_s73 --pair runs/gate_b7_s74 runs/carrier_t1_s74 \
   --pair runs/gate_b7_s75 runs/carrier_t1_s75 --pair runs/gate_b8_s83 runs/carrier_t2_s83 \
   --pair runs/gate_b8_s84 runs/carrier_t2_s84 --pair runs/gate_b8_s85 runs/carrier_t2_s85
+```
+
+## Size test on the real loop (2026-10-14): NOT SUPPORTED by the pre-stated rule
+
+**Prediction S1 fails at 2 of 3 seeds (73 and 75). By the rule the size hypothesis is
+NOT SUPPORTED.** The control check C0 and the check S0 hold.
+
+The replay above was VOID, so the hypothesis was tested on the training loop itself.
+`scripts/analysis/run_unit_feedback.py` starts the loop with one change made in memory.
+Before each of the two feedback rules runs, the broadcast is scaled to the size of the
+module's own vector. No production file changes. The predictions and the rule were
+pushed in `4d3cbcb` before the first run. 25 tests in
+`tests/test_unit_feedback_launcher.py`.
+
+| Check | Result |
+|---|---|
+| C0. Seed 73 of the control command, run again at this revision, equals `runs/carrier_t1_s73` | HOLDS. Both `metrics.csv` files have md5 `7391f2eca5bbf87ed4abf9bbc8a6ae1e` |
+| S0. Each unit run has scaled calls for vision and for audio | HOLDS. 3734 and 3733 at seed 73, 2738 and 2736 at seed 74, 3283 and 3282 at seed 75 |
+| S1. The share of audio leads that flip is below half of the control share | **FAILS at seeds 73 and 75.** Holds at seed 74 |
+
+| Seed | Audio leads that flip, control | Half of it | Unit arm | S1 |
+|---|---|---|---|---|
+| 73 | 0.586 | 0.293 | 0.302 | false |
+| 74 | 0.532 | 0.266 | 0.221 | true |
+| 75 | 0.559 | 0.280 | 0.439 | false |
+
+### What else the runs show. Description, not a pre-stated result
+
+| Seed | Vision bid change when audio leads, control / unit | Vision leads that flip, control / unit | Audio bid change when vision leads, control / unit |
+|---|---|---|---|
+| 73 | +0.369 / +0.198 | 0.035 / 0.309 | +0.095 / +0.168 |
+| 74 | +0.372 / +0.154 | 0.024 / 0.147 | +0.097 / +0.156 |
+| 75 | +0.392 / +0.236 | 0.034 / 0.181 | +0.096 / +0.157 |
+
+| Seed | Winner share at ignited steps, control (`top_winner`) | Unit arm (`top_winner` with equal sizes) | Default merge (`runs/gate_b7_s*`) |
+|---|---|---|---|
+| 73 | vision 1.000 | vision 0.454, audio 0.546 | vision 0.564, audio 0.436 |
+| 74 | vision 0.999, audio 0.001 | vision 0.658, audio 0.342 | vision 0.787, audio 0.213 |
+| 75 | vision 0.997, audio 0.003 | vision 0.783, audio 0.217 | vision 0.736, audio 0.264 |
+
+- The size of the vectors is a part of the effect and not all of it. With equal sizes
+  the cycles still raise the vision bid by 0.154 to 0.236 when audio leads, against
+  0.369 to 0.392 in the control arm.
+- With equal sizes the cycles flip leads in both directions. The share of vision leads
+  that flip rises from 0.024 to 0.035 in the control arm to 0.147 to 0.309. So the
+  rule "the module behind gains" flips leads at any vector size, as the expectation
+  written before the runs said.
+- The winner shares changed more than the flip shares. In the control arm vision wins
+  0.997 to 1.000 of the ignited steps. In the unit arm vision wins 0.454 to 0.783 and
+  hearing 0.217 to 0.546. I saw this after the result. No prediction covered it, so it
+  is a hypothesis for a next test and it is not a finding.
+
+### How the runs were made, with two errors of mine
+
+- The first launch of seed 73 of the unit arm ended after 10 seconds with no data row.
+  A website build ran on the machine at that moment. I do not know the cause. The run
+  was made again.
+- A stopped chain of runs was not stopped in fact. So seed 73 and seed 75 of the unit
+  arm ran at the same time for about 3 minutes, and seed 75 was then made a second
+  time alone. I made seed 73 once more alone. Its `metrics.csv` is identical to the file
+  of the parallel run (md5 `cce4d1b6f401982ad4e1fe9279ed4d4c`). The table uses the run
+  made alone. Both runs of seed 75 gave the same call counts.
+- Every run has 10 episode rows and 2000 metric rows.
+
+### Limits
+
+- Three seeds, one configuration (no learned valence), 10 episodes for each run. This
+  is hypothesis grade.
+- The two arms see different frames after the first changed action. The comparison is
+  of run statistics at matched seeds.
+- The launcher is a test instrument. It is not a proposed mechanism. A mechanism for
+  the feedback rule is a design decision, and it needs the review of the biology first.
+- It is a statement about bids. It is not evidence about consciousness, and it moves no
+  indicator.
+
+### Reproduce
+
+```
+python -m scripts.analysis.run_unit_feedback <control command> --seed 73 --log-dir runs/unit_t1_s73
+python -m scripts.analysis.run_unit_feedback judge --pair runs/carrier_t1_s73 runs/unit_t1_s73 \
+    --pair runs/carrier_t1_s74 runs/unit_t1_s74 --pair runs/carrier_t1_s75 runs/unit_t1_s75
 ```
