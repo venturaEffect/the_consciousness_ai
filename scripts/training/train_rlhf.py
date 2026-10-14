@@ -183,6 +183,7 @@ def build_config(args):
             "komplex_desync_eps": getattr(args, "komplex_desync_eps", 0.01),
             "akorn_natural_frequency": getattr(args, "akorn_natural_frequency", False),
             "binding_relation": getattr(args, "binding_relation", "none"),
+            "map_binding": getattr(args, "map_binding", "off") != "off",
         },
         "reentrant": {
             "max_cycles": 5,
@@ -2293,6 +2294,25 @@ def _wire_place_relation(tectum, workspace, log_dir, mode: str = "place") -> Non
     atexit.register(write_record)
 
 
+def _wire_map_binding(tectum, workspace, log_dir, mode: str = "limit") -> None:
+    """Stage 3, option B: the tectum groups the map, the workspace takes its factors, and the record is written at exit."""
+    import atexit
+    import json
+    from models.core.map_binding import HALF_MAXIMUM, LegionLimit, salience_drive
+    if mode == "salience":
+        tectum.map_binding = LegionLimit(threshold=HALF_MAXIMUM, drive=salience_drive)
+    else:
+        tectum.map_binding = LegionLimit()
+    workspace.map_factor_source = tectum.map_factors
+
+    def write_record() -> None:
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
+            with open(os.path.join(log_dir, "map_binding.json"), "w", encoding="utf-8") as handle:
+                json.dump({"steps": len(tectum.map_history), "history": tectum.map_history}, handle)
+    atexit.register(write_record)
+
+
 def parse_levels(text: str):
     """One float, or a tuple of floats for a comma list."""
     levels = tuple(float(part) for part in str(text).split(","))
@@ -2597,6 +2617,16 @@ def main():
                              "sum of all eligible module payloads, with weights "
                              "from AKOrN bound_bids. Makes phi-on-broadcast "
                              "structurally downstream of sync_R.")
+    parser.add_argument("--map-binding", choices=["off", "limit", "salience"], default="off",
+                        help="Stage 3 of docs/decisions/2026_10_14_binding_stage3_map_oscillators.md. "
+                             "'limit': the tectum map is grouped into connected stimulated areas, "
+                             "the end result that Terman and Wang prove for LEGION; the strongest "
+                             "group is selected and sets the binding factors of vision and audio. "
+                             "With the feature norm as drive it gave one group at almost every step "
+                             "(FAILED design, docs/results/binding_map_stage3_2026_10.md). "
+                             "'salience': the same grouping on a centre against surround contrast, "
+                             "stimulated at half maximum (docs/decisions/2026_10_14_map_binding_drive.md, "
+                             "candidate K2). 'off' (default) is unchanged.")
     parser.add_argument("--binding-relation", choices=["none", "place", "overlap"], default="none",
                         help="Stage 2 of docs/decisions/2026_10_14_oscillator_binding_design.md. "
                              "'place': the coupling of the vision and audio oscillators becomes "
@@ -2977,6 +3007,8 @@ def main():
      wm_predict_head, wm_predict_optimizer,
      latent_id_head, latent_id_optimizer,
      latent_contrastive_head, latent_contrastive_optimizer) = init_components(config)
+    if args.map_binding != "off":
+        _wire_map_binding(tectum, workspace, args.log_dir, args.map_binding)
     if args.binding_relation in ("place", "overlap"):
         _wire_place_relation(tectum, workspace, args.log_dir, args.binding_relation)
 

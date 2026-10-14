@@ -358,6 +358,10 @@ class SensoryTectum(nn.Module):
         self.place_agreement_mode = "place"
         self._last_place_agreement = None
         self.place_history: list = []
+        # Stage 3 of the binding design (models/core/map_binding.py). None (default) is off.
+        self.map_binding = None
+        self._last_map_factors: dict = {}
+        self.map_history: list = []
         self.latent_mode = config.get("rssm_latent_mode", "discrete")
         # Vision bid reduction. "tanh_sum" (default): tanh of the summed KL, which was
         # exactly 1.0 on every measured step. "zscore": sigmoid of a running z-score of
@@ -444,6 +448,15 @@ class SensoryTectum(nn.Module):
         # episode starts with a fresh K-step window.
         self._steps_since_detach = 0
         
+    def map_factors(self) -> dict:
+        """The binding factors of vision and audio from the oscillator map of the last forward pass."""
+        return dict(self._last_map_factors)
+
+    def _update_map_binding(self, vision_features: torch.Tensor, audio_spatial: torch.Tensor) -> None:
+        factors, record = self.map_binding.observe(vision_features, audio_spatial)
+        self._last_map_factors = factors
+        self.map_history.append(dict(record, **factors))
+
     def place_relation(self) -> dict:
         """{("vision", "audio"): agreement} from the last forward pass, or {} without a value."""
         if self._last_place_agreement is None:
@@ -480,6 +493,8 @@ class SensoryTectum(nn.Module):
             agreement = overlap_agreement if self.place_agreement_mode == "overlap" else place_agreement
             self._last_place_agreement = agreement(vision_features, audio_spatial)
             self.place_history.append([self._last_place_agreement, place_cells(vision_features, audio_spatial)])
+        if self.map_binding is not None:
+            self._update_map_binding(vision_features, audio_spatial)
         # Cache spatial features for topographic loss computation in training loop
         self._last_obs_map = obs_map
 

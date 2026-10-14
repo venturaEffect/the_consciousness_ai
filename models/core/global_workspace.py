@@ -177,6 +177,12 @@ class GlobalWorkspace:
         if self.binding_relation != "none" and self.binding_mechanism != "akorn":
             raise ValueError("binding_relation %s needs binding_mechanism akorn" % self.binding_relation)
         self.relation_source = None
+        # Stage 3 of the binding design: the oscillator map of the tectum sets the
+        # binding factors of vision and audio (models/core/map_binding.py). Off by default.
+        self.map_binding = bool(config.get("map_binding", False))
+        if self.map_binding and self.binding_relation != "none":
+            raise ValueError("map_binding and binding_relation %s cannot be used together" % self.binding_relation)
+        self.map_factor_source = None
         self.relation_values: list[float] = []
         if self.binding_mechanism == "komplex":
             from models.core.complex_binding import ComplexBindingSystem
@@ -291,7 +297,9 @@ class GlobalWorkspace:
         # Replaces the heuristic: If Vision and Audio > 0.5, multiply by 1.2
         # Now uses Kuramoto oscillators. Modules that synchronize get boosted bids.
         relations = self.relation_source() if self.binding_relation != "none" and self.relation_source else None
-        if relations:
+        if self.map_binding and self.map_factor_source:
+            bound_bids, sync_order_parameter = self.bind_with_map(bids)
+        elif relations:
             self.relation_values.extend(float(value) for value in relations.values())
             bound_bids, sync_order_parameter = self.binding_system.bind_bids(bids, relations=relations)
         else:
@@ -508,6 +516,14 @@ class GlobalWorkspace:
             self.state.broadcast_payload = None
             return {}, bids
     
+    def bind_with_map(self, bids: dict) -> tuple:
+        """Bind with the workspace layer, then give vision and audio the factors of the oscillator map."""
+        bound_bids, sync_order_parameter = self.binding_system.bind_bids(bids)
+        for name, factor in (self.map_factor_source() or {}).items():
+            if name in bids:
+                bound_bids[name] = bids[name] * factor
+        return bound_bids, sync_order_parameter
+
     def _resolve_competition(self, bids: dict[str, float]) -> list[str]:
         """Determine winners (Winner-Take-Most)."""
         if not bids: return []
