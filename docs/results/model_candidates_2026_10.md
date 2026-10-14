@@ -1,14 +1,17 @@
 # Pretrained model candidates and the compute cost of the running agent
 
-Date: 2026-10-13, measurements added 2026-10-14. Second version. The first version
-held what was read and counted. This version adds the cost of 9 models measured on this
-machine and one content check for the vision models.
+Date: 2026-10-13, measurements added 2026-10-14. Third version. The first version
+held what was read and counted. The later versions add the cost of 10 models measured
+on this machine and one content check for the vision models.
 
 ## Result, limits first
 
-1. **One model FAILED to run.** `HuggingFaceTB/SmolVLM2-256M-Video-Instruct` stopped
-   with an import error at all 3 settings, because the package `num2words` is not
-   installed. It has no measured number. The other 9 models ran.
+1. **One model FAILED in the first run and was measured in a second run.**
+   `HuggingFaceTB/SmolVLM2-256M-Video-Instruct` stopped with an import error, because
+   the package `num2words` was not installed. The owner approved the package, and the
+   model was measured on 2026-10-14. It has the fewest parameters of the two image and
+   text models, and it is not the cheapest. On the CPU it is 2.2 times slower than
+   `Qwen/Qwen3.5-0.8B`.
 2. **Cost is measured, quality is not.** Each number is one run per setting at batch
    size 1 on a laptop GPU. No quality score is given for the text, image-text and
    embedding models. For vision there is one decode check on the DMTS frames of the
@@ -141,8 +144,11 @@ local cache and the run was offline. The predictions of the vision check were pu
 in that revision before any model ran. Source of every number below:
 `runs/model_benchmark/benchmark.json`.
 
-**FAILED to run.** `HuggingFaceTB/SmolVLM2-256M-Video-Instruct`, at all 3 settings. The
-error text is "ImportError: Package `num2words` is required to run SmolVLM processor".
+**FAILED in this run.** `HuggingFaceTB/SmolVLM2-256M-Video-Instruct`, at all 3 settings.
+The error text is "ImportError: Package `num2words` is required to run SmolVLM
+processor". It was measured in a second run on 2026-10-14 at revision `ba67da1`, with
+`num2words` 0.5.14 installed. Source of its numbers:
+`runs/model_benchmark/benchmark_vlm.json`.
 
 **How to read the cost tables.** One load per setting. Each call is timed after 2
 warm-up calls, for at least 8 seconds and at least 3 calls. A time is the median, with
@@ -181,7 +187,17 @@ pair of values is float32 then float16.
 | Model | Parameters | CPU float32 | GPU float32 | GPU float16 | GPU memory | GPU power |
 |---|---|---|---|---|---|---|
 | `Qwen/Qwen3.5-0.8B` | 852,985,920 | 6863 ms (6813 to 6874) | 2099 ms (2039 to 2264) | 2365 ms (2076 to 2505) | 3467 / 1788 MB | 31.6 / 27.2 W |
-| `HuggingFaceTB/SmolVLM2-256M-Video-Instruct` | FAILED | FAILED | FAILED | FAILED | | |
+| `HuggingFaceTB/SmolVLM2-256M-Video-Instruct`, second run | 256,484,928 | 15229 ms (14569 to 16796) | 1748 ms (1674 to 1982) | 1767 ms (1579 to 1877) | 1890 / 1001 MB | 70.7 / 59.6 W |
+| `Qwen/Qwen3.5-0.8B`, measured again in the second run | 852,985,920 | 7000 ms (6807 to 7174) | 2500 ms (2025 to 2728) | 2289 ms (2089 to 2384) | 3467 / 1788 MB | 29.1 / 26.1 W |
+
+- SmolVLM2 has 3.3 times fewer parameters than Qwen3.5-0.8B. On the GPU it needs 1.7 s
+  for 32 tokens against 2.1 to 2.5 s. On the CPU it needs 15.2 s against 7.0 s.
+- Its GPU memory is 1001 MB at float16, which is more than half of the 1788 MB of the
+  larger model. Its GPU board power in the timed calls is more than two times higher.
+- I did not test the reason. A probable reason is the number of image tokens that its
+  input code makes from one image.
+- The two runs of Qwen3.5 differ by up to 19 percent in the GPU float32 time (2099 ms
+  and 2500 ms). So a difference of that size between two models is not a result.
 
 - Each row of these two tables has 3 to 6 timed calls.
 - On the GPU every text model needs 1.5 to 2.1 s for 32 tokens. The smallest model is
@@ -302,7 +318,7 @@ document.
 | Role | Proposal | What the measurement adds |
 |---|---|---|
 | Spatial vision | Keep the convolutional stack as the encoder of the training loop. If a pretrained option stays in the code, change it to `facebook/dinov2-with-registers-small` | The small model needs half the CPU time and 3.5 times less GPU memory than the current option. On the shape check it has the same range. On the colour check its lowest split is 0.579 against 0.750. The stack is what the results use, and by my reading of the review it fits the tectum role as a shallow map of simple features |
-| Semantic vision | No proposal yet | `Qwen/Qwen3.5-0.8B` ran with 1788 MB at float16 and about 2.1 s for 32 tokens on the GPU. The smaller candidate FAILED to run. The current option has no caller, so the first decision is if the role stays |
+| Semantic vision | No proposal yet | `Qwen/Qwen3.5-0.8B` ran with 1788 MB at float16 and 2.1 to 2.5 s for 32 tokens on the GPU. `SmolVLM2-256M` ran with 1001 MB and 1.7 s on the GPU, and it is 2.2 times slower on the CPU. Neither is clearly cheaper, and the quality was not measured. The current option has no caller, so the first decision is if the role stays |
 | Narrative text | No proposal yet | A smaller model saves memory and CPU time. It saves no GPU time at batch size 1. The quality of the text was not measured, and the role is not used by the training loop |
 | Memory embedding | Measure the retrieval quality of `minishlab/potion-base-8M` on the memory use of the project before a change | It is 45 times faster on the CPU and needs no GPU. Its quality for this role was not measured |
 
@@ -338,14 +354,13 @@ cache of the machine.
 | `Qwen/Qwen3.5-0.8B`, `HuggingFaceTB/SmolVLM2-256M-Video-Instruct` | 1770 + 1031 MB |
 | `minishlab/potion-base-8M`, `ibm-granite/granite-embedding-30m-english` | 31 + 63 MB |
 
-The script also needs the packages `torchvision`, `timm`, `model2vec` and
-`sentence-transformers`.
+The script also needs the packages `torchvision`, `timm`, `model2vec`,
+`sentence-transformers` and `num2words`.
 
 Open items, each for the owner.
 
-1. SmolVLM2 needs the package `num2words`. With it the 3 failed rows can be measured.
-2. The trained tectum and the pretrained features were not measured on the same splits.
+1. The trained tectum and the pretrained features were not measured on the same splits.
    A read-only probe can do that. The project rule against a non-biological control
    encoder stays in force, so this would be a measurement and not a change of encoder.
-3. The quality of a smaller text model and of the static embedding model for their
+2. The quality of a smaller text model and of the static embedding model for their
    roles in this project.
