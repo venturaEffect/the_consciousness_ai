@@ -186,6 +186,9 @@ def build_config(args):
         "reentrant": {
             "max_cycles": 5,
             "convergence_threshold": 0.01,
+            # 'legacy' (default, unchanged) or 'select_adapt', option A with C of
+            # docs/decisions/2026_10_14_reentrant_feedback_rule_review.md.
+            "feedback_rule": getattr(args, "reentrant_feedback", "legacy"),
         },
         "emotion": {
             "valence_weight": 0.5,
@@ -2555,6 +2558,12 @@ def main():
                              "sum of all eligible module payloads, with weights "
                              "from AKOrN bound_bids. Makes phi-on-broadcast "
                              "structurally downstream of sync_R.")
+    parser.add_argument("--reentrant-feedback", choices=["legacy", "select_adapt"], default="legacy",
+                        help="The feedback rule of the reentrant cycles. 'legacy' (default, "
+                             "unchanged): a sense whose vector is not in the broadcast raises "
+                             "its bid. 'select_adapt': the sense that leads gains and the other "
+                             "senses lose in each cycle, and a sense that wins adapts over "
+                             "steps. See docs/decisions/2026_10_14_reentrant_feedback_rule_review.md.")
     parser.add_argument("--broadcast-merge", type=str, default="legacy",
                         choices=["legacy", "top_winner"],
                         help="How --broadcast-mode winner_take_all merges two or more "

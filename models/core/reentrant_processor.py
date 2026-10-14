@@ -17,6 +17,18 @@ cycles at ~10ms per relay). Easy/familiar stimuli settle in 2-3 cycles.
 Novel or ambiguous stimuli require all 10.
 
 Reference: Rao & Ballard (1999), Predictive Coding in the Visual Cortex.
+
+FEEDBACK RULES. `feedback_rule` "legacy" (default, unchanged): each sense module gets
+the broadcast through `receive_broadcast` and raises its bid when the broadcast differs
+from its own vector. "select_adapt" (option A with C of
+docs/decisions/2026_10_14_reentrant_feedback_rule_review.md): in each cycle the sense
+that leads the competition (the first of `workspace.state.winners`) gains a factor
+(1 + gain), at most 1.0, and the other senses lose (1 - gain). The broadcast vector is
+not read, so its size plays no part. After each step the sense that won adapts: its
+adaptation a rises by rate * (1 - a), and every other sense recovers, a * (1 - rate).
+At the start of the next step each sense bid is multiplied by (1 - depth * a). The
+adaptation is not reset between episodes. gain 0.1, rate 0.1 and depth 0.5 are assumed
+values, not fitted to data.
 """
 from __future__ import annotations
 
@@ -53,6 +65,13 @@ class ReentrantProcessor:
         self.min_cycles = config.get("min_cycles", 2)
         self.max_cycles = config.get("max_cycles", 10)
         self.convergence_threshold = config.get("convergence_threshold", 0.05)
+        self.feedback_rule = config.get("feedback_rule", "legacy")
+        if self.feedback_rule not in ("legacy", "select_adapt"):
+            raise ValueError("feedback_rule must be legacy or select_adapt, got %r" % self.feedback_rule)
+        self.feedback_gain = config.get("feedback_gain", 0.1)
+        self.adaptation_rate = config.get("adaptation_rate", 0.1)
+        self.adaptation_depth = config.get("adaptation_depth", 0.5)
+        self.adaptation: dict[str, float] = {}
         
         # Tracking
         self.last_settle_result: SettleResult | None = None
@@ -84,6 +103,10 @@ class ReentrantProcessor:
             SettleResult with final broadcast, convergence metrics, etc.
         """
         current_bids = dict(initial_bids)
+        senses = self._senses(specialists, current_bids)
+        if self.feedback_rule == "select_adapt":
+            for name in senses:
+                current_bids[name] *= 1.0 - self.adaptation_depth * self.adaptation.get(name, 0.0)
         prev_broadcast = None
         prediction_errors = []
         converged = False
@@ -115,6 +138,11 @@ class ReentrantProcessor:
                 converged = True
                 break
                 
+            if self.feedback_rule == "select_adapt":
+                self._select(workspace, senses, current_bids)
+                prev_broadcast = broadcast_content
+                continue
+
             # --- Top-down feedback to specialists ---
             # Send the current broadcast back down to each module.
             # Modules that support receive_broadcast() will update their bids.
@@ -129,6 +157,9 @@ class ReentrantProcessor:
             
             prev_broadcast = broadcast_content
         
+        if self.feedback_rule == "select_adapt":
+            self._adapt(workspace, senses)
+
         # One environment step has ended: let the workspace move its per-step
         # ignition statistics (a no-op for the default ignition rule).
         end_step = getattr(workspace, "end_step", None)
@@ -149,6 +180,35 @@ class ReentrantProcessor:
         self.last_settle_result = result
         return result
     
+    @staticmethod
+    def _senses(specialists: dict[str, Any], bids: dict[str, float]) -> list[str]:
+        """The modules that take feedback: they have receive_broadcast and a bid."""
+        return [name for name, module in specialists.items() if hasattr(module, "receive_broadcast") and name in bids]
+
+    @staticmethod
+    def _leader(workspace) -> str | None:
+        winners = list(getattr(workspace.state, "winners", []) or [])
+        return winners[0] if winners else None
+
+    def _select(self, workspace, senses: list[str], bids: dict[str, float]) -> None:
+        """Option A: the leading sense gains, the other senses lose. No change without a winner."""
+        leader = self._leader(workspace)
+        if leader is None:
+            return
+        for name in senses:
+            factor = 1.0 + self.feedback_gain if name == leader else 1.0 - self.feedback_gain
+            bids[name] = min(1.0, bids[name] * factor)
+
+    def _adapt(self, workspace, senses: list[str]) -> None:
+        """Option C: the sense that won this step adapts, the others recover."""
+        leader = self._leader(workspace)
+        for name in senses:
+            level = self.adaptation.get(name, 0.0)
+            if name == leader:
+                self.adaptation[name] = level + self.adaptation_rate * (1.0 - level)
+            else:
+                self.adaptation[name] = level * (1.0 - self.adaptation_rate)
+
     def _compute_prediction_error(self, prev_broadcast: Any, curr_broadcast: Any) -> float:
         """
         Compute prediction error between consecutive cycles.
