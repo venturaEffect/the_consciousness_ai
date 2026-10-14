@@ -234,3 +234,64 @@ python -m scripts.analysis.run_unit_feedback <control command> --seed 73 --log-d
 python -m scripts.analysis.run_unit_feedback judge --pair runs/carrier_t1_s73 runs/unit_t1_s73 \
     --pair runs/carrier_t1_s74 runs/unit_t1_s74 --pair runs/carrier_t1_s75 runs/unit_t1_s75
 ```
+
+## Second test on the real loop, the winner shares (2026-10-14): SUPPORTED at 3 of 3 fresh seeds
+
+**With equal vector sizes the vision takeover under `top_winner` is gone at all 3 fresh
+seeds. W0, W1 and W2 hold at 3 of 3.**
+
+The first test above gave NOT SUPPORTED for the flip share, and after it I saw the
+change of the winner shares at seeds 73 to 75. This test was written for that
+observation. The predictions and the rule were pushed in `ba67da1` before the first
+run. Seeds 93, 94 and 95 were not used before. Both arms were made new with the same
+command, on Python 3.12.10 with torch 2.14.1+cu126 and pyphi 1.2.0. Each run was made
+alone, one after the other.
+
+| Seed | Control arm, `top_winner` | Unit arm, `top_winner` with equal sizes | W1, control vision at 0.95 or more | W2, unit vision below 0.95 |
+|---|---|---|---|---|
+| 93 | vision 0.983, audio 0.017 | vision 0.604, audio 0.396 | true | true |
+| 94 | vision 0.994, audio 0.006 | vision 0.649, audio 0.351 | true | true |
+| 95 | vision 0.974, audio 0.026 | vision 0.645, audio 0.355 | true | true |
+
+The share is the share of the ignited steps that a module wins. The silence is 0.230 to
+0.260 in the control arm and 0.224 to 0.267 in the unit arm. The scaled calls of the
+unit runs are 3807 to 4014 for each sense. Every run has 10 episode rows, 2000 metric
+rows and no `proxy` row. Source: `runs/_audit_followup/oct13/winner_test.json`.
+
+### What this shows and what it does not
+
+- The takeover of the competition under `top_winner` depends on the sizes of the two
+  sense vectors. This holds at 3 fresh seeds in one configuration, and it agrees with
+  the observation at seeds 73 to 75 on Python 3.8.
+- The flip share of the first test does not show it. At these seeds the share of audio
+  leads that flip goes from 0.587, 0.659 and 0.648 to 0.356, 0.370 and 0.508. That is
+  again not below half. So the flip share was the wrong measure for the takeover, and
+  the verdict of the first test stands as it is.
+- It does not show that equal sizes are the right mechanism. The feedback rule still
+  raises the bid of the module that is not in the broadcast, and with equal sizes 25 to
+  34 percent of the vision leads flip. The sources in
+  `docs/sensory_selection_evidence.md` describe suppression of the signals that are not
+  selected.
+- It does not show a link to the task. No task measure was read in this test.
+- Three seeds and one configuration. It changes no default, and it moves no indicator.
+
+### Decision for the owner
+
+At the seeds tested here, the collapse of the competition with `top_winner`
+(`docs/results/broadcast_carrier_2026_10.md`) depends on the vector sizes in the feedback
+rule. The three seeds of that document with the learned valence were not tested. So
+`top_winner` was not judged as a routing rule yet. Two ways are open.
+
+1. Put the size correction into the code behind a default-off flag, and run the gate
+   for `top_winner` again with it at 10 fresh seeds.
+2. Review the feedback rule first, because it rewards the module that lost. That is a
+   design decision and needs the review of the biology.
+
+### Reproduce
+
+```
+<python 3.12> -m scripts.training.train_rlhf <control command> --seed 93 --log-dir runs/top_c_s93
+<python 3.12> -m scripts.analysis.run_unit_feedback <control command> --seed 93 --log-dir runs/top_u_s93
+<python 3.12> -m scripts.analysis.run_unit_feedback judge-winners --pair runs/top_c_s93 runs/top_u_s93 \
+    --pair runs/top_c_s94 runs/top_u_s94 --pair runs/top_c_s95 runs/top_u_s95
+```

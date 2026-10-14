@@ -155,3 +155,36 @@ class TestSizeVerdict:
 
     def test_a_run_without_scaled_calls_gives_void(self):
         assert launcher.size_verdict([True, True, None], [self.CALLS, self.CALLS, {"vision": 5}]) == "VOID"
+
+
+class TestWinnerVerdict:
+    CALLS = {"vision": 10, "audio": 10}
+
+    def test_the_line_is_the_limit_of_the_gates(self):
+        assert launcher.winner_reading(0.95, 0.949) == {"W1": True, "W2": True}
+        assert launcher.winner_reading(0.949, 0.95) == {"W1": False, "W2": False}
+
+    def test_a_share_that_cannot_be_measured_gives_none(self):
+        assert launcher.winner_reading(None, 0.5) == {"W1": None, "W2": True}
+
+    def test_supported_needs_both_predictions_at_every_seed(self):
+        readings = [launcher.winner_reading(0.99, 0.60)] * 3
+        assert launcher.winner_verdict(readings, [self.CALLS] * 3) == "SUPPORTED"
+
+    def test_two_unit_runs_with_a_takeover_give_not_supported(self):
+        readings = [launcher.winner_reading(0.99, 0.60)] + [launcher.winner_reading(0.99, 0.97)] * 2
+        assert launcher.winner_verdict(readings, [self.CALLS] * 3) == "NOT SUPPORTED"
+
+    def test_no_takeover_in_two_control_runs_gives_void(self):
+        readings = [launcher.winner_reading(0.99, 0.60)] + [launcher.winner_reading(0.70, 0.60)] * 2
+        assert launcher.winner_verdict(readings, [self.CALLS] * 3) == "VOID"
+
+    def test_one_failed_prediction_gives_undecided(self):
+        readings = [launcher.winner_reading(0.99, 0.60)] * 2 + [launcher.winner_reading(0.99, 0.97)]
+        assert launcher.winner_verdict(readings, [self.CALLS] * 3) == "UNDECIDED"
+        readings = [launcher.winner_reading(0.99, 0.60)] * 2 + [launcher.winner_reading(0.70, 0.60)]
+        assert launcher.winner_verdict(readings, [self.CALLS] * 3) == "UNDECIDED"
+
+    def test_a_unit_run_without_scaled_calls_gives_void(self):
+        readings = [launcher.winner_reading(0.99, 0.60)] * 3
+        assert launcher.winner_verdict(readings, [self.CALLS, self.CALLS, {"audio": 4}]) == "VOID"
