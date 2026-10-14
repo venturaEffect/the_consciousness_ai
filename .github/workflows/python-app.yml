@@ -19,16 +19,20 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.10
+    # Python 3.12 is the environment for new result runs since 2026-10-14
+    # (docs/decisions/2026_10_13_python_environment.md).
+    - name: Set up Python 3.12
       uses: actions/setup-python@v5
       with:
-        python-version: "3.10"
+        python-version: "3.12"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest
         pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        # The optional thermodynamic libraries, so that their tests run and do not skip.
+        if [ -f requirements-thermodynamic.txt ]; then pip install -r requirements-thermodynamic.txt; fi
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
