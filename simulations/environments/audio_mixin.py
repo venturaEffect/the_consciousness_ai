@@ -293,11 +293,24 @@ BINAURAL_REFERENCE_DISTANCE = 56.0  # a quarter of the 224-wide room
 BINAURAL_MAX_LEVEL_DROP = 0.5  # far-ear level loss for a source straight to one side
 BINAURAL_MAX_DELAY_SAMPLES = 9  # SpatialAudioComputer head model at 16 kHz
 BINAURAL_NOISE_STD = 0.02  # the same noise floor as the legacy sound
+DECOY_TONE_HZ = 660.0  # the second source of --dark-room-decoy-sound, a fifth above the light
 
 
 def binaural_amplitude(distance: float) -> float:
     """Tone amplitude falling smoothly with distance, audible across the whole room."""
     return BINAURAL_MAX_AMPLITUDE / (1.0 + distance / BINAURAL_REFERENCE_DISTANCE)
+
+
+def source_ears(offset, frequency: float, channels: int, sample_rate: int, samples: int,
+                level: float = 1.0) -> np.ndarray:
+    """[channels, samples]: one continuous tone heard from `offset` (dx, dy) by every ear.
+
+    `level` multiplies the amplitude of the source. 1.0 is the level of the light."""
+    dx, dy = offset
+    distance = max(float(np.hypot(dx, dy)), 1e-6)
+    tone = level * binaural_amplitude(distance) * np.sin(2 * np.pi * frequency * np.arange(samples) / sample_rate)
+    pairs = [dx / distance] if channels == 2 else [dx / distance, dy / distance]
+    return np.stack([ear for direction in pairs for ear in ear_pair(tone, direction)])
 
 
 def ear_pair(tone: np.ndarray, direction: float) -> tuple[np.ndarray, np.ndarray]:
@@ -316,16 +329,17 @@ class DarkRoomAudioMixin(AudioMixin):
 
         The light emits a continuous tone. Each ear pair hears it with a delay and a
         level difference from the direction to the light, plus independent noise.
-        A collision adds a short noise burst to every ear.
+        With a second source (info["_truth_decoy_offset"], --dark-room-decoy-sound)
+        a tone of DECOY_TONE_HZ comes from that place by the same rules. It has no
+        visual object. A collision adds a short noise burst to every ear.
         """
         sr, n = self._audio_sample_rate, int(self._audio_frame_duration * self._audio_sample_rate)
         rng = self._get_audio_rng()
-        dx, dy = info["_truth_light_offset"]
-        distance = max(float(np.hypot(dx, dy)), 1e-6)
-        tone = binaural_amplitude(distance) * np.sin(2 * np.pi * BINAURAL_TONE_HZ * np.arange(n) / sr)
-        pairs = [dx / distance] if channels == 2 else [dx / distance, dy / distance]
-        ears = [ear for direction in pairs for ear in ear_pair(tone, direction)]
-        signal = np.stack(ears) + BINAURAL_NOISE_STD * rng.standard_normal((channels, n))
+        signal = source_ears(info["_truth_light_offset"], BINAURAL_TONE_HZ, channels, sr, n)
+        if info.get("_truth_decoy_offset") is not None:
+            signal = signal + source_ears(info["_truth_decoy_offset"], DECOY_TONE_HZ, channels, sr, n,
+                                          level=getattr(self, "decoy_level", 1.0))
+        signal = signal + BINAURAL_NOISE_STD * rng.standard_normal((channels, n))
         if info.get("collision", False):
             burst = noise_burst(0.015, sr, 0.35, rng)
             signal[:, :len(burst)] += burst

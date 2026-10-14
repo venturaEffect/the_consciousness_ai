@@ -168,6 +168,16 @@ class GlobalWorkspace:
         num_modules = config.get("num_modules", 5)
         module_names = config.get("module_names", ['vision', 'audio', 'memory', 'body', 'semantic'])
         self.binding_mechanism = config.get("binding_mechanism", "akorn")
+        # Stage 2 of docs/decisions/2026_10_14_oscillator_binding_design.md. "place":
+        # before each binding, `relation_source()` gives {(module, module): r in [0, 1]},
+        # and the coupling of that pair becomes 2r - 1. "none" (default) is unchanged.
+        self.binding_relation = config.get("binding_relation", "none")
+        if self.binding_relation not in ("none", "place"):
+            raise ValueError("binding_relation must be none or place, got %r" % self.binding_relation)
+        if self.binding_relation == "place" and self.binding_mechanism != "akorn":
+            raise ValueError("binding_relation place needs binding_mechanism akorn")
+        self.relation_source = None
+        self.relation_values: list[float] = []
         if self.binding_mechanism == "komplex":
             from models.core.complex_binding import ComplexBindingSystem
             self.binding_system = ComplexBindingSystem(
@@ -280,7 +290,12 @@ class GlobalWorkspace:
         # 2. Oscillatory Binding (AKOrN - ICLR 2025)
         # Replaces the heuristic: If Vision and Audio > 0.5, multiply by 1.2
         # Now uses Kuramoto oscillators. Modules that synchronize get boosted bids.
-        bound_bids, sync_order_parameter = self.binding_system.bind_bids(bids)
+        relations = self.relation_source() if self.binding_relation == "place" and self.relation_source else None
+        if relations:
+            self.relation_values.extend(float(value) for value in relations.values())
+            bound_bids, sync_order_parameter = self.binding_system.bind_bids(bids, relations=relations)
+        else:
+            bound_bids, sync_order_parameter = self.binding_system.bind_bids(bids)
         self.last_sync_R = sync_order_parameter
         self.last_sync_R_tensor = self.binding_system.last_sync_R_tensor
 

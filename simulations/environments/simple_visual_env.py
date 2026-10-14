@@ -59,7 +59,8 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
                  audio: str = "legacy", audio_channels: int | None = None,
                  report_collision: bool = False, view: str = "full",
                  view_radius: int = DEFAULT_VIEW_RADIUS,
-                 agent_mark: str = "disc", agent_colour: tuple = AGENT_COLOUR):
+                 agent_mark: str = "disc", agent_colour: tuple = AGENT_COLOUR,
+                 decoy_sound: bool = False, decoy_level: float = 1.0):
         """`audio`: "legacy" (mono events, the behaviour of every run before
         2026-09-15) or "binaural" (the light emits a tone heard across the room,
         with direction; `audio_channels` 2 = left/right, 4 = adds upper/lower).
@@ -72,7 +73,13 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
         agent's own body is drawn in. BOTH change the pixels the agent receives, so a
         run drawn one way cannot be compared with a run drawn another way; they are
         recorded in the run facts for that reason. The defaults reproduce the earlier
-        environment exactly."""
+        environment exactly.
+        `decoy_sound`: a second tone source at its own random place, with no visual
+        object, drawn from its own generator (`seed_decoy`), so the agent and the light
+        are where they are without it. It needs the binaural sound. Off by default.
+        `decoy_level`: the amplitude of the second source relative to the light. A list
+        of levels is used in turn, one for each reset, so one run has both a quiet and a
+        loud decoy."""
         if view not in ("full", "agent_centered"):
             raise ValueError("view must be 'full' or 'agent_centered', got %r" % view)
         if agent_mark not in AGENT_MARKS:
@@ -85,8 +92,19 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
             raise ValueError("audio must be 'legacy' or 'binaural', got %r" % audio)
         if audio == "binaural" and audio_channels not in (2, 4):
             raise ValueError("binaural audio needs audio_channels 2 or 4, got %r" % audio_channels)
+        if decoy_sound and audio != "binaural":
+            raise ValueError("decoy_sound needs audio='binaural'")
+        levels = tuple(decoy_level) if isinstance(decoy_level, (list, tuple)) else (decoy_level,)
+        if not levels or not all(float(level) > 0.0 for level in levels):
+            raise ValueError("decoy_level must be above 0, got %r" % (decoy_level,))
+        self.decoy_levels = tuple(float(level) for level in levels)
+        self.decoy_level = self.decoy_levels[0]
+        self._decoy_resets = 0
         self.audio_mode = audio
         self.audio_channels = audio_channels
+        self.decoy_sound = bool(decoy_sound)
+        self.decoy_pos = None
+        self._decoy_rng = None
         self.report_collision = report_collision
         self.width = width
         self.height = height
@@ -131,6 +149,10 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
         # Randomize positions
         self.agent_pos = np.random.rand(2) * [self.width, self.height]
         self.light_pos = np.random.rand(2) * [self.width, self.height]
+        if self.decoy_sound:
+            self.decoy_pos = self._get_decoy_rng().random(2) * [self.width, self.height]
+            self.decoy_level = self.decoy_levels[self._decoy_resets % len(self.decoy_levels)]
+            self._decoy_resets += 1
         self.battery = 1.0
         
         observation = self._get_obs()
@@ -181,6 +203,10 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
             # Ground truth for analysis only; no agent code reads keys starting '_truth_'.
             offset = self.light_pos - self.agent_pos
             info["_truth_light_offset"] = [float(offset[0]), float(offset[1])]
+            if self.decoy_sound:
+                decoy = self.decoy_pos - self.agent_pos
+                info["_truth_decoy_offset"] = [float(decoy[0]), float(decoy[1])]
+                info["_truth_decoy_level"] = float(self.decoy_level)
             info["audio_waveform"] = self._generate_binaural_audio(info, self.audio_channels)
         else:
             info["audio_waveform"] = self._generate_audio(info)
@@ -190,6 +216,15 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
 
         return observation, reward, terminated, truncated, info
         
+    def seed_decoy(self, seed: int) -> None:
+        """Fix the places of the second sound source. They do not use numpy's global stream."""
+        self._decoy_rng = np.random.default_rng(seed)
+
+    def _get_decoy_rng(self) -> np.random.Generator:
+        if self._decoy_rng is None:
+            self._decoy_rng = np.random.default_rng()
+        return self._decoy_rng
+
     def _get_obs(self) -> np.ndarray:
         if self.view == "agent_centered":
             return self._agent_centered_obs()

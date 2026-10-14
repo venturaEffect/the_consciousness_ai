@@ -182,6 +182,7 @@ def build_config(args):
             "komplex_eta": getattr(args, "komplex_eta", 0.1),
             "komplex_desync_eps": getattr(args, "komplex_desync_eps", 0.01),
             "akorn_natural_frequency": getattr(args, "akorn_natural_frequency", False),
+            "binding_relation": getattr(args, "binding_relation", "none"),
         },
         "reentrant": {
             "max_cycles": 5,
@@ -2269,6 +2270,31 @@ def _reject_incompatible_flags(parser: argparse.ArgumentParser, args) -> None:
                      "and --learned-valence is not set." % args.valence_boost)
 
 
+def _wire_place_relation(tectum, workspace, log_dir) -> None:
+    """Give the workspace the place relation of the tectum, and write how often it was used at exit."""
+    import atexit
+    import json
+    tectum.place_agreement_enabled = True
+    workspace.relation_source = tectum.place_relation
+
+    def write_record() -> None:
+        values = workspace.relation_values
+        record = {"relation_calls": len(values),
+                  "mean_relation": float(np.mean(values)) if values else None,
+                  "share_above_half": float(np.mean([v > 0.5 for v in values])) if values else None}
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
+            with open(os.path.join(log_dir, "binding_relation.json"), "w", encoding="utf-8") as handle:
+                json.dump(record, handle, indent=2)
+    atexit.register(write_record)
+
+
+def parse_levels(text: str):
+    """One float, or a tuple of floats for a comma list."""
+    levels = tuple(float(part) for part in str(text).split(","))
+    return levels[0] if len(levels) == 1 else levels
+
+
 def _require_pyphi(parser: argparse.ArgumentParser, args, pyphi_module) -> None:
     """Stop when pyphi could not be imported, unless --phi-proxy asks for the stand-in."""
     if pyphi_module is None and not getattr(args, "phi_proxy", False):
@@ -2472,6 +2498,15 @@ def main():
                         help="Required with --dark-room-audio binaural: 2 = left/right ears, "
                              "4 = adds upper/lower ears (an approximation of outer-ear and "
                              "head-movement cues).")
+    parser.add_argument("--dark-room-decoy-sound", action="store_true",
+                        help="dark_room: a second tone source (660 Hz) at its own random place, "
+                             "with no visual object. Then hearing and vision can report "
+                             "different places, which a test of selective binding needs. "
+                             "Needs --dark-room-audio binaural. Off by default.")
+    parser.add_argument("--dark-room-decoy-level", type=str, default="1.0",
+                        help="Amplitude of the second tone source relative to the light, with "
+                             "--dark-room-decoy-sound. A comma list (for example 0.5,3.0) is "
+                             "used in turn, one level for each reset. Default 1.0.")
     parser.add_argument("--dark-room-view", choices=["full", "agent_centered"], default="full",
                         help="dark_room frame. 'full' (default): the whole room from above, "
                              "so vision alone shows the light. 'agent_centered': a window "
@@ -2558,6 +2593,12 @@ def main():
                              "sum of all eligible module payloads, with weights "
                              "from AKOrN bound_bids. Makes phi-on-broadcast "
                              "structurally downstream of sync_R.")
+    parser.add_argument("--binding-relation", choices=["none", "place"], default="none",
+                        help="Stage 2 of docs/decisions/2026_10_14_oscillator_binding_design.md. "
+                             "'place': the coupling of the vision and audio oscillators becomes "
+                             "2r - 1, where r in [0, 1] is the agreement of the visual peak and "
+                             "the place of the sound on the tectum map. 'none' (default) is "
+                             "unchanged.")
     parser.add_argument("--reentrant-feedback", choices=["legacy", "select_adapt"], default="legacy",
                         help="The feedback rule of the reentrant cycles. 'legacy' (default, "
                              "unchanged): a sense whose vector is not in the broadcast raises "
@@ -2930,6 +2971,8 @@ def main():
      wm_predict_head, wm_predict_optimizer,
      latent_id_head, latent_id_optimizer,
      latent_contrastive_head, latent_contrastive_optimizer) = init_components(config)
+    if args.binding_relation == "place":
+        _wire_place_relation(tectum, workspace, args.log_dir)
 
     if config.get("enable_wm_predict"):
         # Never auto-detach the recurrent state mid-episode; the WM objective detaches at
@@ -2957,12 +3000,16 @@ def main():
                               report_collision=args.dark_room_collision,
                               view=args.dark_room_view, view_radius=args.dark_room_view_radius,
                               agent_mark=args.dark_room_agent_mark,
-                              agent_colour=parse_colour(args.dark_room_agent_colour))
+                              agent_colour=parse_colour(args.dark_room_agent_colour),
+                              decoy_sound=args.dark_room_decoy_sound,
+                              decoy_level=parse_levels(args.dark_room_decoy_level))
     env_seeded = seed_environment(env, args.seed)
     # Seed the environment audio noise from the run seed. Before 2026-09-15 it had
     # no seed, so no run with --enable-audio could be repeated exactly.
     if args.seed is not None and hasattr(env, "seed_audio"):
         env.seed_audio(args.seed)
+    if args.seed is not None and getattr(env, "decoy_sound", False):
+        env.seed_decoy(args.seed)
 
     metrics_logger = ConsciousnessMetricsLogger(
         log_dir=args.log_dir, use_tensorboard=True
@@ -3001,6 +3048,8 @@ def main():
                        "dark_room_audio": args.dark_room_audio,
                        "dark_room_audio_channels": args.dark_room_audio_channels,
                        "dark_room_collision": args.dark_room_collision,
+                       "dark_room_decoy_sound": args.dark_room_decoy_sound,
+                       "dark_room_decoy_level": args.dark_room_decoy_level,
                        "dark_room_view": args.dark_room_view,
                        "dark_room_view_radius": args.dark_room_view_radius,
                        # How the agent's own body was drawn into the frames it

@@ -10,6 +10,28 @@ from typing import Any
 from models.core.retinotopic_encoder import RetinotopicEncoder
 from models.core.capsule_composition import HierarchicalCapsuleComposition
 
+PLACE_SIGMA = 2.0  # grid cells; auditory fields are coarser than visual ones (an assumed value)
+
+
+def place_agreement(vision_grid: torch.Tensor, audio_spatial: torch.Tensor, sigma: float = PLACE_SIGMA) -> float | None:
+    """How well the place of the sound agrees with the visual peak on the map, in [0, 1].
+
+    The sound cell is placed as in TopographicMap._place_audio_on_grid. The visual peak
+    is the cell with the largest feature norm. The value is exp(-d^2 / (2 sigma^2)) for
+    a distance d in cells. None when there is no sound (all audio features are 0).
+    """
+    if not bool(torch.any(audio_spatial != 0)):
+        return None
+    H, W = vision_grid.shape[-2], vision_grid.shape[-1]
+    ax, ay = audio_spatial[0, 0, 0].item(), audio_spatial[0, 0, 1].item()
+    gx = int(torch.clamp(torch.tensor((ax + 1) / 2 * (W - 1)), 0, W - 1).int())
+    gy = int(torch.clamp(torch.tensor((ay + 1) / 2 * (H - 1)), 0, H - 1).int())
+    norms = vision_grid[0].detach().norm(dim=0)
+    peak = int(torch.argmax(norms))
+    vy, vx = divmod(peak, W)
+    return float(torch.exp(torch.tensor(-((gx - vx) ** 2 + (gy - vy) ** 2) / (2.0 * sigma ** 2))).item())
+
+
 class TopographicMap(nn.Module):
     """
     Biological Counterpart: Optic Tectum / Superior Colliculus
@@ -302,6 +324,10 @@ class SensoryTectum(nn.Module):
         workspace_dim = config.get("workspace_dim", 256)
 
         self.topo_map = TopographicMap(self.grid_size, self.feature_dim)
+        # Stage 2 of the binding design: the agreement of the visual peak and the place
+        # of the sound on the map. Off by default.
+        self.place_agreement_enabled = bool(config.get("place_agreement", False))
+        self._last_place_agreement = None
         self.latent_mode = config.get("rssm_latent_mode", "discrete")
         # Vision bid reduction. "tanh_sum" (default): tanh of the summed KL, which was
         # exactly 1.0 on every measured step. "zscore": sigmoid of a running z-score of
@@ -388,6 +414,12 @@ class SensoryTectum(nn.Module):
         # episode starts with a fresh K-step window.
         self._steps_since_detach = 0
         
+    def place_relation(self) -> dict:
+        """{("vision", "audio"): agreement} from the last forward pass, or {} without a value."""
+        if self._last_place_agreement is None:
+            return {}
+        return {("vision", "audio"): self._last_place_agreement}
+
     def forward(self, vision_features: torch.Tensor, audio_spatial: torch.Tensor,
                 body_schema: torch.Tensor | None = None,
                 action: torch.Tensor | None = None) -> tuple[torch.Tensor, float]:
@@ -414,6 +446,8 @@ class SensoryTectum(nn.Module):
 
         # 1. Create Egocentric Topographic Map (inverse effectiveness fusion)
         obs_map = self.topo_map(vision_features, audio_spatial, body_schema=body_schema)
+        if self.place_agreement_enabled:
+            self._last_place_agreement = place_agreement(vision_features, audio_spatial)
         # Cache spatial features for topographic loss computation in training loop
         self._last_obs_map = obs_map
 

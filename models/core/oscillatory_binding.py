@@ -66,7 +66,8 @@ class KuramotoLayer(nn.Module):
     def forward(self, 
                 phases: torch.Tensor, 
                 amplitudes: torch.Tensor | None = None,
-                iterations: int = 5) -> tuple[torch.Tensor, torch.Tensor]:
+                iterations: int = 5,
+                relation: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Run the discrete Kuramoto update.
         
@@ -74,6 +75,9 @@ class KuramotoLayer(nn.Module):
             phases: Current oscillator phases [B, N, D]
             amplitudes: Input bid values/strengths from modules [B, N]
             iterations: Number of discrete integration steps
+            relation: Optional [B, N, N] factor on each coupling. +1 keeps a pair as it
+                is, 0 removes its coupling and -1 makes the pair repel. None (default)
+                leaves every coupling unchanged.
             
         Returns:
             Updated phases [B, N, D] and synchronization order parameter R [B]
@@ -93,6 +97,8 @@ class KuramotoLayer(nn.Module):
         for _ in range(iterations):
             # [B, N, N] interaction matrix = Amplitudes * LearnableWeights
             interaction_strength = torch.einsum('bi,ij,bj->bij', amplitudes, self.coupling_weights, amplitudes)
+            if relation is not None:
+                interaction_strength = interaction_strength * relation
 
             # Tangent-plane projection: for each oscillator i, project phase_j
             # onto the tangent plane at phase_i before computing the pull.
@@ -164,7 +170,17 @@ class WorkspaceBindingSystem(nn.Module):
         """Reset phases for a new episode/sequence"""
         self.current_phases = None
         
-    def bind_bids(self, bids: dict[str, float]) -> tuple[dict[str, float], float]:
+    def relation_matrix(self, relations: dict) -> torch.Tensor:
+        """[1, N, N] coupling factors: 1 for every pair, and 2 * r - 1 for a pair with a relation r in [0, 1]."""
+        device = next(self.parameters()).device
+        matrix = torch.ones(1, self.num_modules, self.num_modules, device=device)
+        for (first, second), value in relations.items():
+            if first in self.module_names and second in self.module_names:
+                i, j = self.module_names.index(first), self.module_names.index(second)
+                matrix[0, i, j] = matrix[0, j, i] = 2.0 * float(value) - 1.0
+        return matrix
+
+    def bind_bids(self, bids: dict[str, float], relations: dict | None = None) -> tuple[dict[str, float], float]:
         """
         Take scalar bids, run Kuramoto synchronization, and boost bids
         that synchronize with the global mean field.
@@ -185,7 +201,11 @@ class WorkspaceBindingSystem(nn.Module):
             self.current_phases = self.kuramoto.init_phases(batch_size=1)
             
         # Run AKOrN binding dynamics
-        new_phases, sync_R = self.kuramoto(self.current_phases, amplitudes=amps, iterations=self.iterations)
+        if relations:
+            new_phases, sync_R = self.kuramoto(self.current_phases, amplitudes=amps, iterations=self.iterations,
+                                               relation=self.relation_matrix(relations))
+        else:
+            new_phases, sync_R = self.kuramoto(self.current_phases, amplitudes=amps, iterations=self.iterations)
         
         # Update persistent state
         self.current_phases = new_phases.detach()
