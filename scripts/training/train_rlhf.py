@@ -2270,11 +2270,12 @@ def _reject_incompatible_flags(parser: argparse.ArgumentParser, args) -> None:
                      "and --learned-valence is not set." % args.valence_boost)
 
 
-def _wire_place_relation(tectum, workspace, log_dir) -> None:
+def _wire_place_relation(tectum, workspace, log_dir, mode: str = "place") -> None:
     """Give the workspace the place relation of the tectum, and write how often it was used at exit."""
     import atexit
     import json
     tectum.place_agreement_enabled = True
+    tectum.place_agreement_mode = mode
     workspace.relation_source = tectum.place_relation
 
     def write_record() -> None:
@@ -2596,11 +2597,13 @@ def main():
                              "sum of all eligible module payloads, with weights "
                              "from AKOrN bound_bids. Makes phi-on-broadcast "
                              "structurally downstream of sync_R.")
-    parser.add_argument("--binding-relation", choices=["none", "place"], default="none",
+    parser.add_argument("--binding-relation", choices=["none", "place", "overlap"], default="none",
                         help="Stage 2 of docs/decisions/2026_10_14_oscillator_binding_design.md. "
                              "'place': the coupling of the vision and audio oscillators becomes "
                              "2r - 1, where r in [0, 1] is the agreement of the visual peak and "
-                             "the place of the sound on the tectum map. 'none' (default) is "
+                             "the place of the sound on the tectum map. 'overlap' (stage 2b): r "
+                             "is the visual activity at the place of the sound, relative to the "
+                             "median and the largest activity of the map. 'none' (default) is "
                              "unchanged.")
     parser.add_argument("--reentrant-feedback", choices=["legacy", "select_adapt"], default="legacy",
                         help="The feedback rule of the reentrant cycles. 'legacy' (default, "
@@ -2974,8 +2977,8 @@ def main():
      wm_predict_head, wm_predict_optimizer,
      latent_id_head, latent_id_optimizer,
      latent_contrastive_head, latent_contrastive_optimizer) = init_components(config)
-    if args.binding_relation == "place":
-        _wire_place_relation(tectum, workspace, args.log_dir)
+    if args.binding_relation in ("place", "overlap"):
+        _wire_place_relation(tectum, workspace, args.log_dir, args.binding_relation)
 
     if config.get("enable_wm_predict"):
         # Never auto-detach the recurrent state mid-episode; the WM objective detaches at

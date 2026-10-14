@@ -172,10 +172,10 @@ class GlobalWorkspace:
         # before each binding, `relation_source()` gives {(module, module): r in [0, 1]},
         # and the coupling of that pair becomes 2r - 1. "none" (default) is unchanged.
         self.binding_relation = config.get("binding_relation", "none")
-        if self.binding_relation not in ("none", "place"):
-            raise ValueError("binding_relation must be none or place, got %r" % self.binding_relation)
-        if self.binding_relation == "place" and self.binding_mechanism != "akorn":
-            raise ValueError("binding_relation place needs binding_mechanism akorn")
+        if self.binding_relation not in ("none", "place", "overlap"):
+            raise ValueError("binding_relation must be none, place or overlap, got %r" % self.binding_relation)
+        if self.binding_relation != "none" and self.binding_mechanism != "akorn":
+            raise ValueError("binding_relation %s needs binding_mechanism akorn" % self.binding_relation)
         self.relation_source = None
         self.relation_values: list[float] = []
         if self.binding_mechanism == "komplex":
@@ -290,7 +290,7 @@ class GlobalWorkspace:
         # 2. Oscillatory Binding (AKOrN - ICLR 2025)
         # Replaces the heuristic: If Vision and Audio > 0.5, multiply by 1.2
         # Now uses Kuramoto oscillators. Modules that synchronize get boosted bids.
-        relations = self.relation_source() if self.binding_relation == "place" and self.relation_source else None
+        relations = self.relation_source() if self.binding_relation != "none" and self.relation_source else None
         if relations:
             self.relation_values.extend(float(value) for value in relations.values())
             bound_bids, sync_order_parameter = self.binding_system.bind_bids(bids, relations=relations)

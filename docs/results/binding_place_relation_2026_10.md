@@ -154,3 +154,51 @@ The reference is now the set of cells where the recorded frame shows the light c
 The scale of the agreement must follow the size of the object. On a map of oscillators
 this means that the coupling of two cells depends on the visual and auditory activity
 at those cells, and not on one peak cell and a fixed width.
+
+## Stage 2b: the agreement is the visual activity at the place of the sound
+
+Owner decision of 2026-10-14: test stage 2b before stage 3.
+
+**The change.** `--binding-relation overlap`. r is the visual activity at the cell of the
+sound: (norm there - median norm of the map) / (largest norm - median norm), cut to
+[0, 1] (`overlap_agreement` in `models/core/sensory_tectum.py`). A sound on a seen
+object agrees, and a sound on the background does not, whatever the size of the object.
+The coupling of vision and audio is 2r - 1, as in stage 2. No new constant.
+
+**Pre-stated gate. Written before its runs.** The stage 2 command with
+`--binding-relation overlap` instead of `place`: the Gate B7 command with `--episodes
+20 --dark-room-decoy-sound --dark-room-decoy-level 0.5,3.0`. Seeds 129, 130 and 131,
+which no run folder names. Python 3.12.10, each run alone. The checks C0, S0, B1, G1 and
+G2, G3 and G4, and the rule for PASSES, FAILS and UNDECIDED are those of stage 2 above.
+The baseline is the present layer of the fourth stage 1 attempt (seeds 122 to 124).
+
+My expectation is not firm. The sound cell was on the light at about half of the steps
+with the light louder, so r stays low at many related steps.
+
+### Stage 2b result (2026-10-14): VOID
+
+**Stage 2b is VOID by the pre-stated rule. B1 fails at seed 131 (58 unrelated steps).**
+The check G3, which does not need the two conditions, fails at 2 of 3 seeds. So the
+valid part of the data does not show a pass either.
+
+| Check | Seed 129 | Seed 130 | Seed 131 |
+|---|---|---|---|
+| C0, md5 of the control run | `7825766f42d3d85b032f8028c94dc1e0`, identical | | |
+| S0, calls with a relation | 8145 | 8254 | 8180 |
+| Mean r | 0.246 | 0.142 | 0.210 |
+| B1, related and unrelated steps | 736 and 512 | 665 and 446 | 492 and **58** |
+| G1 and G2, residual difference (p) | -0.006 (0.70) | +0.052 (0.001) | not measured |
+| G3, share of steps where the binding changes the leader | **0.016** | 0.056 | **0.015** |
+| G4, distinct values of `sync_r` | 3977 | 3980 | 3979 |
+
+Every run has 20 episode rows and 4000 metric rows. Sources:
+`runs/_audit_followup/oct13/binding_selectivity_stage2b.json` and
+`binding_decisive_stage2b.json`.
+
+**Reading.** With the five oscillators of the workspace, a relation term in the
+coupling makes the layer move away from the bids (R squared 0.08 to 0.24), but it does
+not make the binding selective at most seeds, and it changes the leader at few steps.
+Two forms of the relation gave this result. By the owner decision of 2026-10-14, the
+next step is stage 3, with one oscillator for each place on the map.
+
+The test bed is also marginal at 20 episodes: one of 6 runs with the decoy failed B1.

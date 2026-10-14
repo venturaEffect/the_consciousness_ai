@@ -27,6 +27,24 @@ def place_agreement(vision_grid: torch.Tensor, audio_spatial: torch.Tensor, sigm
     return float(torch.exp(torch.tensor(-((gx - vx) ** 2 + (gy - vy) ** 2) / (2.0 * sigma ** 2))).item())
 
 
+def overlap_agreement(vision_grid: torch.Tensor, audio_spatial: torch.Tensor) -> float | None:
+    """Stage 2b. How strong the visual activity is at the place of the sound, in [0, 1].
+
+    (norm at the sound cell - median norm) / (largest norm - median norm), cut to [0, 1].
+    So a sound on a seen object agrees, and a sound on the background does not, whatever
+    the size of the object. None without sound, 0 for a flat map.
+    """
+    cells = place_cells(vision_grid, audio_spatial)
+    if cells is None:
+        return None
+    (gx, gy), _ = cells
+    norms = vision_grid[0].detach().norm(dim=0)
+    top, middle = norms.max(), norms.median()
+    if float(top - middle) <= 0.0:
+        return 0.0
+    return float(torch.clamp((norms[gy, gx] - middle) / (top - middle), 0.0, 1.0))
+
+
 def place_cells(vision_grid: torch.Tensor, audio_spatial: torch.Tensor):
     """((sound column, sound row), (peak column, peak row)) on the map, or None without sound."""
     if not bool(torch.any(audio_spatial != 0)):
@@ -335,6 +353,9 @@ class SensoryTectum(nn.Module):
         # Stage 2 of the binding design: the agreement of the visual peak and the place
         # of the sound on the map. Off by default.
         self.place_agreement_enabled = bool(config.get("place_agreement", False))
+        # "place" (stage 2): distance of the sound cell to the visual peak.
+        # "overlap" (stage 2b): visual activity at the sound cell.
+        self.place_agreement_mode = "place"
         self._last_place_agreement = None
         self.place_history: list = []
         self.latent_mode = config.get("rssm_latent_mode", "discrete")
@@ -456,7 +477,8 @@ class SensoryTectum(nn.Module):
         # 1. Create Egocentric Topographic Map (inverse effectiveness fusion)
         obs_map = self.topo_map(vision_features, audio_spatial, body_schema=body_schema)
         if self.place_agreement_enabled:
-            self._last_place_agreement = place_agreement(vision_features, audio_spatial)
+            agreement = overlap_agreement if self.place_agreement_mode == "overlap" else place_agreement
+            self._last_place_agreement = agreement(vision_features, audio_spatial)
             self.place_history.append([self._last_place_agreement, place_cells(vision_features, audio_spatial)])
         # Cache spatial features for topographic loss computation in training loop
         self._last_obs_map = obs_map
