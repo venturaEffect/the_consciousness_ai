@@ -5,7 +5,10 @@ record. This script turns ONE episode of ONE run into the public bundle the
 website's training sessions console replays:
 
     frames.webm           the episode frames, one video frame per step, VP9
-    steps.json            a slim per-step table for the console
+    steps.json            a slim per-step table for the console, with each step's
+                          path through the workspace (affect-modulated bids, settle
+                          cycles, ignition against threshold) and the module whose
+                          vector the broadcast holds
     session.json          public run facts (no utc_time, git_commit, paths)
     ethics_manifest.json  public manifest (same removals)
     poster.jpg            one frame on a console-coloured card, no EXIF
@@ -57,6 +60,7 @@ from PIL import Image, ImageDraw, ImageFont
 from matplotlib import font_manager
 from scipy.io import wavfile
 
+from scripts.analysis.probe_broadcast_carrier import carried_module, vectors_by_step
 from simulations.environments.audio_mixin import AudioMixin
 
 FRAME_RATE = 30
@@ -263,7 +267,44 @@ def slim_environment(previous: dict) -> dict:
             "light_in_view": after.get("_truth_light_in_view")}
 
 
-def slim_step(record: dict, previous: dict, direction) -> dict:
+SETTLE_KEYS = ("cycles_used", "converged", "prediction_errors", "final_bids")
+IGNITION_KEYS = ("salience", "threshold", "broadcast_strength")
+
+
+def pick_keys(section, keys: tuple):
+    """The named keys of one recorded section, or None when it was not recorded."""
+    if section is None:
+        return None
+    return {key: section.get(key) for key in keys}
+
+
+def slim_pipeline(internals: dict) -> dict:
+    """One step through the workspace: affect-modulated bids, the reentrant settle
+    cycles, and ignition salience against its threshold. A section the record does
+    not carry stays None; nothing is filled in. phi and the ignition baseline are
+    left out on purpose: phi is an unproven instrument and the baseline is unused."""
+    return {
+        "modulated_bids": internals.get("modulated_bids"),
+        "settle": pick_keys(internals.get("settle"), SETTLE_KEYS),
+        "ignition": pick_keys(internals.get("ignition"), IGNITION_KEYS),
+    }
+
+
+def broadcast_carriers(vectors: dict) -> dict:
+    """Step number to the module whose recorded vector the broadcast equals.
+
+    The same element by element comparison as scripts/analysis/probe_broadcast_carrier.py
+    (docs/results/broadcast_carrier_2026_10.md). Empty when the episode did not
+    record the broadcast, vision and audio vectors."""
+    names = ("broadcast", "tectum_content", "audio_content")
+    if any(name not in vectors or name + "__steps" not in vectors for name in names):
+        return {}
+    sent, vision, audio = (vectors_by_step(vectors, name) for name in names)
+    return {int(step): carried_module(sent[step], vision[step], audio[step])
+            for step in sent if step in vision and step in audio}
+
+
+def slim_step(record: dict, previous: dict, direction, carried=None) -> dict:
     internals = record.get("internals", {})
     if record.get("input_source", {}).get("audio") == "none":
         direction = None
@@ -280,7 +321,9 @@ def slim_step(record: dict, previous: dict, direction) -> dict:
         "audio_spatial": direction,
         "internals_kl_div_pre_tanh": internals.get("kl_div_pre_tanh"),
         "learned_valence": (internals.get("learned_valence") or {}).get("values", {}),
+        "carried": carried if record.get("ignited") else None,
     }
+    step_entry.update(slim_pipeline(internals))
     step_entry.update(slim_environment(previous))
     return step_entry
 
@@ -299,10 +342,12 @@ def round_public_numbers(node):
 
 def slim_records(records: list, vectors: dict) -> list:
     directions = audio_directions(vectors)
+    carriers = broadcast_carriers(vectors)
     table = []
     for index, record in enumerate(records):
         previous = records[index - 1] if index else None
-        table.append(slim_step(record, previous, directions.get(record["step"])))
+        table.append(slim_step(record, previous, directions.get(record["step"]),
+                               carriers.get(record["step"])))
     return round_public_numbers(table)
 
 

@@ -54,6 +54,15 @@ def _step_record(step: int) -> dict:
         "env_phase": "",
         "internals": {
             "kl_div_pre_tanh": 1524.22412109375,
+            "modulated_bids": {"vision": 0.61234567, "audio": 0.5,
+                               "memory": 0.1, "body": 0.05, "semantic": 0.0},
+            "settle": {"cycles_used": 2, "converged": True,
+                       "prediction_errors": [0.123456789, 0.0012345],
+                       "final_bids": {"vision": 0.70123456, "audio": 0.48,
+                                      "memory": 0.1, "body": 0.05, "semantic": 0.0}},
+            "ignition": {"salience": 1.23456789, "threshold": 0.987654321,
+                         "baseline": None, "broadcast_strength": 0.5},
+            "phi": {"value": 0.3, "method": "pyphi"},
             "learned_valence": {"values": {"vision": 0.0123456789},
                                 "td_error": 0.005},
             "info_after_step": {
@@ -75,7 +84,14 @@ def write_vectors(episode: Path, records: list) -> None:
         audio_spatial=np.stack(rows),
         audio_spatial__steps=steps,
         tectum_content=np.zeros((len(records), 1, 4)),
-        tectum_content__steps=np.arange(len(records), dtype=np.int32))
+        tectum_content__steps=np.arange(len(records), dtype=np.int32),
+        # The broadcast holds the audio vector at step 2 and the vision vector
+        # at the other ignited steps, as the default merge can produce.
+        audio_content=np.ones((len(records), 1, 4)),
+        audio_content__steps=np.arange(len(records), dtype=np.int32),
+        broadcast=np.stack([np.ones((1, 4)) if step == 2 else np.zeros((1, 4))
+                            for step in range(len(records))]),
+        broadcast__steps=np.arange(len(records), dtype=np.int32))
 
 
 def write_run_facts(folder: Path) -> None:
@@ -178,6 +194,51 @@ def test_table_keeps_winner_silence_and_bids(tmp_path):
     assert table[0]["winner"] == "" and table[0]["ignited"] is False
     assert table[2]["winner"] == "vision" and table[2]["ignited"] is True
     assert table[2]["bound_bids"]["memory"] == 0.1592
+
+
+def test_table_carries_the_step_pipeline(tmp_path):
+    run = build_run(tmp_path / "run")
+    step = exporter.slim_table(run)[2]
+    assert step["modulated_bids"]["vision"] == 0.6123
+    assert step["settle"] == {"cycles_used": 2, "converged": True,
+                              "prediction_errors": [0.1235, 0.0012],
+                              "final_bids": {"vision": 0.7012, "audio": 0.48,
+                                             "memory": 0.1, "body": 0.05,
+                                             "semantic": 0.0}}
+    assert step["ignition"] == {"salience": 1.2346, "threshold": 0.9877,
+                                "broadcast_strength": 0.5}
+
+
+def test_pipeline_is_none_where_the_record_has_none(tmp_path):
+    run = build_run(tmp_path / "run")
+    records = exporter.load_records(run, 0)
+    for key in ("modulated_bids", "settle", "ignition"):
+        del records[2]["internals"][key]
+    step = exporter.slim_records(records, exporter.load_vectors(run, 0))[2]
+    assert step["modulated_bids"] is None
+    assert step["settle"] is None
+    assert step["ignition"] is None
+
+
+def test_carried_names_the_vector_the_broadcast_holds(tmp_path):
+    table = exporter.slim_table(build_run(tmp_path / "run"))
+    assert table[0]["carried"] is None          # step 0 did not ignite
+    assert table[1]["carried"] == "vision"      # broadcast equals tectum_content
+    assert table[2]["carried"] == "audio"       # broadcast equals audio_content
+
+
+def test_carried_is_none_without_the_vectors(tmp_path):
+    run = build_run(tmp_path / "run")
+    vectors = exporter.load_vectors(run, 0)
+    for name in ("broadcast", "broadcast__steps"):
+        del vectors[name]
+    table = exporter.slim_records(exporter.load_records(run, 0), vectors)
+    assert all(step["carried"] is None for step in table)
+
+
+def test_phi_does_not_reach_the_table(tmp_path):
+    steps_text = json.dumps(exporter.slim_table(build_run(tmp_path / "run")))
+    assert "phi" not in steps_text and "baseline" not in steps_text
 
 
 # ---- the public run facts and manifest ------------------------------------
