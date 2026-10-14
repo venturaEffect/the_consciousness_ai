@@ -20,6 +20,15 @@ def place_agreement(vision_grid: torch.Tensor, audio_spatial: torch.Tensor, sigm
     is the cell with the largest feature norm. The value is exp(-d^2 / (2 sigma^2)) for
     a distance d in cells. None when there is no sound (all audio features are 0).
     """
+    cells = place_cells(vision_grid, audio_spatial)
+    if cells is None:
+        return None
+    (gx, gy), (vx, vy) = cells
+    return float(torch.exp(torch.tensor(-((gx - vx) ** 2 + (gy - vy) ** 2) / (2.0 * sigma ** 2))).item())
+
+
+def place_cells(vision_grid: torch.Tensor, audio_spatial: torch.Tensor):
+    """((sound column, sound row), (peak column, peak row)) on the map, or None without sound."""
     if not bool(torch.any(audio_spatial != 0)):
         return None
     H, W = vision_grid.shape[-2], vision_grid.shape[-1]
@@ -27,9 +36,8 @@ def place_agreement(vision_grid: torch.Tensor, audio_spatial: torch.Tensor, sigm
     gx = int(torch.clamp(torch.tensor((ax + 1) / 2 * (W - 1)), 0, W - 1).int())
     gy = int(torch.clamp(torch.tensor((ay + 1) / 2 * (H - 1)), 0, H - 1).int())
     norms = vision_grid[0].detach().norm(dim=0)
-    peak = int(torch.argmax(norms))
-    vy, vx = divmod(peak, W)
-    return float(torch.exp(torch.tensor(-((gx - vx) ** 2 + (gy - vy) ** 2) / (2.0 * sigma ** 2))).item())
+    vy, vx = divmod(int(torch.argmax(norms)), W)
+    return (gx, gy), (vx, vy)
 
 
 class TopographicMap(nn.Module):
@@ -328,6 +336,7 @@ class SensoryTectum(nn.Module):
         # of the sound on the map. Off by default.
         self.place_agreement_enabled = bool(config.get("place_agreement", False))
         self._last_place_agreement = None
+        self.place_history: list = []
         self.latent_mode = config.get("rssm_latent_mode", "discrete")
         # Vision bid reduction. "tanh_sum" (default): tanh of the summed KL, which was
         # exactly 1.0 on every measured step. "zscore": sigmoid of a running z-score of
@@ -448,6 +457,7 @@ class SensoryTectum(nn.Module):
         obs_map = self.topo_map(vision_features, audio_spatial, body_schema=body_schema)
         if self.place_agreement_enabled:
             self._last_place_agreement = place_agreement(vision_features, audio_spatial)
+            self.place_history.append([self._last_place_agreement, place_cells(vision_features, audio_spatial)])
         # Cache spatial features for topographic loss computation in training loop
         self._last_obs_map = obs_map
 

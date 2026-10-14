@@ -2281,7 +2281,10 @@ def _wire_place_relation(tectum, workspace, log_dir) -> None:
         values = workspace.relation_values
         record = {"relation_calls": len(values),
                   "mean_relation": float(np.mean(values)) if values else None,
-                  "share_above_half": float(np.mean([v > 0.5 for v in values])) if values else None}
+                  "share_above_half": float(np.mean([v > 0.5 for v in values])) if values else None,
+                  # One entry for each tectum forward pass of the run, in order:
+                  # [r, [[sound column, sound row], [peak column, peak row]]].
+                  "history": tectum.place_history}
         if log_dir:
             os.makedirs(log_dir, exist_ok=True)
             with open(os.path.join(log_dir, "binding_relation.json"), "w", encoding="utf-8") as handle:

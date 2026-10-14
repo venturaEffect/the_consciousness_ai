@@ -114,3 +114,43 @@ Stage 3 puts the oscillators on the map, so that each place has its own oscillat
 no single peak is needed. That removes the weak part of stage 2. A cheaper step first is
 one run that records r and the true place of the light at each step, to show if the
 place estimate is the cause.
+
+## Diagnostic of the failure (2026-10-14): VOID, and a re-analysis
+
+**FAILED, an error in my diagnostic measure. Its verdict is VOID.** The pre-stated
+measure D1 asked if the visual peak is within 2 cells of the centre of the light. The
+light has a radius of 40 room pixels, which is about 6.7 cells on the map. So a peak on
+the light can be far more than 2 cells from its centre, and D1 was too strict. The
+probe gave D1 = 0.158 (847 in-view steps) and D2 = 0.376 (404 steps), and I first
+reported this as CONFIRMED. That report was wrong.
+
+One run, seed 128, the stage 2 command with 20 episodes and a record of the place
+estimate for each step (prediction pushed in `dd1e803`). The run has 20 episode rows and
+4000 metric rows.
+
+### Re-analysis with the light pixels of the recorded frames. Not pre-stated
+
+The reference is now the set of cells where the recorded frame shows the light colour.
+
+| Measure | Value |
+|---|---|
+| Centre of the light pixels within 2 cells of my computed light cell | 0.726 of 839 in-view steps |
+| Visual peak on the light disc | 0.685, while the light covers 0.231 of the map |
+| Sound cell on the light disc | 0.501 |
+| Steps with both cells on the light disc | 390 |
+| At those steps, distance of the two cells | median 3.0 cells, mean 2.85 |
+| At those steps, place agreement r | median 0.325, mean 0.453, above 0.5 at 0.438 |
+
+- The visual peak marks the light at most steps, three times the share that chance gives.
+- But at the steps where both senses report the light, r is below 0.5 more often than
+  not, so the coupling 2r - 1 made the two oscillators repel. The width of the
+  agreement (sigma of 2 cells, an assumed value) is too small for an object that is
+  about 13 cells wide.
+- This is a clear reason for the failure of stage 2. It is a re-analysis after the data
+  was seen, so it is a hypothesis for the next test and not a result.
+
+### Consequence for stage 3
+
+The scale of the agreement must follow the size of the object. On a map of oscillators
+this means that the coupling of two cells depends on the visual and auditory activity
+at those cells, and not on one peak cell and a fixed width.
