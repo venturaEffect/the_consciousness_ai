@@ -53,3 +53,21 @@ hypothesis for a next test, not a result.
 - The task check is one comparison per seed and stays a hypothesis.
 - G1 reads all steps with the light in view, as in stage 2, not only the steps with both
   objects in view.
+
+## Where the group lies when it is on neither object (reading after the gate)
+
+Computed after the gate on the same steps, read-only. Descriptive only, no rule. A group
+"touches" an object when one of its cells is an 8-neighbour of a cell of that object.
+
+| Seed | Steps on neither object | Touches only the louder | Touches only the quieter | Touches both | Touches none | Median group size, cells |
+|---|---|---|---|---|---|---|
+| 181 | 514 | 0.681 | 0.031 | 0.049 | 0.239 | 39 |
+| 182 | 212 | 0.646 | 0.033 | 0.057 | 0.264 | 44 |
+| 183 | 254 | 0.748 | 0.039 | 0.031 | 0.181 | 40.5 |
+
+So most groups on neither object lie at the edge of the louder object, with more than half of
+their cells off it. With the earlier table, the group is on or at the edge of the louder object
+at 0.81, 0.68 and 0.81 of the counted steps, and on or at the edge of the quieter object only
+at 0.04, 0.13 and 0.08 (products of the two tables, seeds 181, 182, 183). This supports, as a
+hypothesis, that the sound selects the right object and that the remaining fault is the shape
+of the group, which takes the edge and the dark around it.
