@@ -184,16 +184,19 @@ class TestWiring:
         assert captured["parser"].parse_args([]).map_binding == "off"
         assert captured["parser"].parse_args(["--map-binding", "limit"]).map_binding == "limit"
         assert captured["parser"].parse_args(["--map-binding", "salience"]).map_binding == "salience"
+        assert captured["parser"].parse_args(["--map-binding", "adapted"]).map_binding == "adapted"
 
-    @pytest.mark.parametrize("mode, threshold, drive", [("limit", 0.05, "visual_drive"),
-                                                         ("salience", 0.5, "salience_drive")])
-    def test_the_wiring_builds_the_form_of_the_flag(self, mode, threshold, drive):
+    @pytest.mark.parametrize("mode, threshold, drive, adapted", [("limit", 0.05, "visual_drive", False),
+                                                                  ("salience", 0.5, "salience_drive", False),
+                                                                  ("adapted", 0.5, "salience_drive", True)])
+    def test_the_wiring_builds_the_form_of_the_flag(self, mode, threshold, drive, adapted):
         from models.core.sensory_tectum import SensoryTectum
         from scripts.training import train_rlhf
         tectum, workspace = SensoryTectum({}), GlobalWorkspace({"map_binding": True})
         train_rlhf._wire_map_binding(tectum, workspace, None, mode)
         assert tectum.map_binding.threshold == threshold
         assert tectum.map_binding.drive.__name__ == drive
+        assert (tectum.map_binding.adaptation is not None) == adapted
         assert workspace.map_factor_source == tectum.map_factors
 
     def test_the_tectum_forward_feeds_the_workspace_factors(self):
@@ -335,6 +338,48 @@ class TestObserve:
         assert record["blocks"] == 2
         assert 12 * 16 + 12 in record["group"] and 4 * 16 + 4 not in record["group"]
         assert factors["audio"] > 1.25
+
+
+class TestCellAdaptation:
+    """Design A of `docs/decisions/2026_10_14_map_binding_adaptation.md`."""
+
+    def test_a_constant_drive_falls_as_the_closed_form(self):
+        from models.core.map_binding import ADAPT_DEPTH, ADAPT_RATE, CellAdaptation
+        adaptation = CellAdaptation()
+        drive = torch.ones(16, 16)
+        outputs = [float(adaptation.step("vision", drive)[3, 3]) for _ in range(4)]
+        # mean before step n+1 is 1 - (1 - rate)^n, so the output is 1 - depth * (1 - (1 - rate)^n)
+        expected = [1.0 - ADAPT_DEPTH * (1.0 - (1.0 - ADAPT_RATE) ** n) for n in range(4)]
+        assert outputs == pytest.approx(expected)
+
+    def test_the_fall_is_bounded_by_the_depth(self):
+        from models.core.map_binding import ADAPT_DEPTH, CellAdaptation
+        adaptation = CellAdaptation()
+        for _ in range(500):
+            last = adaptation.step("vision", torch.ones(16, 16))
+        assert float(last[0, 0]) == pytest.approx(1.0 - ADAPT_DEPTH, abs=1e-6)
+
+    def test_adaptation_is_specific_to_the_cell_and_to_the_sense(self):
+        from models.core.map_binding import CellAdaptation
+        adaptation = CellAdaptation()
+        one_cell = torch.zeros(16, 16)
+        one_cell[2, 2] = 1.0
+        for _ in range(10):
+            adaptation.step("vision", one_cell)
+        other_cell = torch.zeros(16, 16)
+        other_cell[9, 9] = 1.0
+        assert float(adaptation.step("vision", other_cell)[9, 9]) == pytest.approx(1.0)
+        assert float(adaptation.step("audio", one_cell)[2, 2]) == pytest.approx(1.0)
+
+    def test_a_moving_area_wins_over_an_equal_area_that_stays(self):
+        from models.core.map_binding import CellAdaptation, LegionLimit
+        limit = LegionLimit(threshold=0.5, adaptation=CellAdaptation())
+        places = [(0, 0), (0, 4), (0, 8), (0, 12), (12, 0), (12, 4), (12, 8), (12, 12)]
+        for r, c in places:
+            vision = blobs((7, 10, 7, 10), (r, r + 3, c, c + 3))
+            _, record = limit.update(vision, torch.zeros(16, 16))
+        assert record["blocks"] == 2
+        assert 12 * 16 + 12 in record["group"] and 8 * 16 + 8 not in record["group"]
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="needs a GPU")

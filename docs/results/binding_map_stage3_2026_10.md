@@ -144,3 +144,136 @@ does not change (Knudsen 2018, as read in `docs/sensory_selection_evidence.md`).
 Open for the owner. The B1 rule voided both runs of option B at one seed of three, so a
 valid gate needs a test bed decision. Adaptation of the drive is the next design
 question, and it needs its own review of the sources before a build.
+
+## Option B with adaptation. Pre-stated gate, written before its runs
+
+Owner decisions of 2026-10-14. Design A of
+`docs/decisions/2026_10_14_map_binding_adaptation.md`, and 40 episodes per run.
+
+The change. `--map-binding adapted` is the salience form with adaptation. For each sense
+and each cell, a running mean of the past drive lowers the drive of the step, drive times
+(1 minus 0.5 times the mean), and the mean then moves 0.1 toward the drive of the step.
+A drive that stays the same at one cell falls to half. The adaptation is not reset
+between episodes. Grouping, selection, the half maximum threshold and the factors are as
+in the salience form.
+
+Runs: the Gate B7 command with `--episodes 40 --dark-room-decoy-sound
+--dark-room-decoy-level 0.5,3.0 --map-binding adapted`, seeds 138, 139 and 140, which no
+run folder and no document names. Python 3.12.10, each run alone. C0 runs again at this
+revision.
+
+| Check | Statement |
+|---|---|
+| C0 | As before. If not, VOID |
+| S0 | `map_binding.json` has 8000 entries in each run, and at least one step has two or more groups. If not, VOID |
+| B1 | As before, 100 or more related and 100 or more unrelated steps in each run. If not, VOID |
+| P, G1 and G2, G3 | As before |
+
+The PASS, FAIL and UNDECIDED rule is unchanged. The only change of the test bed is the
+number of episodes, so related and unrelated steps come from twice as many episodes as
+in the earlier forms. The probes are the same.
+
+My expectation is not firm. The agent's ring stays on the same cells, so its drive falls
+to about half. A light that moves across the view keeps more of its drive. When the agent
+stands still on the light, the light also adapts. Then the place where the light and the
+sound overlap has the most combined drive, because the two senses combine as either one.
+
+## Result of the adapted form. UNDECIDED
+
+The gate is valid for the first time in option B. C0, S0 and B1 hold. P holds at 3 of 3
+seeds. G1 and G3 each fail at one seed, and at different seeds. So neither the PASS rule
+(all at 3 of 3) nor the FAIL rule (one check failing at 2 or more seeds) applies, and the
+verdict is UNDECIDED.
+
+| Check | Seed 138 | Seed 139 | Seed 140 | Source |
+|---|---|---|---|---|
+| C0 | md5 `7825766f42d3d85b032f8028c94dc1e0`, identical | | | `runs/s3ka_c0_s73/metrics.csv` |
+| S0, entries, and share of steps with two or more groups | 8000, 0.062 | 8000, 0.668 | 8000, 0.354 | `map_binding.json` |
+| B1, related and unrelated steps | 1228 and 504 | 1282 and 1252 | 1218 and 1108 | `probe_binding_selectivity.py` |
+| P, share on the light | 0.583 | 0.637 | 0.769 | `probe_map_selection.py` |
+| G1, difference and p | +0.013, p 0.001 | +0.045, p 0.001 | +0.004, p 0.134, FAILED | `probe_binding_selectivity.py` |
+| G3, changed leader | 0.0706 | 0.0467, FAILED | 0.1155 | `probe_binding_decisive.py` |
+
+Each run has 8001 lines in `metrics.csv` and 41 in `episodes.csv`. The mean factors were
+1.065 to 1.104 for vision and 1.307 to 1.334 for audio. The chain ran from revision
+`be6c019` with a clean tree (`runs/_audit_followup/oct13/run_stage3ka.out`).
+
+What the selected group covered at related steps, read-only, with the same classing as
+for the salience form. The seeds and the number of episodes differ from the salience
+form, so the change is not a measured effect of the adaptation alone.
+
+| Seed | Group size, median cells | Floor | Light | Wall | Group holds one of the 4 centre cells |
+|---|---|---|---|---|---|
+| 138 | 36 | 0.321 | 0.610 | 0.068 | 0.440 |
+| 139 | 36 | 0.270 | 0.604 | 0.122 | 0.488 |
+| 140 | 35 | 0.238 | 0.742 | 0.011 | 0.448 |
+
+Limits. One seed of three failed each of G1 and G3, and G3 at seed 139 was 0.0467
+against a line of 0.05. The rate of the adaptation was assumed and not varied. The gate
+does not say what more seeds would show. An UNDECIDED gate moves no default
+and no indicator, and it is not a pass.
+
+## Second gate of the adapted form. Written before its runs
+
+Owner decision of 2026-10-14, after the UNDECIDED result above. A second gate on fresh
+seeds, with the same checks, judged on its own. It is not pooled with seeds 138 to 140.
+
+Runs: the same command as the first gate of the adapted form (40 episodes,
+`--map-binding adapted`), seeds 146, 157 and 159. No run folder names them, and the
+numbers appear in no document and no script of this repository. Seeds 141 to 143 were
+not used because other documents name some of them. Python 3.12.10, each run alone. C0
+runs again at this revision.
+
+The checks C0, S0 (8000 entries), B1, P, G1 and G2 and G3, and the PASS, FAIL and
+UNDECIDED rule are unchanged.
+
+My expectation is not firm. In the first gate, G1 failed at one seed with p 0.134 and G3
+at one seed with 0.0467, near its line of 0.05. Both can fail again at a fresh seed.
+
+## Result of the second gate. FAILED
+
+FAILED on P. The selected group was on the light at more than half of the related steps
+at one seed of three. The rule gives FAIL when one check fails at 2 or more seeds. C0, S0
+and B1 hold, so the gate is valid.
+
+| Check | Seed 146 | Seed 157 | Seed 159 | Source |
+|---|---|---|---|---|
+| C0 | md5 `7825766f42d3d85b032f8028c94dc1e0`, identical | | | `runs/s3kb_c0_s73/metrics.csv` |
+| S0, entries, and share of steps with two or more groups | 8000, 0.094 | 8000, 0.308 | 8000, 0.380 | `map_binding.json` |
+| B1, related and unrelated steps | 1089 and 452 | 1572 and 855 | 1070 and 1101 | `probe_binding_selectivity.py` |
+| P, share on the light | 0.453, FAILED | 0.587 | 0.392, FAILED | `probe_map_selection.py` |
+| G1, difference and p | +0.059, p 0.001 | -0.005, p 0.959, FAILED | +0.050, p 0.001 | `probe_binding_selectivity.py` |
+| G3, changed leader | 0.0657 | 0.0554 | 0.0465, FAILED | `probe_binding_decisive.py` |
+
+Each run has 8001 lines in `metrics.csv` and 41 in `episodes.csv`. The mean factors were
+1.089 to 1.105 for vision and 1.305 to 1.342 for audio. The chain ran from revision
+`b9b52b5` with a clean tree (`runs/_audit_followup/oct13/run_stage3kb.out`).
+
+What the selected group covered at related steps, read-only, classed as before.
+
+| Seed | Group size, median cells | Floor | Light | Wall | Group holds one of the 4 centre cells |
+|---|---|---|---|---|---|
+| 146 | 41 | 0.345 | 0.551 | 0.101 | 0.663 |
+| 157 | 36 | 0.323 | 0.549 | 0.120 | 0.561 |
+| 159 | 34 | 0.483 | 0.451 | 0.063 | 0.476 |
+
+Both gates of the adapted form, side by side and not pooled into a verdict. Each of P,
+G1 and G3 held at 4 of the 6 seeds (138, 139, 140, 146, 157, 159). Only seed 138 held all
+three. Seed 159 failed P and G3. So the adapted form selects the light and binds selectively at some
+seeds and not at others. The verdict of the adapted form is the verdict of its second
+gate, FAILED, because the second gate was the owner's chosen test after the first was
+UNDECIDED.
+
+No default changes and no indicator moves.
+
+## The map line is stopped (2026-10-15)
+
+After the FAILED second gate of the adapted form, the owner asked for a design that groups
+the whole object. Three such designs failed their diagnosis on recorded episodes before any
+build (`docs/decisions/2026_10_15_map_binding_object_grouping.md`). The owner then stopped
+the map line of binding stage 3. Option A, the full oscillator equations, was not built.
+
+Summary of option B. Five forms, none passed. The binding changed the leader at 0.05 or
+more of the steps at 7 of 9 seeds of the salience and adapted forms. The selected place was
+the edge of the light, which belongs to two surfaces. The flags stay in the code, default
+off, so the runs can be repeated. No default changes and no indicator moves.

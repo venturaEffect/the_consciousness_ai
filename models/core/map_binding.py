@@ -172,9 +172,10 @@ class LegionLimit:
     (`docs/results/binding_map_stage3_2026_10.md`).
     """
 
-    def __init__(self, threshold: float = ACTIVE, drive=None):
+    def __init__(self, threshold: float = ACTIVE, drive=None, adaptation=None):
         self.threshold = threshold
         self.drive = drive or visual_drive
+        self.adaptation = adaptation
 
     def observe(self, vision_grid: torch.Tensor, audio_spatial: torch.Tensor) -> tuple:
         """(factors, record) from the encoder map and the sound direction."""
@@ -184,8 +185,37 @@ class LegionLimit:
     def update(self, vision: torch.Tensor, audio: torch.Tensor) -> tuple:
         """(factors, record) for one step. record holds the number of groups and the cells of the selected one."""
         from scipy import ndimage
+        if self.adaptation is not None:
+            vision, audio = self.adaptation.step("vision", vision), self.adaptation.step("audio", audio)
         labels, _ = ndimage.label((combine(vision, audio) >= self.threshold).numpy())
         return select_group(labels, vision, audio)
+
+
+# Adaptation of the drive, design A of `docs/decisions/2026_10_14_map_binding_adaptation.md`.
+# ADAPT_RATE is assumed and is the rate of the workspace rule of Gate R1. ADAPT_DEPTH lies
+# in the measured fall of about 35 to 50 percent for a flash repeated at one place in the
+# superior colliculus (Boehnke and colleagues, Eur. J. Neurosci. 2011).
+ADAPT_RATE, ADAPT_DEPTH = 0.1, 0.5
+
+
+class CellAdaptation:
+    """For each sense and each cell, a running mean of the past drive lowers the drive:
+    drive * (1 - depth * mean), then mean += rate * (drive - mean). Specific to the place and
+    to the sense, as in the optic tectum (Dutta, Wagner and Gutfreund 2016; Reches and
+    Gutfreund 2008). Not reset between episodes, like the workspace rule of Gate R1."""
+
+    def __init__(self, rate: float = ADAPT_RATE, depth: float = ADAPT_DEPTH):
+        self.rate, self.depth = rate, depth
+        self.means = {}
+
+    def step(self, name: str, drive: torch.Tensor) -> torch.Tensor:
+        """The adapted drive of this step. The mean is then updated with the drive of this step."""
+        mean = self.means.get(name)
+        if mean is None or mean.shape != drive.shape:
+            mean = torch.zeros_like(drive)
+        adapted = drive * (1.0 - self.depth * mean)
+        self.means[name] = mean + self.rate * (drive - mean)
+        return adapted
 
 
 # Candidate drives of `docs/decisions/2026_10_14_map_binding_drive.md`. CENTRE_SIGMA is

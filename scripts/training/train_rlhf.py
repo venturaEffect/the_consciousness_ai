@@ -2298,9 +2298,11 @@ def _wire_map_binding(tectum, workspace, log_dir, mode: str = "limit") -> None:
     """Stage 3, option B: the tectum groups the map, the workspace takes its factors, and the record is written at exit."""
     import atexit
     import json
-    from models.core.map_binding import HALF_MAXIMUM, LegionLimit, salience_drive
+    from models.core.map_binding import HALF_MAXIMUM, CellAdaptation, LegionLimit, salience_drive
     if mode == "salience":
         tectum.map_binding = LegionLimit(threshold=HALF_MAXIMUM, drive=salience_drive)
+    elif mode == "adapted":
+        tectum.map_binding = LegionLimit(threshold=HALF_MAXIMUM, drive=salience_drive, adaptation=CellAdaptation())
     else:
         tectum.map_binding = LegionLimit()
     workspace.map_factor_source = tectum.map_factors
@@ -2617,7 +2619,7 @@ def main():
                              "sum of all eligible module payloads, with weights "
                              "from AKOrN bound_bids. Makes phi-on-broadcast "
                              "structurally downstream of sync_R.")
-    parser.add_argument("--map-binding", choices=["off", "limit", "salience"], default="off",
+    parser.add_argument("--map-binding", choices=["off", "limit", "salience", "adapted"], default="off",
                         help="Stage 3 of docs/decisions/2026_10_14_binding_stage3_map_oscillators.md. "
                              "'limit': the tectum map is grouped into connected stimulated areas, "
                              "the end result that Terman and Wang prove for LEGION; the strongest "
@@ -2626,7 +2628,11 @@ def main():
                              "(FAILED design, docs/results/binding_map_stage3_2026_10.md). "
                              "'salience': the same grouping on a centre against surround contrast, "
                              "stimulated at half maximum (docs/decisions/2026_10_14_map_binding_drive.md, "
-                             "candidate K2). 'off' (default) is unchanged.")
+                             "candidate K2). Its gate was VOID and the selected group was rarely the light. "
+                             "'adapted': the salience form with adaptation for each cell and each sense, "
+                             "a drive that stays the same falls by at most half "
+                             "(docs/decisions/2026_10_14_map_binding_adaptation.md, design A). "
+                             "'off' (default) is unchanged.")
     parser.add_argument("--binding-relation", choices=["none", "place", "overlap"], default="none",
                         help="Stage 2 of docs/decisions/2026_10_14_oscillator_binding_design.md. "
                              "'place': the coupling of the vision and audio oscillators becomes "
