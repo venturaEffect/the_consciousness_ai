@@ -185,10 +185,12 @@ class TestWiring:
         assert captured["parser"].parse_args(["--map-binding", "limit"]).map_binding == "limit"
         assert captured["parser"].parse_args(["--map-binding", "salience"]).map_binding == "salience"
         assert captured["parser"].parse_args(["--map-binding", "adapted"]).map_binding == "adapted"
+        assert captured["parser"].parse_args(["--map-binding", "trimmed"]).map_binding == "trimmed"
 
     @pytest.mark.parametrize("mode, threshold, drive, adapted", [("limit", 0.05, "visual_drive", False),
                                                                   ("salience", 0.5, "salience_drive", False),
-                                                                  ("adapted", 0.5, "salience_drive", True)])
+                                                                  ("adapted", 0.5, "salience_drive", True),
+                                                                  ("trimmed", 0.5, "salience_drive", True)])
     def test_the_wiring_builds_the_form_of_the_flag(self, mode, threshold, drive, adapted):
         from models.core.sensory_tectum import SensoryTectum
         from scripts.training import train_rlhf
@@ -393,3 +395,76 @@ def test_a_visual_grid_on_the_gpu_works_with_an_audio_drive_on_the_cpu():
     spatial[0, 0, 1] = (3 + 0.5) / 15 * 2 - 1
     factors, record = LegionLimit().update(visual_drive(grid), audio_drive(spatial, 16, 16))
     assert record["blocks"] == 1 and factors["vision"] == pytest.approx(1.5)
+
+
+class TestCellBrightness:
+    def test_the_mean_luminance_of_each_cell(self):
+        from models.core.map_binding import cell_brightness
+        frame = torch.zeros(1, 3, 224, 224)
+        frame[0, 0, 0:14, 0:14] = 1.0          # red cell: 0.299
+        frame[0, :, 0:14, 14:28] = 1.0         # white cell: 1.0
+        frame[0, :, 14:21, 0:14] = 1.0         # half of a white cell: 0.5
+        b = cell_brightness(frame, 16, 16)
+        assert b.shape == (16, 16)
+        assert float(b[0, 0]) == pytest.approx(0.299)
+        assert float(b[0, 1]) == pytest.approx(1.0)
+        assert float(b[1, 0]) == pytest.approx(0.5)
+        assert float(b[5, 5]) == 0.0
+
+
+class TestTrimmedLimit:
+    @staticmethod
+    def limit():
+        from models.core.map_binding import TrimmedLimit
+        return TrimmedLimit(threshold=0.5, drive=lambda grid: grid)
+
+    def test_only_the_bright_cells_of_the_selected_group_stay(self):
+        limit = self.limit()
+        vision = blobs((2, 6, 2, 6))
+        bright = torch.zeros(16, 16)
+        bright[2:4, 2:6] = 0.9                 # 8 of the 16 group cells are bright
+        factors, record = limit.trim(*limit_select(vision), vision, torch.zeros(16, 16), bright)
+        assert len(record["selected"]) == 16
+        assert record["group"] == [r * 16 + c for r in (2, 3) for c in range(2, 6)]
+        assert factors["vision"] == pytest.approx(1.0 + 0.5 * 8 / 16)
+
+    def test_a_group_with_no_bright_cell_becomes_empty_with_neutral_factors(self):
+        limit = self.limit()
+        vision = blobs((2, 6, 2, 6))
+        factors, record = limit.trim(*limit_select(vision), vision, torch.zeros(16, 16), torch.zeros(16, 16))
+        assert record["group"] == [] and len(record["selected"]) == 16
+        assert factors == {"vision": 1.0, "audio": 1.0}
+
+    def test_the_threshold_is_strict(self):
+        limit = self.limit()
+        vision = blobs((2, 6, 2, 6))
+        bright = torch.full((16, 16), 0.3)
+        _, record = limit.trim(*limit_select(vision), vision, torch.zeros(16, 16), bright)
+        assert record["group"] == []
+
+    def test_observe_needs_the_image(self):
+        limit = self.limit()
+        with pytest.raises(ValueError):
+            limit.observe(torch.zeros(1, 3, 16, 16), torch.zeros(1, 1, 2))
+
+    def test_the_tectum_forward_passes_the_image_and_records_the_trim(self):
+        from models.core.sensory_tectum import SensoryTectum
+        from scripts.training import train_rlhf
+        torch.manual_seed(0)
+        tectum, workspace = SensoryTectum({}), GlobalWorkspace({"map_binding": True})
+        train_rlhf._wire_map_binding(tectum, workspace, None, "trimmed")
+        frame = torch.zeros(1, 3, 224, 224)
+        frame[0, :, 20:60, 150:200] = 1.0
+        tectum(frame, torch.zeros(1, tectum.feature_dim, 2))
+        entry = tectum.map_history[-1]
+        assert "selected" in entry and set(entry["group"]) <= set(entry["selected"])
+        bright = {r * 16 + c for r in range(16) for c in range(16)
+                  if float(frame[0, :, r * 14:(r + 1) * 14, c * 14:(c + 1) * 14].mean()) > 0.3}
+        assert set(entry["group"]) <= bright
+
+
+def limit_select(vision):
+    """The labels of one stimulated area, as LegionLimit.update makes them."""
+    from scipy import ndimage
+    labels, _ = ndimage.label((vision >= 0.5).numpy())
+    return (labels,)

@@ -188,7 +188,63 @@ class LegionLimit:
         if self.adaptation is not None:
             vision, audio = self.adaptation.step("vision", vision), self.adaptation.step("audio", audio)
         labels, _ = ndimage.label((combine(vision, audio) >= self.threshold).numpy())
+        return self.finish(labels, vision, audio)
+
+    def finish(self, labels, vision: torch.Tensor, audio: torch.Tensor) -> tuple:
+        """(factors, record) from the labelled groups and the drives of this step."""
         return select_group(labels, vision, audio)
+
+
+# Set 2026-10-15 before the gate of the trimmed form, from a read-only diagnosis on the
+# visible decoy gate runs (`docs/decisions/2026_10_15_map_binding_trim.md`).
+BRIGHT_CELL = 0.3
+_LUMINANCE = torch.tensor([0.299, 0.587, 0.114]).view(1, 3, 1, 1)
+
+
+def cell_brightness(frames: torch.Tensor, height: int, width: int) -> torch.Tensor:
+    """[H, W]: mean luminance (0.299 R + 0.587 G + 0.114 B) of the image over each map cell.
+    `frames` [1, 3, h, w] with values 0 to 1, as the training loop passes them."""
+    luminance = (frames.detach().float().cpu() * _LUMINANCE).sum(dim=1, keepdim=True)
+    return F.adaptive_avg_pool2d(luminance, (height, width))[0, 0]
+
+
+class TrimmedLimit(LegionLimit):
+    """The adapted form, plus one rule after the selection: only the cells of the selected
+    group whose image brightness is above `bright` stay in the group, and the binding factors
+    come from that trimmed group. So the sound raises the response only where the eye also
+    responds (multiplicative gain; Ohshiro, Angelaki and DeAngelis, Nat. Neurosci. 2011).
+    The record keeps the group before the trim as "selected".
+
+    LIMIT: brightness is the visual signal here because every object of the dark room is
+    bright. A dark object would never stay in the group."""
+
+    needs_frames = True
+
+    def __init__(self, bright: float = BRIGHT_CELL, **kwargs):
+        super().__init__(**kwargs)
+        self.bright = bright
+        self._brightness = None
+
+    def observe(self, vision_grid: torch.Tensor, audio_spatial: torch.Tensor, frames: torch.Tensor = None) -> tuple:
+        """(factors, record) from the encoder map, the sound direction and the image."""
+        if frames is None:
+            raise ValueError("TrimmedLimit needs the image of the step (frames [1, 3, h, w])")
+        self._brightness = cell_brightness(frames, vision_grid.shape[-2], vision_grid.shape[-1])
+        return super().observe(vision_grid, audio_spatial)
+
+    def finish(self, labels, vision: torch.Tensor, audio: torch.Tensor) -> tuple:
+        return self.trim(labels, vision, audio, self._brightness)
+
+    def trim(self, labels, vision: torch.Tensor, audio: torch.Tensor, brightness: torch.Tensor) -> tuple:
+        """(factors, record): the selected group, then only its cells brighter than `bright`."""
+        _, record = select_group(labels, vision, audio)
+        # Compared in the precision of the image, so a cell at exactly `bright` does not stay.
+        above = brightness.flatten() > torch.tensor(self.bright, dtype=brightness.dtype)
+        kept = [i for i in record["group"] if bool(above[i])]
+        group = torch.zeros(vision.numel(), dtype=torch.bool)
+        group[kept] = True
+        factors = MapOscillators.factors(group.view(vision.shape), vision, audio)
+        return factors, dict(record, selected=record["group"], group=kept)
 
 
 # Adaptation of the drive, design A of `docs/decisions/2026_10_14_map_binding_adaptation.md`.

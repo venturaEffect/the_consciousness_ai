@@ -452,8 +452,12 @@ class SensoryTectum(nn.Module):
         """The binding factors of vision and audio from the oscillator map of the last forward pass."""
         return dict(self._last_map_factors)
 
-    def _update_map_binding(self, vision_features: torch.Tensor, audio_spatial: torch.Tensor) -> None:
-        factors, record = self.map_binding.observe(vision_features, audio_spatial)
+    def _update_map_binding(self, vision_features: torch.Tensor, audio_spatial: torch.Tensor,
+                            frames: torch.Tensor | None = None) -> None:
+        if getattr(self.map_binding, "needs_frames", False):
+            factors, record = self.map_binding.observe(vision_features, audio_spatial, frames)
+        else:
+            factors, record = self.map_binding.observe(vision_features, audio_spatial)
         self._last_map_factors = factors
         self.map_history.append(dict(record, **factors))
 
@@ -480,7 +484,9 @@ class SensoryTectum(nn.Module):
             vision_features = vision_features.unsqueeze(0)
 
         # Auto-detect: raw frames (3 channels) vs pre-encoded (feature_dim channels)
+        frames = None
         if vision_features.shape[1] <= 3:
+            frames = vision_features
             vision_features = self.retinotopic_encoder(vision_features)
 
         B = vision_features.shape[0]
@@ -494,7 +500,7 @@ class SensoryTectum(nn.Module):
             self._last_place_agreement = agreement(vision_features, audio_spatial)
             self.place_history.append([self._last_place_agreement, place_cells(vision_features, audio_spatial)])
         if self.map_binding is not None:
-            self._update_map_binding(vision_features, audio_spatial)
+            self._update_map_binding(vision_features, audio_spatial, frames)
         # Cache spatial features for topographic loss computation in training loop
         self._last_obs_map = obs_map
 

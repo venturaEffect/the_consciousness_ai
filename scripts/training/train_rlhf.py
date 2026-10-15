@@ -2298,11 +2298,13 @@ def _wire_map_binding(tectum, workspace, log_dir, mode: str = "limit") -> None:
     """Stage 3, option B: the tectum groups the map, the workspace takes its factors, and the record is written at exit."""
     import atexit
     import json
-    from models.core.map_binding import HALF_MAXIMUM, CellAdaptation, LegionLimit, salience_drive
+    from models.core.map_binding import HALF_MAXIMUM, CellAdaptation, LegionLimit, TrimmedLimit, salience_drive
     if mode == "salience":
         tectum.map_binding = LegionLimit(threshold=HALF_MAXIMUM, drive=salience_drive)
     elif mode == "adapted":
         tectum.map_binding = LegionLimit(threshold=HALF_MAXIMUM, drive=salience_drive, adaptation=CellAdaptation())
+    elif mode == "trimmed":
+        tectum.map_binding = TrimmedLimit(threshold=HALF_MAXIMUM, drive=salience_drive, adaptation=CellAdaptation())
     else:
         tectum.map_binding = LegionLimit()
     workspace.map_factor_source = tectum.map_factors
@@ -2630,7 +2632,7 @@ def main():
                              "sum of all eligible module payloads, with weights "
                              "from AKOrN bound_bids. Makes phi-on-broadcast "
                              "structurally downstream of sync_R.")
-    parser.add_argument("--map-binding", choices=["off", "limit", "salience", "adapted"], default="off",
+    parser.add_argument("--map-binding", choices=["off", "limit", "salience", "adapted", "trimmed"], default="off",
                         help="Stage 3 of docs/decisions/2026_10_14_binding_stage3_map_oscillators.md. "
                              "'limit': the tectum map is grouped into connected stimulated areas, "
                              "the end result that Terman and Wang prove for LEGION; the strongest "
@@ -2643,6 +2645,10 @@ def main():
                              "'adapted': the salience form with adaptation for each cell and each sense, "
                              "a drive that stays the same falls by at most half "
                              "(docs/decisions/2026_10_14_map_binding_adaptation.md, design A). "
+                             "'trimmed': the adapted form, and after the selection only the group "
+                             "cells with image brightness above 0.3 stay, so the binding factors come "
+                             "from the bright part of the group "
+                             "(docs/decisions/2026_10_15_map_binding_trim.md). "
                              "'off' (default) is unchanged.")
     parser.add_argument("--binding-relation", choices=["none", "place", "overlap"], default="none",
                         help="Stage 2 of docs/decisions/2026_10_14_oscillator_binding_design.md. "
