@@ -2317,6 +2317,39 @@ def _wire_map_binding(tectum, workspace, log_dir, mode: str = "limit") -> None:
     atexit.register(write_record)
 
 
+def _wire_tectal_orienting(action_core, tectum, mode: str, seed: int, log_dir) -> None:
+    """The motor map of the tectum (docs/decisions/2026_10_15_tectal_motor_map.md).
+
+    Wraps action_core.select_action. The policy is always called first, so every random
+    stream stays as it is. When the map binding of this step has a target, its orienting
+    command replaces the policy's action; otherwise the policy's action is used."""
+    import atexit
+    import json
+    from models.core.tectal_motor_map import TectalMotorMap
+    if getattr(tectum, "map_binding", None) is None:
+        raise ValueError("--tectal-orienting needs --map-binding (limit, salience, adapted or trimmed)")
+    motor = TectalMotorMap(mode, seed)
+    tectum.tectal_motor_map = motor
+    policy_select = action_core.select_action
+
+    def select_action(*args, **kwargs):
+        action, value = policy_select(*args, **kwargs)
+        group = tectum.map_history[-1]["group"] if tectum.map_history else []
+        oriented = motor.step(tectum.map_binding, group)
+        if oriented is None:
+            return action, value
+        return np.asarray(oriented, dtype=np.asarray(action).dtype), value
+
+    action_core.select_action = select_action
+
+    def write_record() -> None:
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
+            with open(os.path.join(log_dir, "tectal_orienting.json"), "w", encoding="utf-8") as handle:
+                json.dump({"mode": mode, "steps": len(motor.history), "history": motor.history}, handle)
+    atexit.register(write_record)
+
+
 def parse_levels(text: str):
     """One float, or a tuple of floats for a comma list."""
     levels = tuple(float(part) for part in str(text).split(","))
@@ -2650,6 +2683,14 @@ def main():
                              "from the bright part of the group "
                              "(docs/decisions/2026_10_15_map_binding_trim.md). "
                              "'off' (default) is unchanged.")
+    parser.add_argument("--tectal-orienting", choices=["off", "group", "active", "audio"], default="off",
+                        help="The motor map of the tectum (docs/decisions/2026_10_15_tectal_motor_map.md). "
+                             "Needs --map-binding. When the target cells of a step lie off the agent's "
+                             "own body, the agent moves at 0.5 toward their drive-weighted centre, plus "
+                             "noise of std 0.1 from its own seed, in place of the policy's action. "
+                             "'group': the cells of the group the map binding selected. 'active': every "
+                             "cell at half the maximum drive or more, with no selection. 'audio': the "
+                             "sound place. 'off' (default) is unchanged.")
     parser.add_argument("--binding-relation", choices=["none", "place", "overlap"], default="none",
                         help="Stage 2 of docs/decisions/2026_10_14_oscillator_binding_design.md. "
                              "'place': the coupling of the vision and audio oscillators becomes "
@@ -3032,6 +3073,9 @@ def main():
      latent_contrastive_head, latent_contrastive_optimizer) = init_components(config)
     if args.map_binding != "off":
         _wire_map_binding(tectum, workspace, args.log_dir, args.map_binding)
+    if args.tectal_orienting != "off":
+        _wire_tectal_orienting(action_core, tectum, args.tectal_orienting,
+                               args.seed if args.seed is not None else 0, args.log_dir)
     if args.binding_relation in ("place", "overlap"):
         _wire_place_relation(tectum, workspace, args.log_dir, args.binding_relation)
 

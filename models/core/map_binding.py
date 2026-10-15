@@ -187,6 +187,8 @@ class LegionLimit:
         from scipy import ndimage
         if self.adaptation is not None:
             vision, audio = self.adaptation.step("vision", vision), self.adaptation.step("audio", audio)
+        # Kept for the motor map of the tectum (models/core/tectal_motor_map.py).
+        self.last_vision, self.last_audio = vision, audio
         labels, _ = ndimage.label((combine(vision, audio) >= self.threshold).numpy())
         return self.finish(labels, vision, audio)
 
