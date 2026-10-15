@@ -2529,6 +2529,17 @@ def main():
                              "with no visual object. Then hearing and vision can report "
                              "different places, which a test of selective binding needs. "
                              "Needs --dark-room-audio binaural. Off by default.")
+    parser.add_argument("--dark-room-decoy-visible", action="store_true",
+                        help="dark_room: the second source is also an object, drawn in the light "
+                             "colour and size at the place of its tone, 120 to 176 room pixels "
+                             "from the light (with the default view), and touching it gives "
+                             "no reward. Only the tone tells the two objects apart, so a test "
+                             "of binding needs the sound. Needs --dark-room-decoy-sound. Off by "
+                             "default.")
+    parser.add_argument("--dark-room-start-between", action="store_true",
+                        help="dark_room: each episode starts with the agent midway between the "
+                             "light and the visible decoy, so both are in view at the start. "
+                             "Needs --dark-room-decoy-visible. Off by default.")
     parser.add_argument("--dark-room-decoy-level", type=str, default="1.0",
                         help="Amplitude of the second tone source relative to the light, with "
                              "--dark-room-decoy-sound. A comma list (for example 0.5,3.0) is "
@@ -3046,7 +3057,9 @@ def main():
                               agent_mark=args.dark_room_agent_mark,
                               agent_colour=parse_colour(args.dark_room_agent_colour),
                               decoy_sound=args.dark_room_decoy_sound,
-                              decoy_level=parse_levels(args.dark_room_decoy_level))
+                              decoy_level=parse_levels(args.dark_room_decoy_level),
+                              decoy_visible=args.dark_room_decoy_visible,
+                              start_between=args.dark_room_start_between)
     env_seeded = seed_environment(env, args.seed)
     # Seed the environment audio noise from the run seed. Before 2026-09-15 it had
     # no seed, so no run with --enable-audio could be repeated exactly.
@@ -3094,6 +3107,8 @@ def main():
                        "dark_room_collision": args.dark_room_collision,
                        "dark_room_decoy_sound": args.dark_room_decoy_sound,
                        "dark_room_decoy_level": args.dark_room_decoy_level,
+                       "dark_room_decoy_visible": args.dark_room_decoy_visible,
+                       "dark_room_start_between": args.dark_room_start_between,
                        "dark_room_view": args.dark_room_view,
                        "dark_room_view_radius": args.dark_room_view_radius,
                        # How the agent's own body was drawn into the frames it

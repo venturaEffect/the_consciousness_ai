@@ -21,6 +21,10 @@ RING_WIDTH = 0.1  # stroke width, also as a fraction of the agent radius
 # Half-width of the agent-centered window, in room pixels. Set 2026-09-15 before any run:
 # a 96-pixel window in a 224-pixel room, so a far light is out of view.
 DEFAULT_VIEW_RADIUS = 48
+# Smallest distance between the centres of the light and a visible decoy, in room pixels.
+# Set 2026-10-15 before any run: two light radii plus two agent radii, so the discs never
+# overlap and the agent cannot touch both objects at once.
+DECOY_MIN_GAP = 2 * (40 + 20)
 
 
 def _checked_colour(colour) -> tuple:
@@ -60,7 +64,8 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
                  report_collision: bool = False, view: str = "full",
                  view_radius: int = DEFAULT_VIEW_RADIUS,
                  agent_mark: str = "disc", agent_colour: tuple = AGENT_COLOUR,
-                 decoy_sound: bool = False, decoy_level: float = 1.0):
+                 decoy_sound: bool = False, decoy_level: float = 1.0,
+                 decoy_visible: bool = False, start_between: bool = False):
         """`audio`: "legacy" (mono events, the behaviour of every run before
         2026-09-15) or "binaural" (the light emits a tone heard across the room,
         with direction; `audio_channels` 2 = left/right, 4 = adds upper/lower).
@@ -79,7 +84,16 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
         are where they are without it. It needs the binaural sound. Off by default.
         `decoy_level`: the amplitude of the second source relative to the light. A list
         of levels is used in turn, one for each reset, so one run has both a quiet and a
-        loud decoy."""
+        loud decoy.
+        `decoy_visible`: the decoy is also an object, drawn with the light colour and size
+        at the place of its tone, DECOY_MIN_GAP to `decoy_max_gap` from the light, so the
+        agent can see both from between them. Touching it gives
+        no reward. So only the tone tells the two objects apart. Needs `decoy_sound`. Off
+        by default.
+        `start_between`: each episode starts with the agent midway between the light and
+        the visible decoy, so both are in view at the start. The agent place is still drawn
+        from the global stream first, so the later draws do not change. Needs
+        `decoy_visible`. Off by default."""
         if view not in ("full", "agent_centered"):
             raise ValueError("view must be 'full' or 'agent_centered', got %r" % view)
         if agent_mark not in AGENT_MARKS:
@@ -94,6 +108,10 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
             raise ValueError("binaural audio needs audio_channels 2 or 4, got %r" % audio_channels)
         if decoy_sound and audio != "binaural":
             raise ValueError("decoy_sound needs audio='binaural'")
+        if decoy_visible and not decoy_sound:
+            raise ValueError("decoy_visible needs decoy_sound")
+        if start_between and not decoy_visible:
+            raise ValueError("start_between needs decoy_visible")
         levels = tuple(decoy_level) if isinstance(decoy_level, (list, tuple)) else (decoy_level,)
         if not levels or not all(float(level) > 0.0 for level in levels):
             raise ValueError("decoy_level must be above 0, got %r" % (decoy_level,))
@@ -103,6 +121,8 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
         self.audio_mode = audio
         self.audio_channels = audio_channels
         self.decoy_sound = bool(decoy_sound)
+        self.decoy_visible = bool(decoy_visible)
+        self.start_between = bool(start_between)
         self.decoy_pos = None
         self._decoy_rng = None
         self.report_collision = report_collision
@@ -150,9 +170,11 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
         self.agent_pos = np.random.rand(2) * [self.width, self.height]
         self.light_pos = np.random.rand(2) * [self.width, self.height]
         if self.decoy_sound:
-            self.decoy_pos = self._get_decoy_rng().random(2) * [self.width, self.height]
+            self.decoy_pos = self._place_decoy()
             self.decoy_level = self.decoy_levels[self._decoy_resets % len(self.decoy_levels)]
             self._decoy_resets += 1
+        if self.start_between:
+            self.agent_pos = ((self.light_pos + self.decoy_pos) / 2.0).astype(np.float32)
         self.battery = 1.0
         
         observation = self._get_obs()
@@ -193,6 +215,9 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
             reach = self.view_radius + self.light_radius
             gap = np.abs(self.light_pos - self.agent_pos)
             info["_truth_light_in_view"] = bool(gap[0] <= reach and gap[1] <= reach)
+            if self.decoy_visible:
+                gap = np.abs(self.decoy_pos - self.agent_pos)
+                info["_truth_decoy_in_view"] = bool(gap[0] <= reach and gap[1] <= reach)
 
         if self.report_collision:
             # Touch, not damage: no homeostatic variable changes (ethics rule E6).
@@ -220,6 +245,26 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
         """Fix the places of the second sound source. They do not use numpy's global stream."""
         self._decoy_rng = np.random.default_rng(seed)
 
+    @property
+    def decoy_max_gap(self) -> float:
+        """Largest distance of a visible decoy from the light: with the agent in the middle,
+        both objects are still in view (two view radii plus two light radii)."""
+        return 2.0 * (self.view_radius + self.light_radius)
+
+    def _place_decoy(self) -> np.ndarray:
+        """A place from the decoy generator. A hidden decoy keeps its single draw anywhere in
+        the room. A visible decoy gets a direction and a distance from the light, between
+        DECOY_MIN_GAP and decoy_max_gap, drawn again until the place is inside the room."""
+        rng = self._get_decoy_rng()
+        if not self.decoy_visible:
+            return rng.random(2) * [self.width, self.height]
+        while True:
+            angle = rng.random() * 2.0 * np.pi
+            distance = DECOY_MIN_GAP + rng.random() * (self.decoy_max_gap - DECOY_MIN_GAP)
+            place = self.light_pos + distance * np.array([np.cos(angle), np.sin(angle)])
+            if np.all(place >= 0) and np.all(place <= [self.width, self.height]):
+                return place
+
     def _get_decoy_rng(self) -> np.random.Generator:
         if self._decoy_rng is None:
             self._decoy_rng = np.random.default_rng()
@@ -235,6 +280,8 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
         pygame.draw.circle(
             self._canvas, (255, 255, 200), self.light_pos.astype(int), self.light_radius
         )
+        if self.decoy_visible:
+            pygame.draw.circle(self._canvas, LIGHT_COLOUR, self.decoy_pos.astype(int), self.light_radius)
 
         # Draw Agent
         draw_agent(self._canvas, self.agent_pos.astype(int), self.agent_radius,
@@ -253,6 +300,8 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
         canvas.fill(WALL_COLOUR)
         pygame.draw.rect(canvas, (0, 0, 0), (r, r, self.width, self.height))
         pygame.draw.circle(canvas, LIGHT_COLOUR, (self.light_pos + r).astype(int), self.light_radius)
+        if self.decoy_visible:
+            pygame.draw.circle(canvas, LIGHT_COLOUR, (self.decoy_pos + r).astype(int), self.light_radius)
         draw_agent(canvas, (self.agent_pos + r).astype(int), self.agent_radius,
                    self.agent_colour, self.agent_mark)
         left, top = self.agent_pos.astype(int)
