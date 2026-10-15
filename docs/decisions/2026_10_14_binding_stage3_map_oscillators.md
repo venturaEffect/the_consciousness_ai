@@ -133,3 +133,16 @@ Three corrections to the first version follow from the review.
 What this review does not establish. I cannot claim that A is the best possible design.
 The full texts of Terman and Wang, Romano and Lowet were not read, only summaries. No
 design was tried on the agent. The comparison is a judgement on the sources listed here.
+
+## Status after the tests (2026-10-15)
+
+Option B was tested in five forms and none passed its gate. The owner stopped the map line
+on 2026-10-15, and option A was not built. Results:
+`docs/results/binding_map_stage3_2026_10.md`. Reviews of the drive, of adaptation and of
+grouping the whole object: `docs/decisions/2026_10_14_map_binding_drive.md`,
+`docs/decisions/2026_10_14_map_binding_adaptation.md` and
+`docs/decisions/2026_10_15_map_binding_object_grouping.md`.
+
+The owner reopened the map line on the same day with a visible decoy. Its gate FAILED on P2
+at 3 of 3 seeds: `docs/decisions/2026_10_15_visible_decoy.md` and
+`docs/results/visible_decoy_gate_2026_10.md`.
