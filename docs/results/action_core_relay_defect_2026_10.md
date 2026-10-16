@@ -46,10 +46,33 @@ product that enters the relay is small, and the action is close to tanh(relay bi
 
 At these seeds the agent touched a wall at 0.71 to 0.93 of the steps of the episodes read.
 
+**4. The same in DMTS.** Added 2026-10-16. Two later DMTS runs at seed 42 saved their policy
+weights. `fixcheck_dmts_s42` uses the plain defaults (5 episodes of 200 steps). `f3_py312_dmts`
+adds `--rssm-latent-mode continuous --capsule-workspace-source all_levels` (10 episodes of 500
+steps). The last saved episode of each was replayed as in measurement 1. Output:
+`runs/_audit_followup/oct13/dmts_relay_replay.out`.
+
+| Run, episode | Action mean | Spread over the steps | Input of zeros | tanh(relay bias) |
+|---|---|---|---|---|
+| `fixcheck_dmts_s42`, 4 (200 steps) | (0.417, 0.279, -0.086, -0.406, -0.232) | 0.0001 or less | (0.420, 0.276, -0.086, -0.404, -0.233) | (0.416, 0.277, -0.081, -0.402, -0.237) |
+| `f3_py312_dmts`, 9 (500 steps) | (0.245, -0.053, 0.107, 0.226, -0.404) | 0.0001 or less | (0.245, -0.052, 0.106, 0.222, -0.406) | (0.246, -0.053, 0.104, 0.222, -0.404) |
+
+The largest value of the mean is choice 0 at every step of both episodes. Over each whole run,
+the recorded choices come in the order of tanh(relay bias): 0 at 0.675, 1 at 0.302 and 2 at
+0.021 in `fixcheck_dmts_s42`; 0 at 0.413, 3 at 0.370, 2 at 0.172 and 1 at 0.044 in
+`f3_py312_dmts`. The exploration noise spreads them. In these runs the choice did not depend on
+what the agent saw.
+
+The trained DMTS runs of June and July 2026 (`docs/results/collapse_locus_trained_2026_06_21.md`,
+`docs/results/b1_continuous_latent_2026_07.md`) used the same default policy for 100 episodes
+and saved no policy weights. For them the same result follows from the code. It was not
+measured on them.
+
 ## Results that read behaviour from this drift
 
-The verdicts stand as written. But each of these checks read a behaviour that came from the drift
-plus the start position, not from perception.
+The verdicts stand as written. But each of these checks read a behaviour that came from the fixed
+output of the policy, not from perception. In the dark room that is the drift plus the start
+position; in DMTS it is the same order of choices at every step.
 
 | Document | Check |
 |---|---|
@@ -58,6 +81,7 @@ plus the start position, not from perception.
 | `docs/results/map_binding_trim_gate_2026_10.md` | The same task check |
 | `docs/results/orientation_test_2026_10.md` (PR 56) | The orientation test |
 | `docs/consciousness_indicators_butlin.md`, AE-1 | The note that DMTS task reward is flat |
+| `docs/results/collapse_locus_trained_2026_06_21.md`, `docs/results/b1_continuous_latent_2026_07.md` | The flat DMTS task reward of the trained runs (measurement 4) |
 
 The June 2026 diagnosis (`docs/results/agent_competence_diagnosis_2026_06_01.md`) found that a
 plain actor-critic on the same broadcast tied with this policy. So the relay defect is not the only
