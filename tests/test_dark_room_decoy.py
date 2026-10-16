@@ -322,3 +322,127 @@ class TestStartBetween:
         assert parser.parse_args([]).dark_room_start_between is False
         text = next(a.help for a in parser._actions if "--dark-room-start-between" in a.option_strings)
         assert "midway" in text and "--dark-room-decoy-visible" in text
+
+
+def make_pulse(seed=5, view="agent_centered", direction=True):
+    np.random.seed(seed)
+    env = SimpleVisualEnv(width=224, height=224, audio="binaural", audio_channels=4,
+                          report_collision=True, view=view, decoy_sound=True,
+                          decoy_visible=True, start_between=True, pulse=True,
+                          sound_direction=direction)
+    env.seed_audio(seed)
+    env.seed_decoy(seed)
+    return env
+
+
+def gain(pair, t, mean, depth):
+    frequency, phase = pair
+    return mean + depth * np.sin(2 * np.pi * frequency * t + phase)
+
+
+class TestPulse:
+    """Each object pulses in time with its own tone (docs/decisions/2026_10_15_rhythm_binding.md)."""
+
+    def test_the_pulse_needs_the_visible_decoy(self):
+        with pytest.raises(ValueError):
+            SimpleVisualEnv(width=224, height=224, audio="binaural", audio_channels=4,
+                            decoy_sound=True, pulse=True)
+
+    def test_the_two_rhythms_are_one_tenth_and_one_sixth_in_some_order(self):
+        env = make_pulse()
+        env.reset()
+        assert sorted([env.pulse["light"][0], env.pulse["decoy"][0]]) == pytest.approx([1 / 10, 1 / 6])
+        assert all(0.0 <= env.pulse[name][1] < 2 * np.pi for name in ("light", "decoy"))
+
+    def test_the_rhythms_repeat_with_the_seed_and_leave_the_global_stream_alone(self):
+        first, second = make_pulse(), make_pulse()
+        np.random.seed(9)
+        first.reset()
+        state = np.random.get_state()[1].copy()
+        np.random.seed(9)
+        second.reset()
+        assert first.pulse == second.pulse
+        assert np.array_equal(np.random.get_state()[1], state)
+
+    def test_the_light_and_the_decoy_keep_their_places(self):
+        plain, pulsed = make_between(), make_pulse()
+        np.random.seed(3)
+        plain.reset()
+        np.random.seed(3)
+        pulsed.reset()
+        assert np.array_equal(plain.light_pos, pulsed.light_pos)
+        assert np.array_equal(plain.decoy_pos, pulsed.decoy_pos)
+
+    def test_the_colour_follows_the_rhythm_at_reset_and_after_a_step(self):
+        env = make_pulse(view="full")
+        frame, _ = env.reset()
+        for t in (0, 1):
+            x, y = env.light_pos.astype(int)
+            g = gain(env.pulse["light"], t, 0.85, 0.15)
+            assert tuple(frame[y, x]) == tuple(int(round(c * g)) for c in LIGHT_COLOUR)
+            x, y = env.decoy_pos.astype(int)
+            g = gain(env.pulse["decoy"], t, 0.85, 0.15)
+            assert tuple(frame[y, x]) == tuple(int(round(c * g)) for c in LIGHT_COLOUR)
+            frame, _, _, _, _ = env.step(np.zeros(2, dtype=np.float32))
+
+    def test_the_brightest_dim_object_stays_above_the_agent_ring(self):
+        dim = 0.85 - 0.15
+        luminance = (0.299 * LIGHT_COLOUR[0] + 0.587 * LIGHT_COLOUR[1] + 0.114 * LIGHT_COLOUR[2]) / 255
+        assert luminance * dim > (0.299 * 217 + 0.587 * 119 + 0.114 * 87) / 255
+
+    def test_the_tone_follows_the_rhythm(self):
+        env = make_pulse()
+        env.reset()
+        sample_rate = env._audio_sample_rate
+        levels = []
+        for t in (1, 2, 3, 4, 5, 6):
+            _, _, _, _, info = env.step(np.zeros(2, dtype=np.float32))
+            levels.append((peak_level(info["audio_waveform"], audio_mixin.BINAURAL_TONE_HZ, sample_rate),
+                           gain(env.pulse["light"], t, 0.7, 0.3)))
+        measured, expected = np.array(levels).T
+        assert np.corrcoef(measured, expected)[0, 1] > 0.99
+        assert measured / measured[0] == pytest.approx(expected / expected[0], rel=0.05)
+
+    def test_the_truth_record_names_the_rhythms(self):
+        env = make_pulse()
+        env.reset()
+        _, _, _, _, info = env.step(np.zeros(2, dtype=np.float32))
+        assert info["_truth_pulse_light"] == pytest.approx(list(env.pulse["light"]))
+        assert info["_truth_pulse_decoy"] == pytest.approx(list(env.pulse["decoy"]))
+        assert info["_truth_pulse_step"] == 1
+
+    def test_without_the_pulse_there_is_no_record(self):
+        env = make_between()
+        env.reset()
+        _, _, _, _, info = env.step(np.zeros(2, dtype=np.float32))
+        assert "_truth_pulse_light" not in info
+
+
+class TestSoundDirection:
+    def test_without_direction_every_ear_hears_the_same_tone(self):
+        env = make_pulse(direction=False)
+        env.reset()
+        _, _, _, _, info = env.step(np.zeros(2, dtype=np.float32))
+        wave = info["audio_waveform"]
+        sample_rate = env._audio_sample_rate
+        tone = peak_level(wave, audio_mixin.BINAURAL_TONE_HZ, sample_rate)
+        for ear in range(1, 4):
+            difference = peak_level(wave[[0]] - wave[[ear]], audio_mixin.BINAURAL_TONE_HZ, sample_rate)
+            assert difference < 0.05 * tone
+
+    def test_with_direction_the_ears_differ(self):
+        env = make_pulse(direction=True)
+        env.reset()
+        env.agent_pos = (env.light_pos + np.array([-30.0, 0.0])).astype(np.float32)
+        _, _, _, _, info = env.step(np.zeros(2, dtype=np.float32))
+        wave = info["audio_waveform"]
+        sample_rate = env._audio_sample_rate
+        assert peak_level(wave[[0]] - wave[[1]], audio_mixin.BINAURAL_TONE_HZ, sample_rate) > \
+            0.1 * peak_level(wave, audio_mixin.BINAURAL_TONE_HZ, sample_rate)
+
+    def test_the_training_flags_are_off_by_default(self):
+        parser = TestTrainingFlag.parser()
+        args = parser.parse_args([])
+        assert args.dark_room_pulse is False and args.dark_room_sound_direction == "on"
+        text = next(a.help for a in parser._actions if "--dark-room-pulse" in a.option_strings)
+        assert "--dark-room-decoy-visible" in text and "rhythm" in text

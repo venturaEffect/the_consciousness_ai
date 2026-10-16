@@ -103,6 +103,11 @@ class AuditorySpecialist(nn.Module):
         self._last_affect: dict | None = None
         self._last_content: torch.Tensor | None = None
         self._last_tonotopic: torch.Tensor | None = None
+        # The mean hair cell envelope of each band for the last step with sound, and a count of
+        # those steps, for binding by timing (models/core/rhythm_binding.py). A reader that sees
+        # the same count twice knows that no sound came in between.
+        self.last_band_envelope = None
+        self.band_envelope_count = 0
 
     def forward(
         self,
@@ -145,6 +150,8 @@ class AuditorySpecialist(nn.Module):
         # Split envelope and TFS for affect extraction
         envelope = hair_cell_out[:, :self.num_bands, :]
         tfs = hair_cell_out[:, self.num_bands:, :]
+        self.last_band_envelope = envelope[0].mean(dim=-1).detach().cpu().double().numpy()
+        self.band_envelope_count += 1
 
         # 3. Tonotopic encoding (trainable)
         tonotopic = self.encoder(hair_cell_out)  # [B, feature_dim, num_output_bands]
@@ -192,6 +199,7 @@ class AuditorySpecialist(nn.Module):
         self._last_spatial = torch.zeros(batch_size, self.feature_dim, 2, device=device)
         self._last_affect = None
         self._last_tonotopic = None
+        self.last_band_envelope = None
         return content, 0.0
 
     def receive_broadcast(

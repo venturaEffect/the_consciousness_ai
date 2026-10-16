@@ -104,3 +104,38 @@ class TestAuditorySpecialist(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBandEnvelope(unittest.TestCase):
+    """The per-band envelope of the step, kept for binding by timing (models/core/rhythm_binding.py)."""
+
+    def setUp(self):
+        from models.audio.auditory_specialist import AuditorySpecialist
+        torch.manual_seed(0)
+        self.spec = AuditorySpecialist({})
+        t = np.arange(1056) / 16000.0
+        self.wave = torch.from_numpy(np.stack([0.3 * np.sin(2 * np.pi * 440 * t)] * 2)).float()[None]
+
+    def test_the_envelope_is_the_mean_hair_cell_envelope_of_each_band(self):
+        self.spec(self.wave)
+        mono = self.wave.mean(dim=1, keepdim=True)
+        with torch.no_grad():
+            hair = self.spec.hair_cell(self.spec.filterbank(mono))
+        expected = hair[0, :self.spec.num_bands].mean(-1).numpy()
+        np.testing.assert_allclose(self.spec.last_band_envelope, expected, rtol=1e-6)
+        self.assertEqual(self.spec.band_envelope_count, 1)
+
+    def test_silence_clears_it_and_does_not_count(self):
+        self.spec(self.wave)
+        self.spec(torch.zeros_like(self.wave))
+        self.assertIsNone(self.spec.last_band_envelope)
+        self.assertEqual(self.spec.band_envelope_count, 1)
+
+    def test_keeping_it_does_not_change_the_outputs(self):
+        from models.audio.auditory_specialist import AuditorySpecialist
+        torch.manual_seed(0)
+        other = AuditorySpecialist({})
+        content_a, bid_a = self.spec(self.wave)
+        content_b, bid_b = other(self.wave)
+        self.assertTrue(torch.equal(content_a, content_b))
+        self.assertEqual(bid_a, bid_b)

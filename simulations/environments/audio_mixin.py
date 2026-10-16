@@ -302,14 +302,17 @@ def binaural_amplitude(distance: float) -> float:
 
 
 def source_ears(offset, frequency: float, channels: int, sample_rate: int, samples: int,
-                level: float = 1.0) -> np.ndarray:
+                level: float = 1.0, directional: bool = True) -> np.ndarray:
     """[channels, samples]: one continuous tone heard from `offset` (dx, dy) by every ear.
 
-    `level` multiplies the amplitude of the source. 1.0 is the level of the light."""
+    `level` multiplies the amplitude of the source. 1.0 is the level of the light.
+    `directional` False gives every ear the same signal (no delay, no level difference)."""
     dx, dy = offset
     distance = max(float(np.hypot(dx, dy)), 1e-6)
     tone = level * binaural_amplitude(distance) * np.sin(2 * np.pi * frequency * np.arange(samples) / sample_rate)
     pairs = [dx / distance] if channels == 2 else [dx / distance, dy / distance]
+    if not directional:
+        pairs = [0.0 for _ in pairs]
     return np.stack([ear for direction in pairs for ear in ear_pair(tone, direction)])
 
 
@@ -324,6 +327,13 @@ def ear_pair(tone: np.ndarray, direction: float) -> tuple[np.ndarray, np.ndarray
 class DarkRoomAudioMixin(AudioMixin):
     """Audio synthesis specialized for the Dark Room environment."""
 
+    def _tone_gains(self) -> tuple:
+        """(light, decoy) loudness gains of this step: 1.0 each without the pulse."""
+        if not getattr(self, "pulse_on", False):
+            return 1.0, 1.0
+        from simulations.environments.simple_visual_env import PULSE_SOUND_GAIN
+        return self.pulse_gain("light", PULSE_SOUND_GAIN), self.pulse_gain("decoy", PULSE_SOUND_GAIN)
+
     def _generate_binaural_audio(self, info: dict, channels: int) -> np.ndarray:
         """[channels, T]: left, right and, with 4 channels, upper, lower ears.
 
@@ -335,10 +345,16 @@ class DarkRoomAudioMixin(AudioMixin):
         """
         sr, n = self._audio_sample_rate, int(self._audio_frame_duration * self._audio_sample_rate)
         rng = self._get_audio_rng()
-        signal = source_ears(info["_truth_light_offset"], BINAURAL_TONE_HZ, channels, sr, n)
+        # --dark-room-pulse changes each tone's loudness with its object's rhythm, and
+        # --dark-room-sound-direction off gives every ear the same signal. Both default off.
+        directional = getattr(self, "sound_direction", True)
+        light_gain, decoy_gain = self._tone_gains()
+        signal = source_ears(info["_truth_light_offset"], BINAURAL_TONE_HZ, channels, sr, n,
+                             level=light_gain, directional=directional)
         if info.get("_truth_decoy_offset") is not None:
             signal = signal + source_ears(info["_truth_decoy_offset"], DECOY_TONE_HZ, channels, sr, n,
-                                          level=getattr(self, "decoy_level", 1.0))
+                                          level=getattr(self, "decoy_level", 1.0) * decoy_gain,
+                                          directional=directional)
         signal = signal + BINAURAL_NOISE_STD * rng.standard_normal((channels, n))
         if info.get("collision", False):
             burst = noise_burst(0.015, sr, 0.35, rng)

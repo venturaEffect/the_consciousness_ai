@@ -25,6 +25,14 @@ DEFAULT_VIEW_RADIUS = 48
 # Set 2026-10-15 before any run: two light radii plus two agent radii, so the discs never
 # overlap and the agent cannot touch both objects at once.
 DECOY_MIN_GAP = 2 * (40 + 20)
+# The rhythms of --dark-room-pulse, set 2026-10-15 before any run
+# (docs/decisions/2026_10_15_rhythm_binding.md). Frequencies in cycles per step; each
+# episode gives one to the light and the other to the decoy, at random. A gain is
+# mean + depth * sin(2 pi f t + phase). The dimmest object (0.70 of the light colour) stays
+# brighter than the agent's ring.
+PULSE_FREQUENCIES = (1.0 / 10.0, 1.0 / 6.0)
+PULSE_VISUAL_GAIN = (0.85, 0.15)
+PULSE_SOUND_GAIN = (0.7, 0.3)
 
 
 def _checked_colour(colour) -> tuple:
@@ -65,7 +73,8 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
                  view_radius: int = DEFAULT_VIEW_RADIUS,
                  agent_mark: str = "disc", agent_colour: tuple = AGENT_COLOUR,
                  decoy_sound: bool = False, decoy_level: float = 1.0,
-                 decoy_visible: bool = False, start_between: bool = False):
+                 decoy_visible: bool = False, start_between: bool = False,
+                 pulse: bool = False, sound_direction: bool = True):
         """`audio`: "legacy" (mono events, the behaviour of every run before
         2026-09-15) or "binaural" (the light emits a tone heard across the room,
         with direction; `audio_channels` 2 = left/right, 4 = adds upper/lower).
@@ -93,7 +102,13 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
         `start_between`: each episode starts with the agent midway between the light and
         the visible decoy, so both are in view at the start. The agent place is still drawn
         from the global stream first, so the later draws do not change. Needs
-        `decoy_visible`. Off by default."""
+        `decoy_visible`. Off by default.
+        `pulse`: the light and the decoy each change brightness and tone loudness in time with
+        their own rhythm (PULSE_FREQUENCIES, one each, at random, with random phases, drawn
+        from a generator of their own). Needs `decoy_visible`. Off by default.
+        `sound_direction`: False makes every ear hear the same signal, with no delay and no
+        level difference, so the sound has no direction. Loudness still falls with distance.
+        True (default) is unchanged."""
         if view not in ("full", "agent_centered"):
             raise ValueError("view must be 'full' or 'agent_centered', got %r" % view)
         if agent_mark not in AGENT_MARKS:
@@ -112,6 +127,8 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
             raise ValueError("decoy_visible needs decoy_sound")
         if start_between and not decoy_visible:
             raise ValueError("start_between needs decoy_visible")
+        if pulse and not decoy_visible:
+            raise ValueError("pulse needs decoy_visible")
         levels = tuple(decoy_level) if isinstance(decoy_level, (list, tuple)) else (decoy_level,)
         if not levels or not all(float(level) > 0.0 for level in levels):
             raise ValueError("decoy_level must be above 0, got %r" % (decoy_level,))
@@ -123,6 +140,11 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
         self.decoy_sound = bool(decoy_sound)
         self.decoy_visible = bool(decoy_visible)
         self.start_between = bool(start_between)
+        self.pulse_on = bool(pulse)
+        self.sound_direction = bool(sound_direction)
+        self.pulse = None
+        self._pulse_step = 0
+        self._pulse_rng = None
         self.decoy_pos = None
         self._decoy_rng = None
         self.report_collision = report_collision
@@ -175,6 +197,8 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
             self._decoy_resets += 1
         if self.start_between:
             self.agent_pos = ((self.light_pos + self.decoy_pos) / 2.0).astype(np.float32)
+        if self.pulse_on:
+            self._draw_pulse()
         self.battery = 1.0
         
         observation = self._get_obs()
@@ -186,6 +210,8 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
         return observation, info
         
     def step(self, action: np.ndarray) -> tuple[np.ndarray, float, bool, bool, dict]:
+        if self.pulse_on:
+            self._pulse_step += 1
         # Update Physics
         move = np.clip(action, -1.0, 1.0) * 10.0 # Speed
         self.agent_pos += move
@@ -232,6 +258,10 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
                 decoy = self.decoy_pos - self.agent_pos
                 info["_truth_decoy_offset"] = [float(decoy[0]), float(decoy[1])]
                 info["_truth_decoy_level"] = float(self.decoy_level)
+            if self.pulse_on:
+                info["_truth_pulse_light"] = [float(v) for v in self.pulse["light"]]
+                info["_truth_pulse_decoy"] = [float(v) for v in self.pulse["decoy"]]
+                info["_truth_pulse_step"] = int(self._pulse_step)
             info["audio_waveform"] = self._generate_binaural_audio(info, self.audio_channels)
         else:
             info["audio_waveform"] = self._generate_audio(info)
@@ -244,6 +274,9 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
     def seed_decoy(self, seed: int) -> None:
         """Fix the places of the second sound source. They do not use numpy's global stream."""
         self._decoy_rng = np.random.default_rng(seed)
+        # The rhythms of --dark-room-pulse come from a second stream of the same seed, so
+        # the places of the decoy are the same with and without the pulse.
+        self._pulse_rng = np.random.default_rng((int(seed), 1))
 
     @property
     def decoy_max_gap(self) -> float:
@@ -265,6 +298,34 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
             if np.all(place >= 0) and np.all(place <= [self.width, self.height]):
                 return place
 
+    def _draw_pulse(self) -> None:
+        """New rhythms for this episode, from the pulse generator only."""
+        rng = self._get_pulse_rng()
+        order = rng.permutation(len(PULSE_FREQUENCIES))
+        phases = rng.random(2) * 2.0 * np.pi
+        self.pulse = {"light": (PULSE_FREQUENCIES[order[0]], float(phases[0])),
+                      "decoy": (PULSE_FREQUENCIES[order[1]], float(phases[1]))}
+        self._pulse_step = 0
+
+    def pulse_gain(self, name: str, mean_depth: tuple) -> float:
+        """The gain of object `name` ("light" or "decoy") at this step; 1.0 without the pulse."""
+        if not self.pulse_on:
+            return 1.0
+        frequency, phase = self.pulse[name]
+        mean, depth = mean_depth
+        return float(mean + depth * np.sin(2.0 * np.pi * frequency * self._pulse_step + phase))
+
+    def _object_colour(self, name: str) -> tuple:
+        if not self.pulse_on:
+            return LIGHT_COLOUR
+        g = self.pulse_gain(name, PULSE_VISUAL_GAIN)
+        return tuple(int(round(c * g)) for c in LIGHT_COLOUR)
+
+    def _get_pulse_rng(self) -> np.random.Generator:
+        if self._pulse_rng is None:
+            self._pulse_rng = np.random.default_rng()
+        return self._pulse_rng
+
     def _get_decoy_rng(self) -> np.random.Generator:
         if self._decoy_rng is None:
             self._decoy_rng = np.random.default_rng()
@@ -278,10 +339,10 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
 
         # Draw Light
         pygame.draw.circle(
-            self._canvas, (255, 255, 200), self.light_pos.astype(int), self.light_radius
+            self._canvas, self._object_colour("light"), self.light_pos.astype(int), self.light_radius
         )
         if self.decoy_visible:
-            pygame.draw.circle(self._canvas, LIGHT_COLOUR, self.decoy_pos.astype(int), self.light_radius)
+            pygame.draw.circle(self._canvas, self._object_colour("decoy"), self.decoy_pos.astype(int), self.light_radius)
 
         # Draw Agent
         draw_agent(self._canvas, self.agent_pos.astype(int), self.agent_radius,
@@ -299,9 +360,9 @@ class SimpleVisualEnv(DarkRoomAudioMixin, gym.Env):
         canvas = self._padded_canvas
         canvas.fill(WALL_COLOUR)
         pygame.draw.rect(canvas, (0, 0, 0), (r, r, self.width, self.height))
-        pygame.draw.circle(canvas, LIGHT_COLOUR, (self.light_pos + r).astype(int), self.light_radius)
+        pygame.draw.circle(canvas, self._object_colour("light"), (self.light_pos + r).astype(int), self.light_radius)
         if self.decoy_visible:
-            pygame.draw.circle(canvas, LIGHT_COLOUR, (self.decoy_pos + r).astype(int), self.light_radius)
+            pygame.draw.circle(canvas, self._object_colour("decoy"), (self.decoy_pos + r).astype(int), self.light_radius)
         draw_agent(canvas, (self.agent_pos + r).astype(int), self.agent_radius,
                    self.agent_colour, self.agent_mark)
         left, top = self.agent_pos.astype(int)

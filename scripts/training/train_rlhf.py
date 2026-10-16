@@ -2294,8 +2294,12 @@ def _wire_place_relation(tectum, workspace, log_dir, mode: str = "place") -> Non
     atexit.register(write_record)
 
 
-def _wire_map_binding(tectum, workspace, log_dir, mode: str = "limit") -> None:
-    """Stage 3, option B: the tectum groups the map, the workspace takes its factors, and the record is written at exit."""
+def _wire_map_binding(tectum, workspace, log_dir, mode: str = "limit", auditory_specialist=None,
+                      seed: int = 0) -> None:
+    """Stage 3: the tectum groups the map, the workspace takes its factors, and the record is written at exit.
+
+    "rhythm" and "rhythm-scrambled" bind by timing (docs/decisions/2026_10_15_rhythm_binding.md)
+    and need the cochlea, `auditory_specialist`; the scrambled form draws from `seed`."""
     import atexit
     import json
     from models.core.map_binding import HALF_MAXIMUM, CellAdaptation, LegionLimit, TrimmedLimit, salience_drive
@@ -2305,6 +2309,14 @@ def _wire_map_binding(tectum, workspace, log_dir, mode: str = "limit") -> None:
         tectum.map_binding = LegionLimit(threshold=HALF_MAXIMUM, drive=salience_drive, adaptation=CellAdaptation())
     elif mode == "trimmed":
         tectum.map_binding = TrimmedLimit(threshold=HALF_MAXIMUM, drive=salience_drive, adaptation=CellAdaptation())
+    elif mode in ("rhythm", "rhythm-scrambled"):
+        if auditory_specialist is None:
+            raise ValueError("--map-binding %s needs the cochlea (--enable-audio)" % mode)
+        from models.core.rhythm_binding import RhythmMapBinding, fresh_band_envelope
+        tectum.map_binding = RhythmMapBinding(
+            fresh_band_envelope(auditory_specialist),
+            scramble_seed=seed if mode == "rhythm-scrambled" else None,
+            bands=getattr(auditory_specialist, "num_bands", 64))
     else:
         tectum.map_binding = LegionLimit()
     workspace.map_factor_source = tectum.map_factors
@@ -2317,12 +2329,13 @@ def _wire_map_binding(tectum, workspace, log_dir, mode: str = "limit") -> None:
     atexit.register(write_record)
 
 
-def _wire_tectal_orienting(action_core, tectum, mode: str, seed: int, log_dir) -> None:
+def _wire_tectal_orienting(action_core, tectum, mode: str, seed: int, log_dir, idle: str = "policy") -> None:
     """The motor map of the tectum (docs/decisions/2026_10_15_tectal_motor_map.md).
 
     Wraps action_core.select_action. The policy is always called first, so every random
     stream stays as it is. When the map binding of this step has a target, its orienting
-    command replaces the policy's action; otherwise the policy's action is used."""
+    command replaces the policy's action. Without a target, `idle` "policy" uses the policy's
+    action and "still" gives no movement."""
     import atexit
     import json
     from models.core.tectal_motor_map import TectalMotorMap
@@ -2337,7 +2350,7 @@ def _wire_tectal_orienting(action_core, tectum, mode: str, seed: int, log_dir) -
         group = tectum.map_history[-1]["group"] if tectum.map_history else []
         oriented = motor.step(tectum.map_binding, group)
         if oriented is None:
-            return action, value
+            return (action if idle == "policy" else np.zeros_like(np.asarray(action))), value
         return np.asarray(oriented, dtype=np.asarray(action).dtype), value
 
     action_core.select_action = select_action
@@ -2571,6 +2584,16 @@ def main():
                              "no reward. Only the tone tells the two objects apart, so a test "
                              "of binding needs the sound. Needs --dark-room-decoy-sound. Off by "
                              "default.")
+    parser.add_argument("--dark-room-pulse", action="store_true",
+                        help="dark_room: the light and the decoy each change brightness and tone "
+                             "loudness in time with their own rhythm (1/10 and 1/6 cycles per step, "
+                             "one each at random), so the timing joins each object to its tone "
+                             "(docs/decisions/2026_10_15_rhythm_binding.md). Needs "
+                             "--dark-room-decoy-visible. Off by default.")
+    parser.add_argument("--dark-room-sound-direction", choices=["on", "off"], default="on",
+                        help="dark_room binaural sound. 'off': every ear hears the same signal, with "
+                             "no delay and no level difference, so the sound has no direction; "
+                             "loudness still falls with distance. 'on' (default) is unchanged.")
     parser.add_argument("--dark-room-start-between", action="store_true",
                         help="dark_room: each episode starts with the agent midway between the "
                              "light and the visible decoy, so both are in view at the start. "
@@ -2665,7 +2688,8 @@ def main():
                              "sum of all eligible module payloads, with weights "
                              "from AKOrN bound_bids. Makes phi-on-broadcast "
                              "structurally downstream of sync_R.")
-    parser.add_argument("--map-binding", choices=["off", "limit", "salience", "adapted", "trimmed"], default="off",
+    parser.add_argument("--map-binding", choices=["off", "limit", "salience", "adapted", "trimmed", "rhythm",
+                                                  "rhythm-scrambled"], default="off",
                         help="Stage 3 of docs/decisions/2026_10_14_binding_stage3_map_oscillators.md. "
                              "'limit': the tectum map is grouped into connected stimulated areas, "
                              "the end result that Terman and Wang prove for LEGION; the strongest "
@@ -2682,6 +2706,12 @@ def main():
                              "cells with image brightness above 0.3 stay, so the binding factors come "
                              "from the bright part of the group "
                              "(docs/decisions/2026_10_15_map_binding_trim.md). "
+                             "'rhythm': binding by timing. Oscillators driven by each place's "
+                             "brightness and by each cochlear band lock when the rhythms match; the "
+                             "group is the places locked with the loudest band "
+                             "(docs/decisions/2026_10_15_rhythm_binding.md). Needs --enable-audio. "
+                             "'rhythm-scrambled': the same, with the sound's rhythm destroyed (the "
+                             "disruption of its test). "
                              "'off' (default) is unchanged.")
     parser.add_argument("--tectal-orienting", choices=["off", "group", "active", "audio"], default="off",
                         help="The motor map of the tectum (docs/decisions/2026_10_15_tectal_motor_map.md). "
@@ -2691,6 +2721,10 @@ def main():
                              "'group': the cells of the group the map binding selected. 'active': every "
                              "cell at half the maximum drive or more, with no selection. 'audio': the "
                              "sound place. 'off' (default) is unchanged.")
+    parser.add_argument("--tectal-orienting-idle", choices=["policy", "still"], default="policy",
+                        help="With --tectal-orienting, what the agent does at a step without a "
+                             "target. 'policy' (default): the policy's action, as before. 'still': no "
+                             "movement (docs/decisions/2026_10_15_rhythm_binding.md).")
     parser.add_argument("--binding-relation", choices=["none", "place", "overlap"], default="none",
                         help="Stage 2 of docs/decisions/2026_10_14_oscillator_binding_design.md. "
                              "'place': the coupling of the vision and audio oscillators becomes "
@@ -3072,10 +3106,13 @@ def main():
      latent_id_head, latent_id_optimizer,
      latent_contrastive_head, latent_contrastive_optimizer) = init_components(config)
     if args.map_binding != "off":
-        _wire_map_binding(tectum, workspace, args.log_dir, args.map_binding)
+        _wire_map_binding(tectum, workspace, args.log_dir, args.map_binding,
+                          auditory_specialist=auditory_specialist,
+                          seed=args.seed if args.seed is not None else 0)
     if args.tectal_orienting != "off":
         _wire_tectal_orienting(action_core, tectum, args.tectal_orienting,
-                               args.seed if args.seed is not None else 0, args.log_dir)
+                               args.seed if args.seed is not None else 0, args.log_dir,
+                               idle=args.tectal_orienting_idle)
     if args.binding_relation in ("place", "overlap"):
         _wire_place_relation(tectum, workspace, args.log_dir, args.binding_relation)
 
@@ -3109,7 +3146,9 @@ def main():
                               decoy_sound=args.dark_room_decoy_sound,
                               decoy_level=parse_levels(args.dark_room_decoy_level),
                               decoy_visible=args.dark_room_decoy_visible,
-                              start_between=args.dark_room_start_between)
+                              start_between=args.dark_room_start_between,
+                              pulse=args.dark_room_pulse,
+                              sound_direction=args.dark_room_sound_direction == "on")
     env_seeded = seed_environment(env, args.seed)
     # Seed the environment audio noise from the run seed. Before 2026-09-15 it had
     # no seed, so no run with --enable-audio could be repeated exactly.
@@ -3159,6 +3198,8 @@ def main():
                        "dark_room_decoy_level": args.dark_room_decoy_level,
                        "dark_room_decoy_visible": args.dark_room_decoy_visible,
                        "dark_room_start_between": args.dark_room_start_between,
+                       "dark_room_pulse": args.dark_room_pulse,
+                       "dark_room_sound_direction": args.dark_room_sound_direction,
                        "dark_room_view": args.dark_room_view,
                        "dark_room_view_radius": args.dark_room_view_radius,
                        # How the agent's own body was drawn into the frames it
