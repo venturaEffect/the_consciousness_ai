@@ -318,3 +318,62 @@ class TestTrainingWiring:
             tectum(pulse_frames(t), torch.zeros(1, tectum.feature_dim, 2))
         entry = tectum.map_history[-1]
         assert len(entry["coherence"]) == 256 and entry["band"] == 18
+
+
+class TestTwoBands:
+    """Binding of the 2 loudest bands, each to its own object (docs/decisions/2026_10_16_value_gate.md)."""
+
+    @staticmethod
+    def run(binding, spec, steps=40):
+        record = None
+        for t in range(steps + 1):
+            if t > 0:
+                spec.hear(pulse_bands(t))
+            _, record = binding.observe(torch.zeros(1, 64, 16, 16), torch.zeros(1, 64, 2), pulse_frames(t))
+        return record
+
+    def test_each_of_the_two_loudest_bands_gets_its_own_object(self):
+        spec = FakeSpecialist()
+        binding = rb.RhythmMapBinding(rb.fresh_band_envelope(spec), bands_to_bind=2)
+        record = self.run(binding, spec)
+        groups = {int(band): set(cells) for band, cells in record["groups"].items()}
+        assert set(groups) == {18, 23}
+        assert groups[18] and groups[18] <= BLOCK_A and not groups[18] & CENTRE
+        assert groups[23] and groups[23] <= BLOCK_B
+        assert set(record["group"]) == groups[18]           # "group" stays the loudest band's group
+
+    def test_the_salience_of_each_band_is_its_slow_mean_over_the_largest(self):
+        spec = FakeSpecialist()
+        binding = rb.RhythmMapBinding(rb.fresh_band_envelope(spec), bands_to_bind=2)
+        record = self.run(binding, spec)
+        mean = binding.binder.band_mean
+        assert record["salience"]["18"] == pytest.approx(1.0)
+        assert record["salience"]["23"] == pytest.approx(mean[23] / mean[18])
+
+    def test_one_band_per_tone_even_when_a_neighbour_band_is_louder_than_the_other_tone(self):
+        # The cochlea spreads a loud tone into its neighbour bands (measured: band 22 at 0.70 of
+        # band 23 when the decoy is 3 times louder). The two candidates are the two largest local
+        # peaks of the band profile, one for each tone, not the two loudest bands.
+        profile = np.full(64, 0.01)
+        profile[22], profile[23], profile[24] = 0.48, 0.68, 0.41
+        profile[17], profile[18], profile[19] = 0.20, 0.33, 0.15
+        assert rb.tone_bands(profile, 2) == [23, 18]
+
+    def test_a_profile_with_one_peak_gives_one_band(self):
+        profile = np.full(64, 0.01)
+        profile[18] = 0.5
+        assert rb.tone_bands(profile, 2) == [18]
+
+    def test_one_band_keeps_the_record_of_the_gate(self):
+        spec = FakeSpecialist()
+        binding = rb.RhythmMapBinding(rb.fresh_band_envelope(spec))
+        record = self.run(binding, spec)
+        assert "groups" not in record and "salience" not in record
+
+    def test_one_band_gives_the_same_coherence_as_before(self):
+        spec_a, spec_b = FakeSpecialist(), FakeSpecialist()
+        one = rb.RhythmMapBinding(rb.fresh_band_envelope(spec_a))
+        two = rb.RhythmMapBinding(rb.fresh_band_envelope(spec_b), bands_to_bind=2)
+        a, b = self.run(one, spec_a), self.run(two, spec_b)
+        # The loudest band never changes here, so its own accumulator equals the single one.
+        assert a["coherence"] == b["coherence"]

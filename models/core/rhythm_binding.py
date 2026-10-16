@@ -100,13 +100,20 @@ class RhythmBinder:
 
     `scramble_seed`: the disruption. The band envelope of each step is replaced by the envelope
     of a step drawn at random from the last SCRAMBLE_HISTORY steps, which destroys the rhythm and
-    keeps the values."""
+    keeps the values.
 
-    def __init__(self, grid: int = 16, bands: int = 64, scramble_seed: Optional[int] = None):
-        self.grid, self.bands = grid, bands
+    `bands_to_bind` 2: the two largest local peaks of the band profile (`tone_bands`, one band for
+    each tone) each get their own coherence (their own leaky means), so each heard tone finds its
+    own object. `last["coherences"]` holds them by band. With 1 (the default) the binder is the one
+    of the gate of 2026-10-15, unchanged."""
+
+    def __init__(self, grid: int = 16, bands: int = 64, scramble_seed: Optional[int] = None,
+                 bands_to_bind: int = 1):
+        self.grid, self.bands, self.bands_to_bind = grid, bands, bands_to_bind
         self.bank_cells = OscillatorBank(grid * grid)
         self.bank_bands = OscillatorBank(bands)
         self.coherence = Coherence(grid * grid)
+        self.band_coherence = {}
         self.scramble = None if scramble_seed is None else np.random.default_rng(scramble_seed)
         self.history = deque(maxlen=SCRAMBLE_HISTORY)
         self.band_mean = None
@@ -116,6 +123,7 @@ class RhythmBinder:
         self.bank_cells.reset()
         self.bank_bands.reset()
         self.coherence.reset()
+        self.band_coherence = {}
         self.history.clear()
         self.band_mean = None
         self.last = {"band": None, "frequency_index": None}
@@ -145,8 +153,29 @@ class RhythmBinder:
         z_bands = self.bank_bands.step(heard)
         band = self.loudest_band()
         k = int(np.argmax(np.abs(z_bands[band])))
-        self.last = {"band": band, "frequency_index": k}
-        return self.coherence.step(z_cells[:, k], z_bands[band, k]).reshape(self.grid, self.grid)
+        if self.bands_to_bind == 1:
+            self.last = {"band": band, "frequency_index": k}
+            return self.coherence.step(z_cells[:, k], z_bands[band, k]).reshape(self.grid, self.grid)
+        maps = {}
+        for b in tone_bands(self.band_mean, self.bands_to_bind) or [band]:
+            kb = int(np.argmax(np.abs(z_bands[b])))
+            accumulator = self.band_coherence.setdefault(b, Coherence(self.grid * self.grid))
+            maps[b] = accumulator.step(z_cells[:, kb], z_bands[b, kb]).reshape(self.grid, self.grid)
+        self.last = {"band": band, "frequency_index": k, "coherences": maps}
+        return maps[band]
+
+
+def tone_bands(band_mean: np.ndarray, count: int) -> List[int]:
+    """The `count` largest local peaks of the band profile, largest first: one band for each tone.
+
+    A loud tone also drives its neighbour bands (measured 2026-10-16: band 22 at 0.70 of band 23
+    when the decoy is three times louder), so the loudest bands can all belong to one tone."""
+    m = np.asarray(band_mean, dtype=np.float64)
+    n = len(m)
+    # A peak is above its lower neighbour and not below its upper one; band 0 must be above band 1.
+    peaks = [b for b in range(n)
+             if (m[b] > m[b - 1] if b > 0 else n > 1 and m[0] > m[1]) and (b == n - 1 or m[b] >= m[b + 1])]
+    return sorted(peaks, key=lambda b: -m[b])[:count]
 
 
 def bound_cells(coherence: np.ndarray, threshold: float) -> List[int]:
@@ -188,18 +217,30 @@ class RhythmMapBinding:
     without the places of the agent's own body. Both senses get the same factor,
     1 + 0.5 x the largest coherence in the group, because they are one object; 1 without a group.
     `last_vision` is the peak luminance and `last_audio` is zero (the sound has no place here), so
-    the motor map reads the drives of the binding as it does for the other forms."""
+    the motor map reads the drives of the binding as it does for the other forms.
+
+    `bands_to_bind` 2 binds each of the two loudest bands to its own group, for the value gate
+    (`docs/decisions/2026_10_16_value_gate.md`). The record then adds "groups" {band: places} and
+    "salience" {band: slow-mean envelope over the largest}; "group" stays the loudest band's."""
 
     needs_frames = True
 
     def __init__(self, band_source, scramble_seed: Optional[int] = None,
-                 threshold: float = RHYTHM_THRESHOLD, grid: int = 16, bands: int = 64):
+                 threshold: float = RHYTHM_THRESHOLD, grid: int = 16, bands: int = 64,
+                 bands_to_bind: int = 1):
         from models.core.tectal_motor_map import body_mask
         self.band_source, self.threshold, self.grid = band_source, threshold, grid
-        self.binder = RhythmBinder(grid=grid, bands=bands, scramble_seed=scramble_seed)
+        self.binder = RhythmBinder(grid=grid, bands=bands, scramble_seed=scramble_seed,
+                                   bands_to_bind=bands_to_bind)
         self.body = body_mask().reshape(-1)
         self.last_vision = torch.zeros(grid, grid)
         self.last_audio = torch.zeros(grid, grid)
+
+    def _group(self, coherence: np.ndarray) -> List[int]:
+        """Places at or above the threshold, without the body, after the wait."""
+        if self.binder.bank_cells.t < WARM_UP:
+            return []
+        return [i for i in bound_cells(coherence, self.threshold) if not self.body[i]]
 
     def observe(self, vision_grid: torch.Tensor, audio_spatial: torch.Tensor, frames: torch.Tensor = None) -> tuple:
         """(factors, record) of one step."""
@@ -207,13 +248,16 @@ class RhythmMapBinding:
             raise ValueError("RhythmMapBinding needs the image of the step (frames [1, 3, h, w])")
         peak = cell_peak_luminance(frames, self.grid)
         coherence = self.binder.step(peak, self.band_source()).reshape(-1)
-        group = [i for i in bound_cells(coherence, self.threshold) if not self.body[i]]
-        if self.binder.bank_cells.t < WARM_UP:
-            group = []
+        group = self._group(coherence)
         self.last_vision = torch.from_numpy(peak).float()
         self.last_audio = torch.zeros_like(self.last_vision)
         factor = 1.0 + 0.5 * float(max(coherence[i] for i in group)) if group else 1.0
         record = {"blocks": 1 if group else 0, "group": group, "band": self.binder.last["band"],
                   "frequency_index": self.binder.last["frequency_index"],
                   "coherence": [round(float(c), 3) for c in coherence]}
+        if self.binder.bands_to_bind > 1:
+            maps = self.binder.last.get("coherences", {})
+            mean = self.binder.band_mean
+            record["groups"] = {str(b): self._group(c.reshape(-1)) for b, c in maps.items()}
+            record["salience"] = {str(b): float(mean[b] / mean.max()) for b in maps} if mean is not None else {}
         return {"vision": factor, "audio": factor}, record

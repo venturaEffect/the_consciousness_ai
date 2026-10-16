@@ -2295,11 +2295,12 @@ def _wire_place_relation(tectum, workspace, log_dir, mode: str = "place") -> Non
 
 
 def _wire_map_binding(tectum, workspace, log_dir, mode: str = "limit", auditory_specialist=None,
-                      seed: int = 0) -> None:
+                      seed: int = 0, bands_to_bind: int = 1) -> None:
     """Stage 3: the tectum groups the map, the workspace takes its factors, and the record is written at exit.
 
     "rhythm" and "rhythm-scrambled" bind by timing (docs/decisions/2026_10_15_rhythm_binding.md)
-    and need the cochlea, `auditory_specialist`; the scrambled form draws from `seed`."""
+    and need the cochlea, `auditory_specialist`; the scrambled form draws from `seed`.
+    `bands_to_bind` 2 binds each of the two loudest bands to its own object, for the value gate."""
     import atexit
     import json
     from models.core.map_binding import HALF_MAXIMUM, CellAdaptation, LegionLimit, TrimmedLimit, salience_drive
@@ -2316,7 +2317,7 @@ def _wire_map_binding(tectum, workspace, log_dir, mode: str = "limit", auditory_
         tectum.map_binding = RhythmMapBinding(
             fresh_band_envelope(auditory_specialist),
             scramble_seed=seed if mode == "rhythm-scrambled" else None,
-            bands=getattr(auditory_specialist, "num_bands", 64))
+            bands=getattr(auditory_specialist, "num_bands", 64), bands_to_bind=bands_to_bind)
     else:
         tectum.map_binding = LegionLimit()
     workspace.map_factor_source = tectum.map_factors
@@ -2360,6 +2361,63 @@ def _wire_tectal_orienting(action_core, tectum, mode: str, seed: int, log_dir, i
             os.makedirs(log_dir, exist_ok=True)
             with open(os.path.join(log_dir, "tectal_orienting.json"), "w", encoding="utf-8") as handle:
                 json.dump({"mode": mode, "steps": len(motor.history), "history": motor.history}, handle)
+    atexit.register(write_record)
+
+
+def _wire_value_gate(action_core, tectum, seed: int, log_dir, idle: str = "still",
+                     learning_rate: float = 0.3) -> None:
+    """The selection switch (docs/decisions/2026_10_16_value_gate.md).
+
+    Wraps action_core.select_action and action_core.step. The policy is always called first, so
+    every random stream stays as it is. Once per episode the gate chooses one of the bound tones by
+    salience and learned value; the motor map follows that tone's object. The reward that reaches
+    action_core.step updates the value. A step without sound starts the next episode."""
+    import atexit
+    import json
+    from models.core.rhythm_binding import RhythmMapBinding
+    from models.core.tectal_motor_map import TectalMotorMap
+    from models.core.value_gate import ValueGate
+    binding = getattr(tectum, "map_binding", None)
+    if not isinstance(binding, RhythmMapBinding) or binding.binder.bands_to_bind < 2:
+        raise ValueError("--tectal-orienting value needs --map-binding rhythm or rhythm-scrambled with two bands")
+    motor = TectalMotorMap("group", seed)
+    gate = ValueGate(seed + 1000003, learning_rate=learning_rate)
+    tectum.tectal_motor_map, tectum.value_gate = motor, gate
+    policy_select, policy_step = action_core.select_action, action_core.step
+
+    def chosen_group() -> list:
+        record = tectum.map_history[-1] if tectum.map_history else {}
+        if record.get("band") is None:
+            gate.new_episode()
+            return []
+        groups = record.get("groups", {})
+        candidates = {int(b): record["salience"][b] for b, cells in groups.items() if cells}
+        if gate.choice is None and candidates:
+            gate.choose(candidates)
+        return groups.get(str(gate.choice), []) if gate.choice is not None else []
+
+    def select_action(*args, **kwargs):
+        action, value = policy_select(*args, **kwargs)
+        oriented = motor.step(tectum.map_binding, chosen_group())
+        if oriented is None:
+            return (action if idle == "policy" else np.zeros_like(np.asarray(action))), value
+        return np.asarray(oriented, dtype=np.asarray(action).dtype), value
+
+    def step(*args, **kwargs):
+        reward = kwargs["raw_reward"] if "raw_reward" in kwargs else args[2]
+        gate.observe_reward(float(reward))
+        return policy_step(*args, **kwargs)
+
+    action_core.select_action, action_core.step = select_action, step
+
+    def write_record() -> None:
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
+            with open(os.path.join(log_dir, "value_gate.json"), "w", encoding="utf-8") as handle:
+                json.dump({"learning_rate": learning_rate, "episodes": gate.episodes,
+                           "values": {str(b): v for b, v in gate.values.items()}}, handle)
+            with open(os.path.join(log_dir, "tectal_orienting.json"), "w", encoding="utf-8") as handle:
+                json.dump({"mode": "value", "steps": len(motor.history), "history": motor.history}, handle)
     atexit.register(write_record)
 
 
@@ -2713,14 +2771,21 @@ def main():
                              "'rhythm-scrambled': the same, with the sound's rhythm destroyed (the "
                              "disruption of its test). "
                              "'off' (default) is unchanged.")
-    parser.add_argument("--tectal-orienting", choices=["off", "group", "active", "audio"], default="off",
+    parser.add_argument("--tectal-orienting", choices=["off", "group", "active", "audio", "value"], default="off",
                         help="The motor map of the tectum (docs/decisions/2026_10_15_tectal_motor_map.md). "
                              "Needs --map-binding. When the target cells of a step lie off the agent's "
                              "own body, the agent moves at 0.5 toward their drive-weighted centre, plus "
                              "noise of std 0.1 from its own seed, in place of the policy's action. "
                              "'group': the cells of the group the map binding selected. 'active': every "
                              "cell at half the maximum drive or more, with no selection. 'audio': the "
-                             "sound place. 'off' (default) is unchanged.")
+                             "sound place. 'value': the object of the heard tone that the value gate "
+                             "chooses once per episode by salience and learned value "
+                             "(docs/decisions/2026_10_16_value_gate.md); needs --map-binding rhythm or "
+                             "rhythm-scrambled, which then bind two bands. 'off' (default) is unchanged.")
+    parser.add_argument("--value-learning-rate", type=float, default=0.3,
+                        help="With --tectal-orienting value, the rate at which the value of the chosen "
+                             "tone moves toward the outcome (food 1, none 0). 0 keeps the values at 0: "
+                             "the frozen arm of its test. Default 0.3.")
     parser.add_argument("--tectal-orienting-idle", choices=["policy", "still"], default="policy",
                         help="With --tectal-orienting, what the agent does at a step without a "
                              "target. 'policy' (default): the policy's action, as before. 'still': no "
@@ -3108,8 +3173,12 @@ def main():
     if args.map_binding != "off":
         _wire_map_binding(tectum, workspace, args.log_dir, args.map_binding,
                           auditory_specialist=auditory_specialist,
-                          seed=args.seed if args.seed is not None else 0)
-    if args.tectal_orienting != "off":
+                          seed=args.seed if args.seed is not None else 0,
+                          bands_to_bind=2 if args.tectal_orienting == "value" else 1)
+    if args.tectal_orienting == "value":
+        _wire_value_gate(action_core, tectum, args.seed if args.seed is not None else 0, args.log_dir,
+                         idle=args.tectal_orienting_idle, learning_rate=args.value_learning_rate)
+    elif args.tectal_orienting != "off":
         _wire_tectal_orienting(action_core, tectum, args.tectal_orienting,
                                args.seed if args.seed is not None else 0, args.log_dir,
                                idle=args.tectal_orienting_idle)
