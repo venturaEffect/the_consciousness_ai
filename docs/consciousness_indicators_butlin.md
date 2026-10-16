@@ -126,7 +126,7 @@ the public count.
 | Indicator | Project component | Status |
 |-----------|-------------------|--------|
 | RPT-1: algorithmic recurrence in input modules | `ReentrantProcessor` (5-10 adaptive settle cycles), capsule intra-hierarchy reentrant feedback, RSSM recurrence in `SensoryTectum` | IMPLEMENTED |
-| RPT-2: organized, integrated perceptual representations | Topographic map + inverse-effectiveness fusion, hierarchical capsule composition, AKOrN oscillatory binding | PARTIAL, **rationale corrected 2026-09-13** (`results/rpt2_evidence_audit_2026_09.md`). The ORGANIZED half is measured at 3 seeds: `obs_map` decodes 6-class `sample_shape` at ~1.0, `kl_map` at 0.84 / 0.71 / 0.76, the 256-D broadcast at 0.76 / 0.69 / 0.77. The INTEGRATED half has NEVER been validly measured. **The previous rationale, "the in-training phi-binding coupling (Phi-1) FAILED across 9 runs", is withdrawn.** The pre-registration requires non-degenerate variances before a negative may be accepted (`preregistered_predictions.md` line 599; floors `phi_std` > 0.01 and `sync_R_std` > 0.02), and 0 of the 9 runs met them: every `sync_R_std` is at or below 0.019. The individual run documents recorded the correct verdict, RE-RUN, at the time; this summary line drifted from them. The cause was established later: `reset_state` at `oscillatory_binding.py:149` is never called from the training loop, so the oscillators converge and `sync_R` becomes the mean of the separately degenerate bids, which pins its variance below the floor in any run of this architecture. That rationale also demanded a measured training-time signature, which the IMPLEMENTED definition settled 2026-08-11 states is NOT necessary. Status stays PARTIAL: withdrawing invalid negative evidence leaves no evidence, not a positive, and mechanism presence is not sufficient. Whether the ORGANIZED half alone counts toward this indicator is an open owner decision |
+| RPT-2: organized, integrated perceptual representations | Topographic map + inverse-effectiveness fusion, hierarchical capsule composition, AKOrN oscillatory binding | PARTIAL, **rationale corrected 2026-09-13** (`results/rpt2_evidence_audit_2026_09.md`). The ORGANIZED half is measured at 3 seeds: `obs_map` decodes 6-class `sample_shape` at ~1.0, `kl_map` at 0.84 / 0.71 / 0.76, the 256-D broadcast at 0.76 / 0.69 / 0.77. The INTEGRATED half was never validly measured before 2026-10-16; one case is measured now (status update of that date). **The previous rationale, "the in-training phi-binding coupling (Phi-1) FAILED across 9 runs", is withdrawn.** The pre-registration requires non-degenerate variances before a negative may be accepted (`preregistered_predictions.md` line 599; floors `phi_std` > 0.01 and `sync_R_std` > 0.02), and 0 of the 9 runs met them: every `sync_R_std` is at or below 0.019. The individual run documents recorded the correct verdict, RE-RUN, at the time; this summary line drifted from them. The cause was established later: `reset_state` at `oscillatory_binding.py:149` is never called from the training loop, so the oscillators converge and `sync_R` becomes the mean of the separately degenerate bids, which pins its variance below the floor in any run of this architecture. That rationale also demanded a measured training-time signature, which the IMPLEMENTED definition settled 2026-08-11 states is NOT necessary. Status stays PARTIAL: withdrawing invalid negative evidence leaves no evidence, not a positive, and mechanism presence is not sufficient. Whether the ORGANIZED half alone counts toward this indicator is an open owner decision |
 
 ### Global Workspace Theory
 
@@ -339,6 +339,22 @@ Net: no promotions, no demotions, no consciousness claim. The rubric gains a nam
 standard (matched stimulus contrast, divergence latency, perturbational complexity) that the
 GWT rows have not yet been held to. Pre-registered thresholds (EI, Phi-1, section 13) are
 unchanged.
+
+## Status update 2026-10-16: the integrated half of RPT-2 is measured once (NO status change)
+
+The RPT-2 row says that the integrated half has never been validly measured. A test with rules
+written before its runs now measures it for one case: binding of a seen object and a heard tone by
+their timing (`results/rhythm_binding_gate_2026_10.md`, design in
+`decisions/2026_10_15_rhythm_binding.md`). At 3 of 3 seeds, oscillators of the places on the object
+with the louder tone locked with the loudest cochlear band more than those of the other object
+(coherence difference +0.580 to +0.616), brightness did not explain it, and the agent went to the
+object with the louder tone first in 115 of 120 episodes, against 67 of 120 with the sound's rhythm
+destroyed.
+
+RPT-2 stays PARTIAL. The owner decided on 2026-10-16 to decide a promotion only after harder rooms
+repeat the result (irregular rhythms, a sound with weak direction), because the evidence comes from
+one room, behind default-off flags, with a fixed orienting reflex. GWT-2 does not change: the
+workspace leader changed at 0 steps in these runs, so the binding did not act through the workspace.
 
 ## Caveat
 
