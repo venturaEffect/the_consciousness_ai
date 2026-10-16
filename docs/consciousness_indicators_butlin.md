@@ -356,6 +356,10 @@ repeat the result (irregular rhythms, a sound with weak direction), because the 
 one room, behind default-off flags, with a fixed orienting reflex. GWT-2 does not change: the
 workspace leader changed at 0 steps in these runs, so the binding did not act through the workspace.
 
+Later the same day the harder rooms did NOT repeat the result. With irregular rhythms, and when the
+louder tone changes while the agent moves, the binding failed its offline diagnoses
+(`results/rhythm_binding_harder_rooms_2026_10.md`). RPT-2 stays PARTIAL.
+
 ## Caveat
 
 Indicator coverage is necessary-evidence framing, not proof. A system can satisfy
