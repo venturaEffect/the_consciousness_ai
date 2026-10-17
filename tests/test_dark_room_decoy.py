@@ -446,3 +446,93 @@ class TestSoundDirection:
         assert args.dark_room_pulse is False and args.dark_room_sound_direction == "on"
         text = next(a.help for a in parser._actions if "--dark-room-pulse" in a.option_strings)
         assert "--dark-room-decoy-visible" in text and "rhythm" in text
+
+
+def make_switch(switch=2, seed=5):
+    np.random.seed(seed)
+    env = SimpleVisualEnv(width=224, height=224, audio="binaural", audio_channels=4,
+                          report_collision=True, view="agent_centered", decoy_sound=True,
+                          decoy_visible=True, food_switch=switch)
+    env.seed_audio(seed)
+    env.seed_decoy(seed)
+    return env
+
+
+def reward_at(env, place):
+    """Reward and info of one still step with the agent put on `place`, "light" or "decoy"."""
+    env.agent_pos = getattr(env, place + "_pos").astype(np.float32).copy()
+    _, reward, _, _, info = env.step(np.zeros(2, dtype=np.float32))
+    return reward, info
+
+
+class TestFoodSwitch:
+    """From the episode `food_switch` on, the decoy gives the food and the light gives none."""
+
+    def test_it_needs_the_visible_decoy(self):
+        with pytest.raises(ValueError):
+            SimpleVisualEnv(width=224, height=224, audio="binaural", audio_channels=4,
+                            decoy_sound=True, food_switch=3)
+
+    def test_the_switch_episode_cannot_be_negative(self):
+        with pytest.raises(ValueError):
+            SimpleVisualEnv(width=224, height=224, audio="binaural", audio_channels=4,
+                            decoy_sound=True, decoy_visible=True, food_switch=-1)
+
+    def test_the_food_is_at_the_light_before_the_switch_and_at_the_decoy_from_it_on(self):
+        env = make_switch(switch=2)
+        for episode in range(5):
+            env.reset()
+            light, info = reward_at(env, "light")
+            decoy, _ = reward_at(env, "decoy")
+            food = "decoy" if episode >= 2 else "light"
+            assert info["_truth_food"] == food
+            assert (light, decoy) == ((1.0, -0.01) if food == "light" else (-0.01, 1.0))
+
+    def test_the_reset_before_the_first_training_episode_does_not_count(self):
+        # train_rlhf resets the room once in seed_environment, with no step after it. On
+        # 2026-10-16 that reset moved the food one episode early (the gate runs of
+        # docs/results/reversal_2026_10.md); the switch now counts the episodes the room runs.
+        from scripts.training.train_rlhf import seed_environment
+        env = make_switch(switch=2)
+        assert seed_environment(env, 7) is True
+        for episode in range(4):
+            env.reset()
+            _, info = reward_at(env, "light")
+            assert info["_truth_food"] == ("decoy" if episode >= 2 else "light")
+
+    def test_the_in_light_record_still_names_the_light(self):
+        env = make_switch(switch=0)
+        env.reset()
+        _, info = reward_at(env, "light")
+        assert info["in_light"] is True
+
+    def test_without_the_switch_the_decoy_gives_no_reward_and_there_is_no_food_record(self):
+        env = make_visible()
+        for _ in range(3):
+            env.reset()
+            light, info = reward_at(env, "light")
+            decoy, _ = reward_at(env, "decoy")
+            assert (light, decoy) == (1.0, -0.01)
+            assert "_truth_food" not in info
+
+    def test_the_switch_draws_nothing_so_the_room_and_its_sound_are_unchanged(self):
+        plain, switched = make_visible(), make_switch(switch=1)
+        for k in range(4):
+            np.random.seed(k)
+            plain.reset()
+            np.random.seed(k)
+            switched.reset()
+            assert np.array_equal(plain.light_pos, switched.light_pos)
+            assert np.array_equal(plain.decoy_pos, switched.decoy_pos)
+            assert plain.decoy_level == switched.decoy_level
+            frame_plain, _, _, _, info_plain = plain.step(ACTION)
+            frame_switched, _, _, _, info_switched = switched.step(ACTION)
+            assert np.array_equal(frame_plain, frame_switched)
+            assert np.array_equal(info_plain["audio_waveform"], info_switched["audio_waveform"])
+
+    def test_the_training_flag_is_off_by_default_and_its_help_names_the_rule(self):
+        parser = TestTrainingFlag.parser()
+        assert parser.parse_args([]).dark_room_food_switch is None
+        assert parser.parse_args(["--dark-room-food-switch", "30"]).dark_room_food_switch == 30
+        text = next(a.help for a in parser._actions if "--dark-room-food-switch" in a.option_strings)
+        assert "decoy" in text and "--dark-room-decoy-visible" in text

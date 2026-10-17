@@ -2656,6 +2656,12 @@ def main():
                         help="dark_room: each episode starts with the agent midway between the "
                              "light and the visible decoy, so both are in view at the start. "
                              "Needs --dark-room-decoy-visible. Off by default.")
+    parser.add_argument("--dark-room-food-switch", type=int, default=None,
+                        help="dark_room: from this episode on (counted from 0), the visible decoy "
+                             "gives the food and the light gives none, so a learned value must "
+                             "reverse (docs/decisions/2026_10_16_reversal.md). The room, its "
+                             "pixels and its sound do not change. Needs --dark-room-decoy-visible. "
+                             "Off by default.")
     parser.add_argument("--dark-room-decoy-level", type=str, default="1.0",
                         help="Amplitude of the second tone source relative to the light, with "
                              "--dark-room-decoy-sound. A comma list (for example 0.5,3.0) is "
@@ -3217,7 +3223,8 @@ def main():
                               decoy_visible=args.dark_room_decoy_visible,
                               start_between=args.dark_room_start_between,
                               pulse=args.dark_room_pulse,
-                              sound_direction=args.dark_room_sound_direction == "on")
+                              sound_direction=args.dark_room_sound_direction == "on",
+                              food_switch=args.dark_room_food_switch)
     env_seeded = seed_environment(env, args.seed)
     # Seed the environment audio noise from the run seed. Before 2026-09-15 it had
     # no seed, so no run with --enable-audio could be repeated exactly.
@@ -3269,6 +3276,7 @@ def main():
                        "dark_room_start_between": args.dark_room_start_between,
                        "dark_room_pulse": args.dark_room_pulse,
                        "dark_room_sound_direction": args.dark_room_sound_direction,
+                       "dark_room_food_switch": args.dark_room_food_switch,
                        "dark_room_view": args.dark_room_view,
                        "dark_room_view_radius": args.dark_room_view_radius,
                        # How the agent's own body was drawn into the frames it
