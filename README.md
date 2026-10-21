@@ -12,7 +12,7 @@
 [![Store](https://img.shields.io/badge/Store-Merch-E34F26?logo=shopify&logoColor=white)](https://theconsciousness.ai/merch/)
 [![Newsletter](https://img.shields.io/badge/Newsletter-Subscribe-D97757?logo=maildotru&logoColor=white)](https://theconsciousness.ai/subscribe/?utm_source=github&utm_medium=readme)
 
-<img width="1000" height="238" alt="theconsciousness-ai-badge-logo-2" src="https://github.com/user-attachments/assets/97c42d29-4560-4867-a31f-cc79d6c4f4e6" />
+<img width="1000" height="238" alt="theConsciousness.ai, open source research" src="docs/assets/banner.png" />
 
 **The Consciousness AI** is a research framework investigating the emergence of synthetic awareness. Unlike traditional AI that mimics intelligent output, this system generates behavior through an internal struggle for **Emotional Homeostasis** and **Integrated Information**.
 
